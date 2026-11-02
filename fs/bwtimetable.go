@@ -82,8 +82,14 @@ func (x BwTimetable) String() string {
 
 // Basic hour format checking
 func validateHour(HHMM string) error {
-	if len(HHMM) != 5 {
+	if len(HHMM) != 5 || HHMM[2] != ':' {
 		return fmt.Errorf("invalid time specification (hh:mm): %q", HHMM)
+	}
+	// strconv.Atoi accepts a sign, so check for digits explicitly
+	for _, i := range []int{0, 1, 3, 4} {
+		if HHMM[i] < '0' || HHMM[i] > '9' {
+			return fmt.Errorf("invalid time specification (hh:mm): %q", HHMM)
+		}
 	}
 	hh, err := strconv.Atoi(HHMM[0:2])
 	if err != nil {
@@ -237,12 +243,16 @@ func (x BwTimetable) LimitAt(tt time.Time) BwTimeSlot {
 
 	dayOfWeekHHMM := int(tt.Weekday())*10000 + tt.Hour()*100 + tt.Minute()
 
-	// By default, we return the last element in the timetable. This
-	// satisfies two conditions: 1) If there's only one element it
-	// will always be selected, and 2) The last element of the table
-	// will "wrap around" until overridden by an earlier time slot.
-	// there's only one time slot in the timetable.
-	ret := x[len(x)-1]
+	// By default, we return the latest time slot in the week, which
+	// "wraps around" until overridden by an earlier time slot. This is
+	// the only time slot when there is just one, and doesn't depend on
+	// the order the time slots were given in.
+	ret := x[0]
+	for _, ts := range x[1:] {
+		if (ts.DayOfTheWeek*10000)+ts.HHMM >= (ret.DayOfTheWeek*10000)+ret.HHMM {
+			ret = ts
+		}
+	}
 	mindif := 0
 	first := true
 

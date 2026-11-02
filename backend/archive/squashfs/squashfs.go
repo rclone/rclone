@@ -42,6 +42,8 @@ type Fs struct {
 	prefix      string   // position for objects
 	prefixSlash string   // position for objects with a slash on
 	root        string   // position to read from within the archive
+	file        string   // remote of the single file root points at, if any
+	links       bool     // read symlinks as .rclonelink files
 }
 
 // recoverParsePanic converts a panic raised while parsing a squashfs image
@@ -98,6 +100,7 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (_ f
 		c:           c,
 		remote:      remote,
 		root:        strings.Trim(root, "/"),
+		links:       fs.GetConfig(ctx).Links,
 		prefix:      prefix,
 		prefixSlash: prefix + "/",
 	}
@@ -115,10 +118,13 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (_ f
 			_, err := f.newObjectNative(native)
 			if err == nil {
 				// If it pointed to a file, find the directory above
+				// and remember the file so that only it is listed
 				f.root = path.Dir(f.root)
 				if f.root == "." || f.root == "/" {
 					f.root = ""
 				}
+				f.file = f.prefixSlash + path.Base(native)
+				singleObject = true
 			}
 		}
 	}
@@ -150,7 +156,9 @@ func (f *Fs) Name() string {
 
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
-	return f.root
+	// Include the file so the fs cache can tell this Fs apart from
+	// the one for the directory containing it
+	return path.Join(f.root, f.file)
 }
 
 // Features returns the optional features of this Fs
@@ -214,6 +222,30 @@ func (f *Fs) objectFromFileInfo(nativeDir string, item os.FileInfo) *Object {
 	}
 }
 
+// Convert a symlink entry into an Object holding its target
+func (f *Fs) objectFromLink(nativeDir string, item os.FileInfo, target string) *Object {
+	return &Object{
+		fs:      f,
+		remote:  f.fromNative(nativeDir, item.Name()) + fs.LinkSuffix,
+		size:    int64(len(target)),
+		modTime: item.ModTime(),
+		isLink:  true,
+		link:    target,
+	}
+}
+
+// readlink returns the target of the symlink the info describes.
+//
+// A symlink may carry an empty target, so the caller decides what is a
+// symlink from the mode rather than from the target being set.
+func readlink(info os.FileInfo) (string, error) {
+	st, ok := info.Sys().(*squashfs.StatT)
+	if !ok {
+		return "", fmt.Errorf("squashfs entry %q has no stat information", info.Name())
+	}
+	return st.LinkTarget, nil
+}
+
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -227,6 +259,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	defer log.Trace(f, "dir=%q", dir)("entries=%v, err=%v", &entries, &err)
 	defer recoverParsePanic(&err)
 
+	if f.file != "" && dir != "" {
+		return nil, fs.ErrorDirNotFound
+	}
+
 	nativeDir, err := f.toNative(dir)
 	if err != nil {
 		return nil, err
@@ -239,6 +275,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	entries = make(fs.DirEntries, 0, len(items))
 	skipped := 0
+	skippedLinks := 0
 	for _, item := range items {
 		// fs.Debugf(item.Name(), "entry = %#v", item)
 		// Skip entry names that aren't safe
@@ -261,8 +298,25 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
 			}
 			entry = f.objectFromFileInfo(nativeDir, info)
+		} else if item.Type()&os.ModeSymlink != 0 {
+			if !f.links {
+				skippedLinks++
+				continue
+			}
+			info, err := item.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
+			}
+			target, err := readlink(info)
+			if err != nil {
+				return nil, err
+			}
+			entry = f.objectFromLink(nativeDir, info, target)
 		} else {
 			fs.Debugf(item.Name(), "FIXME Not regular file - skipping")
+			continue
+		}
+		if f.file != "" && entry.Remote() != f.file {
 			continue
 		}
 		entries = append(entries, entry)
@@ -272,6 +326,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	// can't flood the log
 	if skipped > 0 {
 		fs.Logf(f, "Skipped %d squashfs entries in %q whose names escape the archive", skipped, dir)
+	}
+	if skippedLinks > 0 {
+		fs.Logf(f, "Skipped %d symlinks in %q - use -l/--links to read them", skippedLinks, dir)
 	}
 
 	// fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
@@ -294,13 +351,31 @@ func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
 	}
 
 	for _, fi := range fis {
-		if fi.Name() == leaf {
+		// Name the entry as List does, so that the two agree on
+		// which names exist
+		isLink := fi.Type()&os.ModeSymlink != 0
+		if isLink && !f.links {
+			continue
+		}
+		name := fi.Name()
+		if isLink {
+			name += fs.LinkSuffix
+		}
+		if name == leaf {
 			if fi.IsDir() {
 				return nil, fs.ErrorNotAFile
 			}
 			info, err := fi.Info()
 			if err != nil {
 				return nil, fmt.Errorf("error reading item %q: %w", fi.Name(), err)
+			}
+			if isLink {
+				target, err := readlink(info)
+				if err != nil {
+					return nil, err
+				}
+				o = f.objectFromLink(dir, info, target)
+				break
 			}
 			o = f.objectFromFileInfo(dir, info)
 			break
@@ -316,6 +391,9 @@ func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
 func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err error) {
 	defer log.Trace(f, "remote=%q", remote)("obj=%v, err=%v", &o, &err)
 
+	if f.file != "" && remote != f.file {
+		return nil, fs.ErrorObjectNotFound
+	}
 	nativePath, err := f.toNative(remote)
 	if err != nil {
 		return nil, err
@@ -377,6 +455,8 @@ type Object struct {
 	remote  string
 	size    int64
 	modTime time.Time
+	isLink  bool   // whether this is a symlink
+	link    string // target of the symlink
 }
 
 // Fs returns read only access to the Fs that this object is part of
@@ -446,6 +526,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
+	}
+
+	if o.isLink {
+		// Clamp offset into range to avoid panic
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > int64(len(o.link)) {
+			offset = int64(len(o.link))
+		}
+		return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(o.link[offset:])), limit), nil
 	}
 
 	remote, err := o.fs.toNative(o.remote)

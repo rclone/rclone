@@ -111,6 +111,7 @@ Optional Flags:
       --force                                Bypass --max-delete safety check and run the sync. Consider using with --verbose
   -h, --help                                 help for bisync
       --ignore-listing-checksum              Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --max-delete-renames-aware             Exclude tracked renames from the --max-delete safety check (requires --track-renames)
       --max-lock Duration                    Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m) (default 0s)
       --no-cleanup                           Retain working files (useful for troubleshooting and testing).
       --no-slow-hash                         Ignore listing checksums only on backends where they are slow
@@ -183,7 +184,7 @@ will (by default) be overwritten by the Path1 filesystem version.
 (Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815),
 and more symmetrical options can be specified with the
 [`--resync-mode`](#resync-mode) flag.)
-Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+Carefully evaluate deltas using [--dry-run](/docs/#n-dry-run).
 
 For a resync run, one of the paths may be empty (no files in the path tree).
 The resync run should result in files on both paths, else a normal non-resync
@@ -500,6 +501,23 @@ to bypass the check.
 
 Also see the [all files changed](#all-files-changed) check.
 
+### --max-delete-renames-aware
+
+When `--track-renames` is in use, `--max-delete-renames-aware` can exclude
+files that are guaranteed to match as tracked renames from the deletion count.
+If the initial deletion count exceeds `--max-delete`, bisync performs a rename
+matching preflight before starting either sync direction. The run still aborts
+if the remaining unmatched deletions exceed the limit.
+
+The preflight uses the selected [`--track-renames-strategy`](/docs/#track-renames-strategy)
+and the attributes stored in the normal bisync listings. A hash strategy forces
+both listings to use a common hash and is incompatible with
+`--ignore-listing-checksum`. The option only exempts matches when the destination
+supports server-side moves or copies and the selected strategy is supported by both paths.
+It requires `--track-renames` and is disabled by default because hashing may add
+listing time. `--force` bypasses both the safety check and this preflight.
+The preflight is also disabled during `--resync`, when rename tracking is unavailable.
+
 ### --filters-file {#filters-file}
 
 By using rclone filter features you can exclude file types or directory
@@ -698,7 +716,7 @@ other, if there were changes during or after the run. This is normal, and any
 differences will be detected and synced on the next run.
 
 For a robust integrity check of the current state of the remotes (as opposed to
-just their listing snapshots), consider using [`check`](commands/rclone_check/)
+just their listing snapshots), consider using [`check`](/commands/rclone_check/)
 (or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a
 `crypt` remote) instead of `--check-sync`, keeping in mind that differences are
 expected if files changed during or after your last bisync run.
@@ -932,7 +950,7 @@ conflicts, which would previously have resulted in unnecessary renames and
 duplicates. Now, when bisync comes to a file that it wants to rename (because it
 is new/changed on both sides), it first checks whether the Path1 and Path2
 versions are currently *identical* (using the same underlying function as
-[`check`](commands/rclone_check/).) If bisync concludes that the files are
+[`check`](/commands/rclone_check/).) If bisync concludes that the files are
 identical, it will skip them and move on. Otherwise, it will create renamed
 duplicates, as before. This behavior also [improves the experience of renaming
 directories](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=Renamed%20directories),
@@ -1172,10 +1190,10 @@ is to rename it to the same name on both sides. (As of `rclone v1.64`,
 a `--resync` is no longer required after doing so, as bisync will automatically
 detect that Path1 and Path2 are in agreement.)
 
-Note that although the flag --track-renames ensures that renamed/moved files won't
-be deleted and uploaded again, they are still counted as deleted files for purposes
-of the --max-delete flag (as this check happens before the rename detection
-operation). See [this issue](https://github.com/rclone/rclone/issues/8685).
+By default, renamed or moved files are still counted as deleted files for
+purposes of `--max-delete`, because the safety check happens before rename
+detection. Use `--max-delete-renames-aware` together with `--track-renames` to
+run a rename preflight and exclude guaranteed matches from this count.
 
 ### `--fast-list` used by default
 
@@ -1915,105 +1933,6 @@ about *Unison* and synchronization in general.
 
 ## Changelog
 
-### `v1.74.2`
-
-- Fixed an issue causing `--conflict-loser pathname` to produce unexpected
-behavior if using a non-default `--conflict-resolve` value.
-
-### `v1.74`
-
-- Added several missing `rc` parameters.
-- Optional `rc` parameters are now truly optional.
-- `rc` output now provides more structured information.
-
-### `v1.71`
-
-- `bisync` is now officially released from beta.
-
-- Fixed an issue causing hash type to be set incorrectly if `path2` had slow
-hashes and `--no-slow-hash` or `--slow-hash-sync-only` was in use.
-
-- Fixed an issue causing errors when running concurrent bisync runs through the `rc`.
-
-### `v1.69.1`
-
-- Fixed an issue causing listings to not capture concurrent modifications under
-certain conditions
-
-### `v1.68`
-
-- Fixed an issue affecting backends that round modtimes to a lower precision.
-
-### `v1.67`
-
-- Added integration tests against all backends.
-
-### `v1.66`
-
-- Copies and deletes are now handled in one operation instead of two
-
-- `--track-renames` and `--backup-dir` are now supported
-- Partial uploads known issue on `local`/`ftp`/`sftp` has been resolved (unless
-using `--inplace`)
-- Final listings are now generated from sync results, to avoid needing to re-list
-- Bisync is now much more resilient to changes that happen during a bisync run,
-and far less prone to critical errors / undetected changes
-- Bisync is now capable of rolling a file listing back in cases of uncertainty,
-essentially marking the file as needing to be rechecked next time.
-- A few basic terminal colors are now supported, controllable with
-[`--color`](/docs/#color-autoneveralways) (`AUTO`|`NEVER`|`ALWAYS`)
-- Initial listing snapshots of Path1 and Path2 are now generated concurrently,
-using the same "march" infrastructure as `check` and `sync`,
-for performance improvements and less
-[risk of error](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=4.%20Listings%20should%20alternate%20between%20paths%20to%20minimize%20errors).
-- Fixed handling of unicode normalization and case insensitivity, support for
-[`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync),
-[`--no-unicode-normalization`](/docs/#no-unicode-normalization)
-- `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`)
-- Google Docs (and other files of unknown size) are now supported (with the same
-options as in `sync`)
-- Equality checks before a sync conflict rename now fall back to `cryptcheck`
-(when possible) or `--download`,
-instead of `--size-only`, when `check` is not available.
-- Bisync no longer fails to find the correct listing file when configs are
-overridden with backend-specific flags.
-- Bisync now fully supports comparing based on any combination of size, modtime,
-and checksum, lifting the prior restriction on backends without modtime support.
-- Bisync now supports a "Graceful Shutdown" mode to cleanly cancel a run early
-without requiring `--resync`.
-- New `--recover` flag allows robust recovery in the event of interruptions,
-without requiring `--resync`.
-- A new `--max-lock` setting allows lock files to automatically renew and expire,
-for better automatic recovery when a run is interrupted.
-- Bisync now supports auto-resolving sync conflicts and customizing rename
-behavior with new [`--conflict-resolve`](#conflict-resolve),
-[`--conflict-loser`](#conflict-loser), and
-[`--conflict-suffix`](#conflict-suffix) flags.
-- A new [`--resync-mode`](#resync-mode) flag allows more control over which
-version of a file gets kept during a `--resync`.
-- Bisync now supports [`--retries`](/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-duration)
-(when [`--resilient`](#resilient) is set.)
-
-### `v1.64`
-
-- Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry)
-causing dry runs to inadvertently commit filter changes
-
-- Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20%2D%2Dresync%20deletes%20data%2C%20contrary%20to%20docs)
-causing `--resync` to erroneously delete empty folders and duplicate files
-unique to Path2
-- `--check-access` is now enforced during `--resync`, preventing data loss in
-[certain user error scenarios](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should)
-- Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=5.%20Bisync%20reads%20files%20in%20excluded%20directories%20during%20delete%20operations)
-causing bisync to consider more files than necessary due to overbroad filters
-during delete operations
-- [Improved detection of false positive change conflicts](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides)
-(identical files are now left alone instead of renamed)
-- Added [support for `--create-empty-src-dirs`](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=3.%20Bisync%20should%20create/delete%20empty%20directories%20as%20sync%20does%2C%20when%20%2D%2Dcreate%2Dempty%2Dsrc%2Ddirs%20is%20passed)
-- Added experimental `--resilient` mode to allow
-[recovery from self-correctable errors](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20Bisync%20should%20be%20more%20resilient%20to%20self%2Dcorrectable%20errors)
-- Added [new `--ignore-listing-checksum` flag](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20%2D%2Dignore%2Dchecksum%20should%20be%20split%20into%20two%20flags%20for%20separate%20purposes)
-to distinguish from `--ignore-checksum`
-- [Performance improvements](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20Deletes%20take%20several%20times%20longer%20than%20copies)
-for large remotes
-- Documentation and testing improvements
+Changes to bisync are listed in the [rclone changelog](/changelog/).
+The changelog this page kept until `v1.76` is
+[archived on GitHub](https://github.com/rclone/rclone/blob/0891ce30606c726990c98d70812d31b555782791/docs/content/bisync.md?plain=1#L1934-L2061).

@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/netip"
 	"os/exec"
 	"strings"
@@ -27,6 +28,7 @@ import (
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"golang.org/x/sync/singleflight"
 )
 
 // Help contains text describing how to use the proxy
@@ -179,7 +181,8 @@ type Proxy struct {
 	ctx         context.Context // for global config
 	Opt         Options
 	vfsOpt      vfscommon.Options
-	accessKeyMu sync.Mutex // serialises replacing a cached access key entry
+	accessKeyMu sync.Mutex         // serialises replacing a cached access key entry
+	calls       singleflight.Group // shares the calls made by logins which arrive together
 }
 
 // cacheEntry is what is stored in the vfsCache
@@ -231,6 +234,13 @@ func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
 		if entry, ok := value.(cacheEntry); ok && entry.vfs != nil {
 			entry.vfs.Shutdown()
 		}
+	})
+	// Shutting down a VFS stops it writing, so keep one which still
+	// has data to write, e.g. files in the VFS cache waiting to be
+	// uploaded after the transfer which wrote them has finished.
+	p.vfsCache.SetCanExpire(func(value any) bool {
+		entry, ok := value.(cacheEntry)
+		return !ok || entry.vfs == nil || !entry.vfs.Busy()
 	})
 	return p
 }
@@ -449,7 +459,13 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VF
 		if isPublicKey {
 			kind = authPublicKey
 		}
-		value, err = p.call(user, auth, kind, clientIP)
+		// Logins with the same credentials which arrive together
+		// share one call, as each call which made its own cache
+		// entry would take a reference to the VFS but only the
+		// last entry made would be kept to give its reference back.
+		value, err, _ = p.calls.Do(cacheKey, func() (any, error) {
+			return p.call(user, auth, kind, clientIP)
+		})
 		if err != nil {
 			return nil, "", err
 		}
@@ -575,6 +591,26 @@ func (p *Provider) Get(ctx context.Context) (*vfs.VFS, error) {
 		return nil, fmt.Errorf("context value is not VFS: %#v", value)
 	}
 	return VFS, nil
+}
+
+// HoldVFS is HTTP middleware which holds the VFS for the request until
+// the request has been served.
+//
+// An auth proxy shuts down a VFS when it expires from its cache, which
+// a long upload or download can outlast as only the start of a request
+// counts as a use of the VFS.
+func (p *Provider) HoldVFS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Requests which don't need auth, eg CORS preflight, have no VFS
+		if VFS, err := p.Get(r.Context()); err == nil {
+			if !VFS.Hold() {
+				http.Error(w, "VFS has been shut down", http.StatusServiceUnavailable)
+				return
+			}
+			defer VFS.Shutdown()
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // VFS returns the fixed VFS, or nil if using an auth proxy.

@@ -626,6 +626,29 @@ func TestNewFilterMatchesRegexp(t *testing.T) {
 	assert.False(t, f.InActive())
 }
 
+func TestNewFilterMatchesNegatedCharacterClass(t *testing.T) {
+	for _, negate := range []string{"!", "^"} {
+		t.Run(negate, func(t *testing.T) {
+			f, err := NewFilter(nil)
+			require.NoError(t, err)
+			add := func(s string) {
+				err := f.AddRule(s)
+				require.NoError(t, err)
+			}
+			add("+ file[" + negate + "a].txt")
+			add("- *")
+			testInclude(t, f, []includeTest{
+				{"fileb.txt", 100, 0, true},
+				{"sub/fileb.txt", 100, 0, true},
+				{"filea.txt", 100, 0, false},
+				{"file" + negate + ".txt", 100, 0, true},
+				{"file/.txt", 100, 0, false},
+			})
+			assert.False(t, f.InActive())
+		})
+	}
+}
+
 func TestNewFilterHashFilter(t *testing.T) {
 	const e1 = "filé1.jpg" // one of the unicode E characters
 	const e2 = "filé1.jpg"  // a different unicode E character
@@ -1040,6 +1063,39 @@ func TestNewFilterUsesDirectoryFilters(t *testing.T) {
 		}
 		got := f.UsesDirectoryFilters()
 		assert.Equal(t, test.want, got, fmt.Sprintf("%s: %s", what, f.DumpFilters()))
+	}
+}
+
+func TestAddConfigRulesIndependent(t *testing.T) {
+	for _, ignoreCase := range []bool{false, true} {
+		t.Run(fmt.Sprintf("ignoreCase=%t", ignoreCase), func(t *testing.T) {
+			opt := Opt
+			opt.IgnoreCase = ignoreCase
+			for i := range minIndexedRules {
+				opt.FilterRule = append(opt.FilterRule, fmt.Sprintf("- /old_%d/**", i))
+				opt.MetaRules.FilterRule = append(opt.MetaRules.FilterRule, fmt.Sprintf("- /old_%d/**", i))
+			}
+			original, err := NewFilter(&opt)
+			require.NoError(t, err)
+			ctx := ReplaceConfig(context.Background(), original)
+			_, cloned := AddConfig(ctx)
+			require.NoError(t, cloned.Add(false, "/new/**"))
+			require.NoError(t, cloned.metaRules.Add(false, "/new/**"))
+			assert.False(t, cloned.IncludeRemote("new/file"))
+			assert.True(t, original.IncludeRemote("new/file"))
+			assert.False(t, cloned.metaRules.include("new/file"))
+			assert.True(t, original.metaRules.include("new/file"))
+			include := original.IncludeDirectory(ctx, nil)
+			got, err := include("new")
+			require.NoError(t, err)
+			assert.True(t, got)
+			// The original must not inherit the clone's deduplication state.
+			require.NoError(t, original.Add(false, "/new/**"))
+			assert.False(t, original.IncludeRemote("new/file"))
+			cloned.Clear()
+			assert.True(t, cloned.IncludeRemote("old_0/file"))
+			assert.False(t, original.IncludeRemote("old_0/file"))
+		})
 	}
 }
 

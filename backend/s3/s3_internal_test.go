@@ -9,7 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"path"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -330,6 +333,37 @@ func TestMergeDeleteMarkersWithURLEncodedKeys(t *testing.T) {
 		{Key: &encodedKey, LastModified: &t1},
 	}
 	assert.Equal(t, want, got)
+}
+
+func TestVersionsListStorageClass(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `<ListVersionsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Name>bucket</Name>
+  <IsTruncated>false</IsTruncated>
+  <Version>
+    <Key>archived.bin</Key>
+    <VersionId>v1</VersionId>
+    <IsLatest>true</IsLatest>
+    <LastModified>2026-09-26T12:00:00.000Z</LastModified>
+    <ETag>"d41d8cd98f00b204e9800998ecf8427e"</ETag>
+    <Size>0</Size>
+    <StorageClass>DEEP_ARCHIVE</StorageClass>
+  </Version>
+</ListVersionsResult>`)
+	}))
+	defer srv.Close()
+
+	f := &Fs{c: s3.New(s3.Options{
+		Region:       "us-east-1",
+		BaseEndpoint: aws.String(srv.URL),
+		UsePathStyle: true,
+		Credentials:  aws.AnonymousCredentials{},
+	})}
+	ls := f.newVersionsList(&s3.ListObjectsV2Input{Bucket: aws.String("bucket")}, false, time.Time{})
+	resp, _, err := ls.List(context.Background())
+	require.NoError(t, err)
+	require.Len(t, resp.Contents, 1)
+	assert.Equal(t, types.ObjectStorageClassDeepArchive, resp.Contents[0].StorageClass)
 }
 
 func TestRemoveAWSChunked(t *testing.T) {
@@ -858,6 +892,31 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 	})
 }
 
+// InternalTestRmdirRoot checks the directory marker of the root of a
+// remote is removed by Rmdir.
+func (f *Fs) InternalTestRmdirRoot(t *testing.T) {
+	if !f.opt.DirectoryMarkers {
+		t.Skip("needs --s3-directory-markers")
+	}
+	ctx := context.Background()
+	dir := "rmdir-root-" + random.String(8)
+	hasDir := func() bool {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		return slices.ContainsFunc(entries, func(entry fs.DirEntry) bool {
+			_, isDir := entry.(fs.Directory)
+			return isDir && entry.Remote() == dir
+		})
+	}
+
+	require.NoError(t, f.Mkdir(ctx, dir))
+	require.True(t, hasDir(), "directory marker not made")
+	fDir, err := cache.Get(ctx, bucket.Join(fs.ConfigStringFull(f), dir))
+	require.NoError(t, err)
+	require.NoError(t, fDir.Rmdir(ctx, ""))
+	assert.False(t, hasDir(), "directory marker not removed")
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
@@ -865,6 +924,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("HasChildren", f.InternalTestHasChildren)
 	t.Run("Versions", f.InternalTestVersions)
 	t.Run("ObjectLock", f.InternalTestObjectLock)
+	t.Run("RmdirRoot", f.InternalTestRmdirRoot)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

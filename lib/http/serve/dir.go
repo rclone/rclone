@@ -158,6 +158,12 @@ func (d *Directory) AddHTMLEntry(remote string, isDir bool, size int64, modTime 
 		leaf = ""
 	}
 	urlRemote := leaf
+	if leaf != "" {
+		// Link with a leading ./ as Caddy's file server does, since
+		// released versions of rclone selfupdate look for
+		// href="./vX.Y.Z/" in the listing of downloads.rclone.org
+		urlRemote = "./" + leaf
+	}
 	mimeType := fs.MimeTypeFromName(leaf)
 	linkIndex, zipURL := "", ""
 	if isDir {

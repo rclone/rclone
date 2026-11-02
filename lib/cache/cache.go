@@ -17,6 +17,7 @@ type Cache struct {
 	expireDuration time.Duration // expire the cache entry when it is older than this
 	expireInterval time.Duration // interval to run the cache expire
 	finalize       func(value any)
+	canExpire      func(value any) bool // if set, asked before expiring a value
 }
 
 // New creates a new cache with the default expire duration and interval
@@ -222,8 +223,29 @@ func (c *Cache) cacheExpire() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	now := time.Now()
+	expired := func(entry *cacheEntry) bool {
+		return entry.pinCount <= 0 && now.Sub(entry.lastUsed) > c.expireDuration
+	}
+	candidates := map[string]*cacheEntry{}
 	for key, entry := range c.cache {
-		if entry.pinCount <= 0 && now.Sub(entry.lastUsed) > c.expireDuration {
+		if expired(entry) {
+			candidates[key] = entry
+		}
+	}
+	if c.canExpire != nil && len(candidates) != 0 {
+		// canExpire may block so call it without the lock
+		canExpire := c.canExpire
+		c.mu.Unlock()
+		for key, entry := range candidates {
+			if !canExpire(entry.value) {
+				delete(candidates, key)
+			}
+		}
+		c.mu.Lock()
+	}
+	for key, entry := range candidates {
+		// The entry may have been used or replaced while the lock was released
+		if c.cache[key] == entry && expired(entry) {
 			c.finalize(entry.value)
 			delete(c.cache, key)
 		}
@@ -258,6 +280,19 @@ func (c *Cache) Entries() int {
 func (c *Cache) SetFinalizer(finalize func(any)) {
 	c.mu.Lock()
 	c.finalize = finalize
+	c.mu.Unlock()
+}
+
+// SetCanExpire sets a function which is asked whether a value which
+// hasn't been used recently can be expired from the cache. If it
+// returns false the value is kept and asked about again the next time
+// the cache expiry runs.
+//
+// It is called without the cache locked so may use the cache. It
+// isn't called for values removed in other ways, e.g. Delete or Clear.
+func (c *Cache) SetCanExpire(canExpire func(value any) bool) {
+	c.mu.Lock()
+	c.canExpire = canExpire
 	c.mu.Unlock()
 }
 

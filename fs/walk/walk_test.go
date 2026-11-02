@@ -653,6 +653,39 @@ a/b2/
 			level:   -1,
 			exclude: ".bzEmpty",
 		},
+		{
+			// Directories listed after the objects in them
+			entries: fs.DirEntries{
+				mockobject.Object("a/b/c/d"),
+				mockdir.New("a"),
+				mockdir.New("a/b"),
+				mockdir.New("a/b/c"),
+			},
+			want: `/
+  a/
+a/
+  b/
+a/b/
+`,
+			level: 2,
+		},
+		{
+			// Directories listed after the excluded objects in them
+			entries: fs.DirEntries{
+				mockobject.Object("a/.bzEmpty"),
+				mockobject.Object("a/b/.bzEmpty"),
+				mockdir.New("a"),
+				mockdir.New("a/b"),
+			},
+			want: `/
+  a/
+a/
+  b/
+a/b/
+`,
+			level:   -1,
+			exclude: ".bzEmpty",
+		},
 	} {
 		ctx := context.Background()
 		if test.exclude != "" {

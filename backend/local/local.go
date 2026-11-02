@@ -37,6 +37,10 @@ import (
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+	// maxLinkTargetSize is the largest symlink target accepted when
+	// translating a .rclonelink object, comfortably above any OS path
+	// limit (Windows allows 32767 UTF-16 units).
+	maxLinkTargetSize = 128 * 1024
 )
 
 // timeType allows the user to choose what exactly ModTime() returns
@@ -83,8 +87,10 @@ Metadata is supported on files and directories.
 When restoring metadata with ` + "`--metadata`" + ` rclone applies the
 "mode", "uid" and "gid" from the source. These come from the source
 remote which may not be trusted, so restoring metadata as root from an
-untrusted source can change file ownership and is not recommended. The
-setuid, setgid and sticky bits are not restored by default - see the
+untrusted source can change file ownership and is not recommended. A
+user other than root keeps its own uid and sets the gid only to a group
+it is a member of, as rsync does. The setuid, setgid and sticky bits are
+not restored by default - see the
 ` + "`--local-metadata-restore-special-bits`" + ` flag.
 `,
 		},
@@ -247,6 +253,13 @@ Cloning is usually preferable to copying, as it is much faster and is
 deduplicated by default (i.e. having two identical files does not consume more
 storage than having just one.)  However, for use cases where data redundancy is
 preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
+
+Cloning also preserves macOS-specific metadata such as extended attributes,
+which a normal copy does not, so this metadata is lost when cloning is disabled.
+
+If the destination file already exists, cloning replaces it with a new file,
+even with --inplace, so hard links to it are broken. Use --local-no-clone to
+update existing files in place.
 
 Currently, cloning is only supported when using APFS on macOS (support for other
 platforms may be added in the future.)`,
@@ -440,6 +453,8 @@ var (
 	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
 	errPathEscapes       = errors.New("file name is not a path within the local root - check the encoding")
 	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
+	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
+	errLinkNameInvalid   = errors.New("translated link needs a file name before the \"" + fs.LinkSuffix + "\" suffix")
 )
 
 // NewFs constructs an Fs from the path
@@ -567,28 +582,24 @@ func (f *Fs) caseInsensitive() bool {
 	return runtime.GOOS == "windows" || runtime.GOOS == "darwin"
 }
 
-// translateLink checks whether the remote is a translated link
-// and returns a new path, removing the suffix as needed,
-// It also returns whether this is a translated link at all
-//
-// for regular files, localPath is returned unchanged
-func translateLink(remote, localPath string) (newLocalPath string, isTranslatedLink bool) {
-	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
-	newLocalPath = strings.TrimSuffix(localPath, fs.LinkSuffix)
-	return newLocalPath, isTranslatedLink
-}
-
 // newObject makes a half completed Object
 func (f *Fs) newObject(remote string) (*Object, error) {
-	translatedLink := false
-	localPath, err := f.localPath(remote)
+	name, translatedLink := remote, false
+	if f.opt.TranslateSymlinks {
+		name, translatedLink = strings.CutSuffix(remote, fs.LinkSuffix)
+	}
+	if translatedLink {
+		// Check this makes a valid native file name
+		native := f.nativePath(name)
+		switch native[strings.LastIndex(native, string(filepath.Separator))+1:] {
+		case "", ".", "..":
+			return nil, fserrors.NoRetryError(fmt.Errorf("%q: %w", remote, errLinkNameInvalid))
+		}
+	}
+	// Check the name after any suffix removal
+	localPath, err := f.localPath(name)
 	if err != nil {
 		return nil, err
-	}
-
-	if f.opt.TranslateSymlinks {
-		// Possibly receive a new name for localPath
-		localPath, translatedLink = translateLink(remote, localPath)
 	}
 
 	return &Object{
@@ -639,15 +650,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Create new directory object from the info passed in
+//
+// Directories are never translated links, so the name is used as is
+// whatever suffix it has.
 func (f *Fs) newDirectory(dir string, fi os.FileInfo) (*Directory, error) {
-	o, err := f.newObject(dir)
+	localPath, err := f.localPath(dir)
 	if err != nil {
 		return nil, err
 	}
-	o.setMetadata(fi)
-	return &Directory{
-		Object: *o,
-	}, nil
+	d := &Directory{
+		Object: Object{
+			fs:     f,
+			remote: dir,
+			path:   localPath,
+		},
+	}
+	d.setMetadata(fi)
+	return d, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -805,6 +824,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					continue
 				}
 				fso, err := f.newObjectWithInfo(newRemote, fi)
+				if errors.Is(err, errLinkNameInvalid) {
+					// Skip a badly named ".rclonelink" file
+					fs.Errorf(newRemote, "Listing error: %v", err)
+					_ = accounting.Stats(ctx).Error(err)
+					continue
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -849,14 +874,19 @@ func (f *Fs) cleanRemote(dir, filename string) (remote string) {
 	return
 }
 
+// nativePath returns name in the OS encoding with OS path separators,
+// relative to f.root, without cleaning it.
+func (f *Fs) nativePath(name string) string {
+	return filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
+}
+
 // localPath returns the OS path for the object called name, which is
 // always underneath f.root.
 //
 // It returns errPathEscapes if name resolves outside f.root which can
 // happen depending on the encoding.
 func (f *Fs) localPath(name string) (string, error) {
-	native := filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
-	localPath := filepath.Join(f.root, native)
+	localPath := filepath.Join(f.root, f.nativePath(name))
 	rel, err := filepath.Rel(f.root, localPath)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", fserrors.NoRetryError(fmt.Errorf("%q: %w", name, errPathEscapes))
@@ -1736,6 +1766,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		out = f
 	} else {
+		// The target is buffered in memory, so stop reading just past
+		// the longest acceptable one rather than trust the source
+		in = io.LimitReader(in, maxLinkTargetSize+1)
 		out = nopWriterCloser{&symlinkData}
 	}
 
@@ -1752,6 +1785,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.translatedLink {
+		if err == nil && symlinkData.Len() > maxLinkTargetSize {
+			err = fserrors.NoRetryError(errLinkTargetTooLong)
+		}
 		if err == nil {
 			// Use the contents of the copied object to create a symlink,
 			// without following or creating it through a planted symlink

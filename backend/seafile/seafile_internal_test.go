@@ -2,14 +2,23 @@ package seafile
 
 import (
 	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 type pathData struct {
@@ -100,6 +109,28 @@ func TestSplitPath(t *testing.T) {
 			argumentPath:    path.Join("subpath", "to", "file"),
 			expectedLibrary: "Library",
 			expectedPath:    path.Join("root", "path", "subpath", "to", "file"),
+		},
+		// paths inside a library are returned in NFC, library names are kept as they are
+		{
+			configLibrary:   "Library",
+			configRoot:      "",
+			argumentPath:    norm.NFD.String("path/to/équivalent.txt"),
+			expectedLibrary: "Library",
+			expectedPath:    norm.NFC.String("path/to/équivalent.txt"),
+		},
+		{
+			configLibrary:   "Library",
+			configRoot:      norm.NFD.String("répertoire"),
+			argumentPath:    norm.NFD.String("équivalent.txt"),
+			expectedLibrary: "Library",
+			expectedPath:    norm.NFC.String("répertoire/équivalent.txt"),
+		},
+		{
+			configLibrary:   "",
+			configRoot:      "",
+			argumentPath:    norm.NFD.String("Bibliothèque/équivalent.txt"),
+			expectedLibrary: norm.NFD.String("Bibliothèque"),
+			expectedPath:    norm.NFC.String("équivalent.txt"),
 		},
 	}
 	for _, test := range testData {
@@ -224,5 +255,37 @@ func Test2FAStateMachine(t *testing.T) {
 			assert.Equal(t, fixture.expectErrorMessage, output.Error)
 			assert.Equal(t, fixture.expectResult, output.Result)
 		})
+	}
+}
+
+// Test that a failed upload stops reading the source so it can be closed
+func TestUploadErrorReleasesSource(t *testing.T) {
+	ctx := context.Background()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Reply without reading the body, like a server rejecting the upload early
+		http.Error(w, "rejected", http.StatusBadRequest)
+	}))
+	defer server.Close()
+
+	f := &Fs{
+		srv:   rest.NewClient(server.Client()),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	// An AsyncReader holds its lock while writing to the upload
+	in, err := asyncreader.New(ctx, io.NopCloser(readers.NewPatternReader(64<<20)), 4)
+	require.NoError(t, err)
+
+	_, err = f.upload(ctx, in, server.URL+"/upload", "/file.bin")
+	require.Error(t, err)
+
+	closed := make(chan struct{})
+	go func() {
+		_ = in.Close()
+		close(closed)
+	}()
+	select {
+	case <-closed:
+	case <-time.After(10 * time.Second):
+		t.Fatal("source still in use after upload returned")
 	}
 }

@@ -1287,7 +1287,7 @@ This means that rclone can't use the OneDrive for Business API with your account
 You can't do much about it, maybe write an email to your admins.
 
 However, there are other ways to interact with your OneDrive account. Have a look
-at the WebDAV backend: <https://rclone.org/webdav/#sharepoint>
+at the WebDAV backend: <https://rclone.org/webdav/#sharepoint-online>
 
 ### invalid\_grant (AADSTS50076)
 

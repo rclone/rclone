@@ -1,0 +1,60 @@
+# s3-tests configuration for rclone serve s3. run.sh fills in @PORT@.
+#
+# The access keys here must match the --auth-key flags in run.sh.
+
+[DEFAULT]
+host = 127.0.0.1
+port = @PORT@
+is_secure = False
+ssl_verify = False
+
+[fixtures]
+bucket prefix = rclone-{random}-
+iam name prefix = s3-tests-
+iam path prefix = /s3-tests/
+
+# The user_id and display_name are those gofakes3 gives the owner of
+# every bucket and object. There is no api_name, as serve s3 doesn't
+# store bucket locations.
+[s3 main]
+display_name = GoFakeS3
+user_id = fe7272ea58be830e56fe1663b10fafef
+email = tester@ceph.com
+access_key = 0555b35654ad1656d804
+secret_key = h7GhxuBLTrlhVUyxSPUKUV8r/2EI4ngqJxD7iBdBYLhwluN30JaT3Q==
+
+[s3 alt]
+display_name = john.doe
+email = john.doe@example.com
+user_id = 56789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234
+access_key = NOPQRSTUVWXYZABCDEFG
+secret_key = nopqrstuvwxyzabcdefghijklmnabcdefghijklm
+
+[s3 tenant]
+display_name = testx$tenanteduser
+user_id = testx$9876543210abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+access_key = HIJKLMNOPQRSTUVWXYZA
+secret_key = opqrstuvwxyzabcdefghijklmnopqrstuvwxyzab
+email = tenanteduser@example.com
+tenant = testx
+
+[iam]
+email = s3@example.com
+user_id = 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+access_key = ABCDEFGHIJKLMNOPQRST
+secret_key = abcdefghijklmnopqrstuvwxyzabcdefghijklmn
+display_name = youruseridhere
+
+[iam root]
+access_key = AAAAAAAAAAAAAAAAAAaa
+secret_key = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+account_id = RGW11111111111111111
+user_id = RGW11111111111111111
+email = account1@ceph.com
+
+[iam alt root]
+access_key = BBBBBBBBBBBBBBBBBBbb
+secret_key = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+account_id = RGW22222222222222222
+user_id = RGW22222222222222222
+email = account2@ceph.com

@@ -32,6 +32,10 @@ func TestBwTimetableSet(t *testing.T) {
 		{"bad-10:20,666", BwTimetable{}, true, ""},
 		{"Mon-bad,666", BwTimetable{}, true, ""},
 		{"Mon-10:20,bad", BwTimetable{}, true, ""},
+		{"10h20,666", BwTimetable{}, true, ""},
+		{"Mon-10.20,666", BwTimetable{}, true, ""},
+		{"+1:00,666", BwTimetable{}, true, ""},
+		{"Mon-10:+5,666", BwTimetable{}, true, ""},
 		{
 			"0",
 			BwTimetable{
@@ -577,6 +581,14 @@ func TestBwTimetableLimitAt(t *testing.T) {
 			},
 			time.Date(2017, time.April, 17, 10, 59, 0, 0, time.UTC),
 			BwTimeSlot{DayOfTheWeek: 0, HHMM: 2300, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 66 * 1024}},
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 0000, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 0000, Bandwidth: BwPair{Tx: 1024 * 1024, Rx: 1024 * 1024}},
+			},
+			time.Date(2017, time.April, 23, 10, 0, 0, 0, time.UTC),
+			BwTimeSlot{DayOfTheWeek: 6, HHMM: 0000, Bandwidth: BwPair{Tx: -1, Rx: -1}},
 		},
 	} {
 		slot := test.tt.LimitAt(test.now)

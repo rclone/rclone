@@ -36,7 +36,7 @@ var OptionsInfo = fs.Options{{
 }, {
 	Name:    "no_cleanup",
 	Default: false,
-	Help:    "Not to cleanup empty folder after object is deleted",
+	Help:    "Deprecated: use --directory-markers instead",
 }, {
 	Name:    "disable_multipart_streaming",
 	Default: false,
@@ -45,6 +45,22 @@ var OptionsInfo = fs.Options{{
 	Name:    "multipart_streaming_buffer_limit",
 	Default: fs.SizeSuffix(256 * 1024 * 1024),
 	Help:    "Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited",
+}, {
+	Name:    "multipart_streaming_buffer_total",
+	Default: fs.SizeSuffix(1024 * 1024 * 1024),
+	Help:    "Maximum memory buffered by all the streamed multipart uploads of a user for parts arriving out of order, 0 for unlimited",
+}, {
+	Name:    "multipart_max_uploads",
+	Default: 1000,
+	Help:    "Maximum number of streamed multipart uploads a user can have in progress at once, 0 for unlimited",
+}, {
+	Name:    "metadata_max_objects",
+	Default: 100000,
+	Help:    "Maximum number of objects of a user whose metadata is kept in memory, 0 for unlimited",
+}, {
+	Name:    "directory_markers",
+	Default: false,
+	Help:    "List every directory as a directory marker object",
 }, {
 	Name:    "multipart_expiry",
 	Default: fs.Duration(24 * time.Hour),
@@ -62,7 +78,11 @@ type Options struct {
 	NoCleanup                     bool          `config:"no_cleanup"`
 	DisableMultipartStreaming     bool          `config:"disable_multipart_streaming"`
 	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
+	MultipartStreamingBufferTotal fs.SizeSuffix `config:"multipart_streaming_buffer_total"`
+	MultipartMaxUploads           int           `config:"multipart_max_uploads"`
+	MetadataMaxObjects            int           `config:"metadata_max_objects"`
 	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
+	DirectoryMarkers              bool          `config:"directory_markers"`
 	Auth                          httplib.AuthConfig
 	HTTP                          httplib.Config
 }

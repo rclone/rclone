@@ -272,6 +272,9 @@ $ tree /tmp/b
 └── file2 -> /home/user/file3
 ```
 
+A `.rclonelink` file whose contents are too long to be a path (more
+than 128 KiB) is refused rather than turned into a symlink.
+
 However, if copied back without '-l'
 
 ```console

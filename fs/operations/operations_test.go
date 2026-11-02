@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -49,6 +50,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Some times used in the tests
@@ -634,6 +636,8 @@ func TestCat(t *testing.T) {
 		{0, 5, "", "ABCDE", "01234"},
 		{-3, -1, "", "HIJ", "678"},
 		{1, 3, "", "BCD", "123"},
+		{-10, 3, "", "ABC", "012"},
+		{-12, 5, "", "ABCDE", "01234"},
 		{0, -1, "\n", "ABCDEFGHIJ", "012345678"},
 	} {
 		var buf bytes.Buffer
@@ -1136,6 +1140,75 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2Capitalized)
 }
 
+func TestMoveOntoItself(t *testing.T) {
+	ctx := context.Background()
+	for _, viaSubdir := range []bool{false, true} {
+		for _, disableMove := range []bool{false, true} {
+			t.Run(fmt.Sprintf("viaSubdir=%v,disableMove=%v", viaSubdir, disableMove), func(t *testing.T) {
+				r := fstest.NewRunIndividual(t)
+				file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
+				src := fstest.NewObject(ctx, t, r.Fremote, file1.Path)
+
+				var err error
+				fdst, remote := r.Fremote, src.Remote()
+				if viaSubdir {
+					fdst, err = fs.NewFs(ctx, fspath.JoinRootPath(fs.ConfigStringFull(r.Fremote), "sub"))
+					require.NoError(t, err)
+					remote = "file1"
+				}
+				if disableMove {
+					fdst.Features().Disable("Move")
+				}
+				_, err = operations.Move(ctx, fdst, nil, remote, src)
+				require.NoError(t, err)
+				r.CheckRemoteItems(t, file1)
+			})
+		}
+	}
+}
+
+func TestMoveUnicodeEquivalentWithoutServerSideMove(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRunIndividual(t)
+	r.Fremote.Features().Disable("Move")
+
+	nfd := norm.NFD.String("sub/équivalent.txt")
+	nfc := norm.NFC.String("sub/équivalent.txt")
+	file1 := fstest.NewItem(nfd, "file1 contents", t1)
+	_, err := r.Fremote.Put(ctx, bytes.NewBufferString("file1 contents"), object.NewStaticObjectInfo(nfd, t1, file1.Size, true, nil, nil))
+	if err != nil {
+		t.Skipf("remote can't store an NFD name: %v", err)
+	}
+	src, err := r.Fremote.NewObject(ctx, nfd)
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		t.Skip("remote doesn't keep an NFD name as written")
+	}
+	require.NoError(t, err)
+
+	_, err = operations.Move(ctx, r.Fremote, nil, nfc, src)
+	require.NoError(t, err)
+	file1.Path = nfc
+	r.CheckRemoteItems(t, file1)
+}
+
+func TestCaseInsensitiveMoveWithoutServerSideMove(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRunIndividual(t)
+	if !r.Fremote.Features().CaseInsensitive {
+		t.Skip("remote is case sensitive")
+	}
+	r.Fremote.Features().Disable("Move")
+
+	file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
+	src, err := r.Fremote.NewObject(ctx, "sub/file1")
+	require.NoError(t, err)
+
+	_, err = operations.Move(ctx, r.Fremote, nil, "sub/File1", src)
+	require.NoError(t, err)
+	file1.Path = "sub/File1"
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -1201,7 +1274,7 @@ func (i *testFsInfo) Precision() time.Duration { return i.precision }
 // Returns the supported hash types of the filesystem
 func (i *testFsInfo) Hashes() hash.Set { return i.hashes }
 
-// Returns the supported hash types of the filesystem
+// Features returns the optional features of this Fs.
 func (i *testFsInfo) Features() *fs.Features { return &i.features }
 
 func TestSameConfig(t *testing.T) {

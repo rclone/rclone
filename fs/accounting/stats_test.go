@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +14,38 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAverageLoopTransferOverlap(t *testing.T) {
+	ctx := context.Background()
+	stats := NewStats(ctx)
+	t.Cleanup(func() {
+		stats.mu.Lock()
+		defer stats.mu.Unlock()
+		stats._stopAverageLoop()
+	})
+	current := stats.NewTransferRemoteSize("initial", 1, nil, nil)
+	for i := range 10000 {
+		start := make(chan struct{})
+		var next *Transfer
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			<-start
+			current.Done(ctx, nil)
+		})
+		wg.Go(func() {
+			<-start
+			next = stats.NewTransferRemoteSize(fmt.Sprintf("transfer-%d", i), 1, nil, nil)
+		})
+		close(start)
+		wg.Wait()
+		stats.mu.Lock()
+		started := stats.average.started
+		stats.mu.Unlock()
+		require.True(t, started, "transfer %d is active", i)
+		current = next
+	}
+	current.Done(ctx, nil)
+}
 
 func TestAverageLoopStopsAfterLastCheck(t *testing.T) {
 	ctx := context.Background()

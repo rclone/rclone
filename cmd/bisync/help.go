@@ -41,6 +41,7 @@ func RcHelp() string {
 - path1 (required) - (string) a remote directory string e.g. ||drive:path1||
 - path2 (required) - (string) a remote directory string e.g. ||drive:path2||
 - dryRun - (bool) dry-run mode
+- maxDelete - (int) Safety check on maximum percentage of deleted files allowed. If exceeded, the bisync run will abort. (default: {MAXDELETE}%)
 `+GenerateParams()+`
 See [bisync command help](https://rclone.org/commands/rclone_bisync/)
 and [full bisync description](https://rclone.org/bisync/)

@@ -10,9 +10,11 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -257,4 +259,80 @@ func TestRedirectStripsGlobalHeaders(t *testing.T) {
 		require.NotNil(t, got, test.path)
 		assert.Equal(t, test.want, got.Get("X-Potato"), test.path)
 	}
+}
+
+// TestRedirectLeavesHost checks the redirect chain walk against
+// synthetic chains, in particular that an HTTPS to HTTP downgrade
+// which keeps the host and port counts as leaving the host.
+func TestRedirectLeavesHost(t *testing.T) {
+	// chain builds the linked list of requests net/http records
+	// when following redirects, returning the last hop
+	chain := func(urls ...string) *http.Request {
+		var req *http.Request
+		for _, u := range urls {
+			next, err := http.NewRequest(http.MethodGet, u, nil)
+			require.NoError(t, err)
+			if req != nil {
+				next.Response = &http.Response{Request: req}
+			}
+			req = next
+		}
+		return req
+	}
+	for _, test := range []struct {
+		urls []string
+		want bool
+	}{
+		{[]string{"https://a.test/"}, false},
+		{[]string{"https://a.test/", "https://a.test/x"}, false},
+		{[]string{"https://a.test/", "https://A.test:443/x"}, false},
+		{[]string{"https://a.test/", "https://b.test/x"}, true},
+		{[]string{"https://a.test/", "https://b.test/x", "https://a.test/y"}, true},
+		{[]string{"https://a.test/", "http://a.test/x"}, true},
+		{[]string{"https://a.test:8443/", "http://a.test:8443/x"}, true},
+		{[]string{"https://a.test:8443/", "http://a.test:8443/x", "https://a.test:8443/y"}, true},
+		{[]string{"http://a.test:8080/", "https://a.test:8080/x"}, false},
+		{[]string{"http://a.test:8080/", "https://a.test:8080/x", "http://a.test:8080/y"}, false},
+	} {
+		assert.Equal(t, test.want, redirectLeavesHost(chain(test.urls...)), test.urls)
+	}
+}
+
+// TestRedirectStripsGlobalHeadersOnDowngrade checks the headers set
+// with --header are not sent over plaintext HTTP when an HTTPS
+// request is redirected to an http:// URL with the same host and
+// port.
+//
+// The https:// request is made to the plain server's host and port
+// with a TLS dialer which ignores the address and connects to the
+// TLS server instead, so both hops share a host and port as they
+// would in the wild.
+func TestRedirectStripsGlobalHeadersOnDowngrade(t *testing.T) {
+	var gotTLS, gotPlain http.Header
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPlain = r.Header.Clone()
+	}))
+	defer plain.Close()
+	secure := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTLS = r.Header.Clone()
+		http.Redirect(w, r, plain.URL+"/final", http.StatusFound)
+	}))
+	defer secure.Close()
+	tlsConfig := secure.Client().Transport.(*http.Transport).TLSClientConfig
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Headers = []*fs.HTTPOption{{Key: "X-Potato", Value: "sausage"}}
+	client := NewClientCustom(ctx, func(tr *http.Transport) {
+		tr.DialTLSContext = func(ctx context.Context, network, _ string) (net.Conn, error) {
+			return (&tls.Dialer{Config: tlsConfig}).DialContext(ctx, network, secure.Listener.Addr().String())
+		}
+	})
+
+	resp, err := client.Get("https" + strings.TrimPrefix(plain.URL, "http") + "/start")
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.NotNil(t, gotTLS)
+	require.NotNil(t, gotPlain)
+	assert.Equal(t, "sausage", gotTLS.Get("X-Potato"))
+	assert.Equal(t, "", gotPlain.Get("X-Potato"))
 }

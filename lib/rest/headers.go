@@ -165,7 +165,7 @@ func ParseSizeFromHeaders(headers http.Header) (size int64) {
 	var contentLength = headers.Get("Content-Length")
 	if len(contentLength) != 0 {
 		var err error
-		if size, err = strconv.ParseInt(contentLength, 10, 64); err != nil {
+		if size, err = strconv.ParseInt(contentLength, 10, 64); err != nil || size < 0 {
 			return -1
 		}
 	}
@@ -183,7 +183,7 @@ func ParseSizeFromHeaders(headers http.Header) (size int64) {
 		return -1
 	}
 	ret, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
-	if err != nil {
+	if err != nil || ret < 0 {
 		return -1
 	}
 	return ret

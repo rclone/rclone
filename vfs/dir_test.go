@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"runtime"
 	"slices"
@@ -16,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,6 +33,41 @@ func dirCreate(t *testing.T) (r *fstest.Run, vfs *VFS, dir *Dir, item fstest.Ite
 	require.True(t, node.IsDir())
 
 	return r, vfs, node.(*Dir), file1
+}
+
+// TestDirLinksInvalidName checks that with --links an object called
+// "...rclonelink" doesn't become a directory entry called "..", which
+// would address the parent, whether it comes from a listing or from
+// the cache.
+func TestDirLinksInvalidName(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.Links = true
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "dir/.."+fs.LinkSuffix, "target", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1, file2)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	dir := node.(*Dir)
+
+	checkEntries := func() {
+		t.Helper()
+		entries, err := dir.ReadDirAll()
+		require.NoError(t, err)
+		var names []string
+		for _, entry := range entries {
+			names = append(names, entry.Name())
+		}
+		assert.Equal(t, []string{"file1"}, names)
+	}
+	checkEntries()
+
+	for _, leaf := range []string{".." + fs.LinkSuffix, "." + fs.LinkSuffix, fs.LinkSuffix} {
+		dir.AddVirtual(leaf, 6, false)
+	}
+	checkEntries()
 }
 
 func TestDirMethods(t *testing.T) {
@@ -435,6 +472,48 @@ func TestDirMkdirSub(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// TestDirUnsafeName checks that a name which isn't a single safe path
+// element is refused by everything which creates a node, so it can't
+// build a path outside the directory. At the root path.Join("", "..")
+// preserves the "..", so this would otherwise make a node whose path is
+// outside the VFS root.
+func TestDirUnsafeName(t *testing.T) {
+	r, vfs, dir, file1 := dirCreate(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	for _, d := range []*Dir{root, dir} {
+		for _, name := range []string{"", ".", "..", "sub/dir", "../escape", "escape/.."} {
+			t.Run(fmt.Sprintf("%q in %q", name, d.Path()), func(t *testing.T) {
+				_, err := d.Mkdir(name)
+				assert.Equal(t, EINVAL, err, "Mkdir")
+
+				_, err = d.Create(name, os.O_WRONLY|os.O_CREATE)
+				assert.Equal(t, EINVAL, err, "Create")
+
+				err = dir.Rename("file1", name, d)
+				assert.Equal(t, EINVAL, err, "Rename")
+
+				// The source name is only looked up so isn't found
+				err = d.Rename(name, "renamed", dir)
+				assert.Equal(t, ENOENT, err, "Rename source")
+			})
+		}
+	}
+
+	// such a name can't be looked up either
+	_, err = vfs.Stat("..")
+	assert.Equal(t, ENOENT, err)
+	_, err = vfs.Stat("../escape")
+	assert.Equal(t, ENOENT, err)
+
+	// check nothing was made in the vfs or the underlying r.Fremote
+	checkListing(t, root, []string{"dir,0,true"})
+	checkListing(t, dir, []string{"file1,14,false"})
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestDirRemove(t *testing.T) {
 	r, vfs, dir, _ := dirCreate(t)
 
@@ -472,6 +551,24 @@ func TestDirRemove(t *testing.T) {
 	vfs.Opt.ReadOnly = true
 	err = dir.Remove()
 	assert.Equal(t, EROFS, err)
+}
+
+// Removing a directory leaves no virtual entries counted in its parent, so the
+// parent can still forget its cache.
+func TestDirRemoveVirtuals(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// Remove the directory's contents and then the directory, before a
+	// listing has confirmed the contents are gone.
+	require.NoError(t, dir.RemoveName("file1"))
+	require.NoError(t, root.RemoveName("dir"))
+
+	assert.False(t, root.ForgetAll(), "root holds virtual entries after rmdir")
+
+	dir.ForgetAll()
+	assert.False(t, root.ForgetAll(), "root holds virtual entries after the removed dir is forgotten")
 }
 
 func TestDirRemoveAll(t *testing.T) {
@@ -778,4 +875,30 @@ func TestDirMetadataExtension(t *testing.T) {
 	if !errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		require.NoError(t, err)
 	}
+}
+
+// Check that renaming a directory leaves its parent's directory entries alone,
+// so it can't corrupt the parent's map while the parent is iterating it.
+func TestDirRenameParentEntries(t *testing.T) {
+	_, vfs := newTestVFS(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	dir, err := root.Mkdir("dir")
+	require.NoError(t, err)
+
+	// Hold the root's read lock, as ForgetAll and ReadDirAll do while they
+	// iterate the root's entries, and rename the directory underneath it.
+	root.mu.RLock()
+	defer root.mu.RUnlock()
+	before := slices.Sorted(maps.Keys(root.items))
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		dir.rename(root, fs.NewDir("dir2", t1))
+	}()
+	<-done
+
+	assert.Equal(t, before, slices.Sorted(maps.Keys(root.items)))
 }

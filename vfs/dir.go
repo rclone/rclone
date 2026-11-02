@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"golang.org/x/text/unicode/norm"
 )
@@ -389,6 +390,9 @@ func (d *Dir) renameTree(dirPath string) {
 //
 // Reset the directory to new state, discarding all the objects and
 // reading everything again
+//
+// The caller must move the entry between the old and the new parent's
+// directory entries itself, holding each parent's lock as it does so.
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
 
@@ -401,8 +405,6 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
-	delete(d.parent.items, name(oldPath))
-	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
 
@@ -478,6 +480,9 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 			// since the path came from the cache it may have fs.LinkSuffix,
 			// so remove it and mark the *File accordingly
 			leaf, isLink = strings.CutSuffix(leaf, fs.LinkSuffix)
+			if leaf == "" || leaf == "." || leaf == ".." {
+				return
+			}
 		}
 		f := newFile(d, dPath, nil, leaf)
 		if isLink {
@@ -724,11 +729,13 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 	mv := d._newManageVirtuals()
 	for _, entry := range entries {
 		name := path.Base(entry.Remote())
-		if name == "." || name == ".." {
-			continue
-		}
 		if d.vfs.Opt.Links {
 			name, _ = strings.CutSuffix(name, fs.LinkSuffix)
+		}
+		// Check after removing the suffix so "...rclonelink" can't
+		// become an entry called ".."
+		if name == "" || name == "." || name == ".." {
+			continue
 		}
 		node := d.items[name]
 		if mv.add(d, name) {
@@ -1021,9 +1028,28 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 	return newDirHandle(d), nil
 }
 
+// checkName returns EINVAL if name isn't a single safe path element,
+// that is it is empty, "." or "..", or contains a "/".
+//
+// Such a name can't be a child of the directory and would make a node
+// whose path is outside it (or outside the VFS root, since at the root
+// path.Join("", "..") preserves the "..").
+func (d *Dir) checkName(name string) error {
+	if err := sanitize.Leaf(name); err != nil {
+		fs.Errorf(d, "Refusing unsafe name: %v", err)
+		return EINVAL
+	}
+	return nil
+}
+
 // Create makes a new file node
+//
+// It returns EINVAL if name isn't a single safe path element.
 func (d *Dir) Create(name string, flags int) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
+	if err := d.checkName(name); err != nil {
+		return nil, err
+	}
 	// Return existing node if one exists
 	node, err := d.stat(name)
 	switch err {
@@ -1053,9 +1079,14 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 }
 
 // Mkdir creates a new directory
+//
+// It returns EINVAL if name isn't a single safe path element.
 func (d *Dir) Mkdir(name string) (*Dir, error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
+	}
+	if err := d.checkName(name); err != nil {
+		return nil, err
 	}
 	path := path.Join(d.path, name)
 	node, err := d.stat(name)
@@ -1111,6 +1142,15 @@ func (d *Dir) Remove() error {
 		fs.Errorf(d, "Dir.Remove failed to remove directory: %v", err)
 		return err
 	}
+	// The directory is gone, so no listing will resolve its virtual
+	// entries, which can only be deletes as it was empty. They must be
+	// removed now, or they will be counted in every parent and
+	// cache forgets blocked as a consequence
+	d.mu.Lock()
+	for leaf := range d.virtual {
+		d._deleteVirtual(leaf)
+	}
+	d.mu.Unlock()
 	// Remove the item from the parent directory listing
 	if d.parent != nil {
 		d.parent.delObject(d.Name())
@@ -1165,10 +1205,15 @@ func (d *Dir) RemoveName(name string) error {
 }
 
 // Rename the file
+//
+// It returns EINVAL if newName isn't a single safe path element.
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	// fs.Debugf(d, "BEFORE\n%s", d.dump())
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
+	}
+	if err := destDir.checkName(newName); err != nil {
+		return err
 	}
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
@@ -1178,6 +1223,8 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
+	// oldName may only match oldNode with case or unicode normalization
+	oldLeaf := oldNode.Name()
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
@@ -1229,7 +1276,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	}
 
 	// Show moved - delete from old dir and add to new
-	d.delObject(oldName)
+	d.delObject(oldLeaf)
 	destDir.addObject(oldNode)
 	if err = d.SetModTime(time.Now()); err != nil {
 		fs.Errorf(d, "Dir.Rename failed to set modtime on parent dir: %v", err)

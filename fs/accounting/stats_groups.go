@@ -17,6 +17,9 @@ var groups *statsGroups
 func init() {
 	// Init stats container
 	groups = newStatsGroups()
+
+	// Attribute logs to stats groups
+	fs.StatsGroupFromContext = StatsGroupFromContext
 }
 
 func rcListStats(ctx context.Context, in rc.Params) (rc.Params, error) {
