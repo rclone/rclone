@@ -371,14 +371,10 @@ this may help to speed up the transfers.`,
 			Help: `Part size for Direct Fetch copies to Fastly Object Storage.
 
 Objects larger than this are fetched as a multipart upload in parts of
-this size. Objects up to this size are fetched in a single request.
+this size.
 
-The parts are only kept to one version of the source by its ETag, so a
-source without a usable ETag is fetched in a single request up to 5 GiB
-whatever this is set to.
-
-Direct Fetch parts are not buffered by rclone, so unlike chunk_size
-this does not affect memory use.
+Rclone doesn't buffer these parts, so unlike chunk_size this doesn't
+affect memory use.
 
 Rclone will automatically increase the part size to stay below the
 max_upload_parts limit. The minimum is 5 MiB.`,
@@ -388,12 +384,11 @@ max_upload_parts limit. The minimum is 5 MiB.`,
 			Name: "direct_fetch_concurrency",
 			Help: `Concurrency for Direct Fetch copies to Fastly Object Storage.
 
-This is the number of parts of the same object that Fastly Object
-Storage is asked to fetch concurrently. Each transfer has its own
-parts in flight, so the total is this multiplied by --transfers.
+This is the number of parts of the same object fetched concurrently,
+per transfer.
 
-Direct Fetch parts are not buffered by rclone, so unlike
-upload_concurrency this has a negligible effect on memory use.`,
+Rclone doesn't buffer these parts, so unlike upload_concurrency this
+has little effect on memory use.`,
 			Default:  16,
 			Advanced: true,
 		}, {
@@ -1205,9 +1200,8 @@ type Fs struct {
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
 
-	// Immutable safety assertions for the constructed HTTP and SDK clients.
-	urlFetchLogSafe     bool
-	urlFetchRequestSafe bool
+	urlFetchLogSafe     bool // set if no logging could leak presigned source URLs
+	urlFetchRequestSafe bool // set if requests need nothing beyond the URL
 }
 
 // Object describes a s3 object
@@ -1345,8 +1339,7 @@ var (
 	directFetchNullAccounter = transferaccounter.Get(context.Background())
 )
 
-// directFetchError renders safe Direct Fetch diagnostics while retaining the
-// original SDK error for errors.Is and errors.As.
+// directFetchError is a Direct Fetch error with the source URL redacted
 type directFetchError struct {
 	operation string
 	sourceURL string
@@ -2368,8 +2361,7 @@ func (f *Fs) supportsDirectPublicLink() bool {
 		// GCS may decompress objects stored with Content-Encoding, so
 		// ServerSideFetchURL declines those objects individually using
 		// X-Goog-Stored-Content-Encoding, as GCS omits Content-Encoding
-		// when it decompresses. no_system_metadata also hides the
-		// Content-Encoding check, so decline it to stay conservative.
+		// when it decompresses. no_system_metadata hides that header.
 		// See: https://cloud.google.com/storage/docs/transcoding
 		if o.NoSystemMetadata {
 			return false

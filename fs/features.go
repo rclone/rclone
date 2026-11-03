@@ -23,7 +23,7 @@ type Features struct {
 	SetTier                  bool // allows set tier functionality on objects
 	GetTier                  bool // allows to retrieve storage tier of objects
 	ServerSideAcrossConfigs  bool // can server-side copy between different remotes of the same type
-	PublicLinkIsDirect       bool // means a public link is equivalent to a normal logical download: URL-only authorization supplies the bytes without changing persistent sharing, private-object authorization remains bounded by provider and credential expiry, and property/hash access does not require reading the body.
+	PublicLinkIsDirect       bool // PublicLink makes a temporary URL, without changing sharing, which returns the object as Open would
 	IsLocal                  bool // is the local backend
 	SlowModTime              bool // if calling ModTime() generally takes an extra transaction
 	SlowHash                 bool // if calling Hash() generally takes an extra transaction
@@ -112,7 +112,7 @@ type Features struct {
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
 	PublicLink func(ctx context.Context, remote string, expire Duration, unlink bool) (string, error)
 
-	// ServerSideFetchURL fetches source bytes directly into this remote without a source body transfer; see ServerSideFetchURLer for the contract.
+	// ServerSideFetchURL makes remote by having the server fetch sourceURL
 	ServerSideFetchURL func(ctx context.Context, remote, sourceURL string, src ObjectInfo, options ...OpenOption) (Object, error)
 
 	// Put in to the remote path with the modTime given of the given size
@@ -646,12 +646,14 @@ type PutStreamer interface {
 	PutStream(ctx context.Context, in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
 }
 
-// ServerSideFetchURLer is an optional interface for Fs.
-// The source URL must identify the same logical bytes as src; destinations may fall back when unsupported.
+// ServerSideFetchURLer is an optional interface for Fs
 type ServerSideFetchURLer interface {
-	// ServerSideFetchURL fetches sourceURL directly into remote without opening src.
-	// It honors the same upload options as a normal upload, leaves partitioning and cleanup to the destination, and returns a non-nil object on success.
-	// Only errors.Is(err, ErrorCantCopy) authorizes fallback; context, fatal, and destination errors must not match it and retain their identity for safe diagnostics.
+	// ServerSideFetchURL makes remote by having the server fetch
+	// sourceURL, which must return the same bytes as src.
+	//
+	// It returns the destination Object and a possible error
+	//
+	// If it isn't possible then return fs.ErrorCantCopy
 	ServerSideFetchURL(ctx context.Context, remote, sourceURL string, src ObjectInfo, options ...OpenOption) (Object, error)
 }
 

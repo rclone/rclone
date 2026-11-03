@@ -165,10 +165,8 @@ type MimeTyper interface {
 
 // ETagger is an optional interface for Object
 type ETagger interface {
-	// ETag returns the entity tag, as sent in an HTTP ETag header
-	// (quotes included), of the version of the Object that Size and
-	// ModTime describe, or "" if not known. It must not refresh the
-	// Object to read a newer value.
+	// ETag returns the HTTP ETag, with quotes, of the version the
+	// Object describes or "" if not known, without refreshing it
 	ETag(ctx context.Context) string
 }
 
