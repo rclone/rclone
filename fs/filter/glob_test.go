@@ -1,7 +1,10 @@
 package filter
 
 import (
+	"regexp"
+	"regexp/syntax"
 	"testing"
+	"unicode"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -189,4 +192,42 @@ func TestGlobToDirGlobs(t *testing.T) {
 		got := globToDirGlobs(test.in)
 		assert.Equal(t, test.want, got, test.in)
 	}
+}
+
+// literal returns the one string re matches, or false if it can match more
+func literal(t *testing.T, re *regexp.Regexp) (string, bool) {
+	p, err := syntax.Parse(re.String(), syntax.Perl)
+	require.NoError(t, err)
+	p = p.Simplify()
+	if p.Op != syntax.OpConcat || len(p.Sub) != 3 || p.Sub[0].Op != syntax.OpBeginText ||
+		p.Sub[1].Op != syntax.OpLiteral || p.Sub[1].Flags&syntax.FoldCase != 0 || p.Sub[2].Op != syntax.OpEndText {
+		return "", false
+	}
+	return string(p.Sub[1].Rune), true
+}
+
+func TestGlobEscape(t *testing.T) {
+	var chars []rune
+	for c := rune(' '); c <= '~'; c++ {
+		if !unicode.IsLetter(c) && !unicode.IsDigit(c) {
+			chars = append(chars, c)
+		}
+	}
+	chars = append(chars, '\u00a0', '日')
+	for _, c := range chars {
+		for _, s := range []string{string(c), "a" + string(c) + "b", string(c) + string(c)} {
+			glob := GlobEscape(s)
+			re, err := GlobPathToRegexp("/"+glob, false)
+			require.NoError(t, err, glob)
+			got, ok := literal(t, re)
+			assert.True(t, ok, "path glob %q matches more than %q", glob, s)
+			assert.Equal(t, s, got)
+			re, err = GlobStringToRegexp(glob, true, false)
+			require.NoError(t, err, glob)
+			got, ok = literal(t, re)
+			assert.True(t, ok, "string glob %q matches more than %q", glob, s)
+			assert.Equal(t, s, got)
+		}
+	}
+	assert.Equal(t, `a\*b\?\[c\]\{d\}\\e`, GlobEscape(`a*b?[c]{d}\e`))
 }

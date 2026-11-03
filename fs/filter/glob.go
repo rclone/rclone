@@ -31,6 +31,21 @@ func GlobStringToRegexp(glob string, addAnchors bool, ignoreCase bool) (*regexp.
 	return globToRegexp(glob, false, addAnchors, ignoreCase)
 }
 
+// globSpecial are the characters with a special meaning in a glob
+const globSpecial = `\*?[]{}`
+
+// GlobEscape returns a glob matching s literally
+func GlobEscape(s string) string {
+	var b strings.Builder
+	for _, c := range s {
+		if strings.ContainsRune(globSpecial, c) {
+			_ = b.WriteByte('\\')
+		}
+		_, _ = b.WriteRune(c)
+	}
+	return b.String()
+}
+
 // globToRegexp converts an rsync style glob to a regexp
 //
 // Set pathMode true for matching of path/file names, e.g.
