@@ -73,6 +73,7 @@ directories to and from different cloud storage providers.
 - Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
 - IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
 - Impossible Cloud [:page_facing_up:](https://rclone.org/s3/#impossible-cloud)
+- Infomaniak Swiss Backup (S3) [:page_facing_up:](https://rclone.org/s3/#infomaniak)
 - Intercolo Object Storage [:page_facing_up:](https://rclone.org/s3/#intercolo)
 - IONOS Cloud [:page_facing_up:](https://rclone.org/s3/#ionos)
 - kDrive [:page_facing_up:](https://rclone.org/kdrive/)
