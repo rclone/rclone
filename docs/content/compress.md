@@ -137,10 +137,6 @@ Properties:
   - "zstd"
     - Zstandard compression — fast modern algorithm offering adjustable speed-to-compression tradeoffs.
 
-### Advanced options
-
-Here are the Advanced options specific to compress (Compress a remote).
-
 #### --compress-level
 
 GZIP (levels -2 to 9):
@@ -159,15 +155,17 @@ ZSTD (levels 0 to 4):
 Notes:
 - Choose GZIP for wide compatibility; ZSTD for better speed/ratio tradeoffs.
 - Negative gzip levels: -2 = Huffman-only, -1 = default (≈ level 5).
-- The default level is -1 which selects the default level of the
-  compression mode, equivalent to level 5 for gzip and level 2 for zstd.
 
 Properties:
 
 - Config:      level
 - Env Var:     RCLONE_COMPRESS_LEVEL
-- Type:        int
-- Default:     -1
+- Type:        string
+- Required:    true
+
+### Advanced options
+
+Here are the Advanced options specific to compress (Compress a remote).
 
 #### --compress-ram-cache-limit
 
