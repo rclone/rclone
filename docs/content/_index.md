@@ -165,6 +165,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
 {{< provider name="Impossible Cloud" home="https://www.impossiblecloud.com/" config="/s3/#impossible-cloud" >}}
 {{< provider name="Infomaniak Swiss Backup (S3)" home="https://www.infomaniak.com/en/swiss-backup/cloud-storage" config="/s3/#infomaniak" >}}
+{{< provider name="Infomaniak Swiss Backup (Swift)" home="https://www.infomaniak.com/en/swiss-backup/cloud-storage" config="/swift" >}}
 {{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="kDrive" home="https://www.infomaniak.com/en/ksuite/kdrive" config="/kdrive/" >}}
