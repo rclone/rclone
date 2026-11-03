@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -891,6 +892,31 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 	})
 }
 
+// InternalTestRmdirRoot checks the directory marker of the root of a
+// remote is removed by Rmdir.
+func (f *Fs) InternalTestRmdirRoot(t *testing.T) {
+	if !f.opt.DirectoryMarkers {
+		t.Skip("needs --s3-directory-markers")
+	}
+	ctx := context.Background()
+	dir := "rmdir-root-" + random.String(8)
+	hasDir := func() bool {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		return slices.ContainsFunc(entries, func(entry fs.DirEntry) bool {
+			_, isDir := entry.(fs.Directory)
+			return isDir && entry.Remote() == dir
+		})
+	}
+
+	require.NoError(t, f.Mkdir(ctx, dir))
+	require.True(t, hasDir(), "directory marker not made")
+	fDir, err := cache.Get(ctx, bucket.Join(fs.ConfigStringFull(f), dir))
+	require.NoError(t, err)
+	require.NoError(t, fDir.Rmdir(ctx, ""))
+	assert.False(t, hasDir(), "directory marker not removed")
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
@@ -898,6 +924,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("HasChildren", f.InternalTestHasChildren)
 	t.Run("Versions", f.InternalTestVersions)
 	t.Run("ObjectLock", f.InternalTestObjectLock)
+	t.Run("RmdirRoot", f.InternalTestRmdirRoot)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

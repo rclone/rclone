@@ -32,7 +32,8 @@ They should be bound to localhost so they are not accessible externally.
 | 28637 | TestSMBKerberosCcache |
 | 28638 | TestSMBKerberosCcache |
 | 28639 | TestWebdavInfiniteScale |
-| 38081 | TestWebdavOwncloud |
+| 28640 | TestSia |
+| 28641 | TestWebdavOwncloud |
 
 ## Non localhost tests
 

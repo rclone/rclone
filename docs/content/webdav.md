@@ -384,7 +384,7 @@ ownCloud supports modified times using the `X-OC-Mtime` header.
 
 This is configured in an identical way to ownCloud.  Note that
 Nextcloud initially did not support streaming of files (`rcat`) whereas
-ownCloud did, but [this](https://github.com/nextcloud/nextcloud-snap/issues/365)
+ownCloud did, but [this](https://github.com/nextcloud-snap/nextcloud-snap/issues/365)
 seems to be fixed as of 2020-11-27 (tested with rclone v1.53.1 and Nextcloud
 Server v19).
 

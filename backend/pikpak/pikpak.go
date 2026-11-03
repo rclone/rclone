@@ -72,6 +72,8 @@ const (
 	minSleep         = 100 * time.Millisecond
 	maxSleep         = 2 * time.Second
 	taskWaitTime     = 500 * time.Millisecond
+	taskMaxSleep     = 5 * time.Second
+	taskTimeout      = 5 * time.Minute
 	decayConstant    = 2 // bigger for slower decay, exponential
 	rootURL          = "https://api-drive.mypikpak.com"
 
@@ -1388,6 +1390,8 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	if err != nil {
 		return fmt.Errorf("failed to make multipart upload: %w", err)
 	}
+	// Stop the form writer reading in if the request fails before sending it all
+	defer func() { _ = formReader.Close() }()
 
 	contentLength := overhead + size
 	opts := rest.Opts{
@@ -1946,6 +1950,12 @@ func (o *Object) httpResponse(ctx context.Context, url, method string, options [
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
+		// client.Do does not fail a completed non-2xx response, so the
+		// HTML error page would be returned as the file. errorHandler
+		// closes the body; shouldRetry then retries retryErrorCodes.
+		if err == nil && (res.StatusCode < 200 || res.StatusCode > 299) {
+			err = errorHandler(res)
+		}
 		return o.fs.shouldRetry(ctx, res, err)
 	})
 	if err != nil {

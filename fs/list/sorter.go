@@ -305,6 +305,11 @@ func (ls *Sorter) Send() (err error) {
 				}
 			}
 		}
+		// The select may see outputChan closed before reading the
+		// error the sorter sent on errChan
+		if err := <-ls.errChan; err != nil {
+			return err
+		}
 		err = list.Flush()
 		if err != nil {
 			return err

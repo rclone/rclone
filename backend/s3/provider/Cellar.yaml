@@ -1,0 +1,15 @@
+name: Cellar
+description: Clever Cloud Cellar Object Storage
+endpoint:
+  cellar-c2.services.clever-cloud.com: Paris, France
+acl: {}
+bucket_acl: true
+sse_customer_algorithm: true
+sse_customer_key: true
+sse_customer_key_base64: true
+sse_customer_key_md5: true
+quirks:
+  # Object Lock headers are not applied on CreateMultipartUpload, so the
+  # Object Lock tests are skipped. Users should set
+  # --s3-object-lock-set-after-upload when using Object Lock.
+  object_lock_supported: false

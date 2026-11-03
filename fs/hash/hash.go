@@ -102,7 +102,13 @@ var (
 
 	// XXH128 indicates XXH128 support, also known as XXH3-128, a variant of xxHash
 	XXH128 Type
+
+	// CRC32C indicates CRC-32C (Castagnoli) support
+	CRC32C Type
 )
+
+// castagnoliTable is the CRC-32C table (hardware accelerated where available)
+var castagnoliTable = crc32.MakeTable(crc32.Castagnoli)
 
 type xxh128Hasher struct {
 	xxh3.Hasher
@@ -129,6 +135,7 @@ func init() {
 	BLAKE3 = RegisterHash("blake3", "BLAKE3", 64, func() hash.Hash { return blake3.New() })
 	XXH3 = RegisterHash("xxh3", "XXH3", 16, func() hash.Hash { return xxh3.New() })
 	XXH128 = RegisterHash("xxh128", "XXH128", 32, func() hash.Hash { return &xxh128Hasher{} })
+	CRC32C = RegisterHash("crc32c", "CRC-32C", 8, func() hash.Hash { return crc32.New(castagnoliTable) })
 }
 
 // Supported returns a set of all the supported hashes by

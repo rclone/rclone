@@ -116,6 +116,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Akamai Netstorage" home="https://www.akamai.com/us/en/products/media-delivery/netstorage.jsp" config="/netstorage/" >}}
 {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
 {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
+{{< provider name="Autonomys Auto Drive" home="https://ai3.storage/" config="/s3/#autonomys" >}}
 {{< provider name="Bizfly Cloud Simple Storage" home="https://bizflycloud.vn/" config="/s3/#bizflycloud" >}}
 {{< provider name="Backblaze B2" home="https://www.backblaze.com/cloud-storage" config="/b2/" >}}
 {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
@@ -123,6 +124,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="China Mobile Ecloud Elastic Object Storage (EOS)" home="https://ecloud.10086.cn/home/product-introduction/eos/" config="/s3/#china-mobile-ecloud-eos" >}}
 {{< provider name="Arvan Cloud Object Storage (AOS)" home="https://www.arvancloud.ir/en/products/cloud-storage" config="/s3/#arvan-cloud" >}}
 {{< provider name="Citrix ShareFile" home="http://sharefile.com/" config="/sharefile/" >}}
+{{< provider name="Clever Cloud Cellar" home="https://www.clever.cloud/product/cellar-object-storage/" config="/s3/#clever-cloud-cellar" >}}
 {{< provider name="Cloudflare R2" home="https://blog.cloudflare.com/r2-open-beta/" config="/s3/#cloudflare-r2" >}}
 {{< provider name="Cloudinary" home="https://cloudinary.com/" config="/cloudinary/" >}}
 {{< provider name="Cubbit DS3" home="https://cubbit.io/ds3-cloud" config="/s3/#Cubbit" >}}
@@ -164,6 +166,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Impossible Cloud" home="https://www.impossiblecloud.com/" config="/s3/#impossible-cloud" >}}
 {{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
+{{< provider name="kDrive" home="https://www.infomaniak.com/en/ksuite/kdrive" config="/kdrive/" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
 {{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-cloud" >}}

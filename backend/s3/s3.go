@@ -2508,6 +2508,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
 	}
+	if opt.Provider == "Autonomys" {
+		// Versions are permanent, so Purge's version deletes are always refused.
+		f.features.Purge = nil
+		// There are no bucket endpoints: CreateBucket would be stored as an object.
+		f.opt.NoCheckBucket = true
+	}
 	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
 		// Global Acceleration endpoint does not support bucket creation.
 		f.opt.NoCheckBucket = true
@@ -3576,8 +3582,9 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	bucket, directory := f.split(dir)
-	// Remove directory marker file
-	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
+	// Remove directory marker file, including the one of the root
+	// when it is a directory in the bucket
+	if f.opt.DirectoryMarkers && bucket != "" && directory != "" {
 		o := &Object{
 			fs:     f,
 			remote: dir + "/",
