@@ -25,7 +25,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
@@ -1334,17 +1333,18 @@ func directFetchRanges(size int64, chunkSize fs.SizeSuffix, maxParts int) ([]dir
 }
 
 var (
-	directFetchURLPattern    = regexp.MustCompile(`(?i)https?(?::|%3a)(?:/|%2f){2}[^\s<>"']+`)
 	directFetchSourceStatus  = regexp.MustCompile(`^DirectFetchSourceStatus ([1-5][0-9]{2})$`)
+	directFetchSafeDetail    = regexp.MustCompile(`^[A-Za-z]+(?: [0-9]{3})?$`)
 	directFetchNullAccounter = transferaccounter.Get(context.Background())
 )
 
-// directFetchError is a Direct Fetch error with the source URL redacted
+// directFetchError is a Direct Fetch error
+//
+// Error doesn't render the server's free-text message or an unrecognised
+// diagnostic, so a source URL reflected by the server can't reach the logs.
 type directFetchError struct {
 	operation string
-	sourceURL string
 	code      string
-	message   string
 	detail    string
 	requestID string
 	status    int
@@ -1352,11 +1352,18 @@ type directFetchError struct {
 }
 
 func (e *directFetchError) Error() string {
-	cleanStructural := func(text string) string { return safeDirectFetchText(text, e.sourceURL, false) }
-	cleanDiagnostic := func(text string) string { return safeDirectFetchText(text, e.sourceURL, true) }
-	return fmt.Sprintf("direct fetch %s (HTTP %d, code %q, request %q): %s; %s",
-		cleanStructural(e.operation), e.status, cleanStructural(e.code), cleanStructural(e.requestID),
-		cleanDiagnostic(e.message), cleanDiagnostic(e.detail))
+	if e.status == 0 {
+		return fmt.Sprintf("direct fetch %s: %v", e.operation, e.cause)
+	}
+	text := fmt.Sprintf("direct fetch %s (HTTP %d, code %q, request %q)", e.operation, e.status, e.code, e.requestID)
+	switch {
+	case e.detail == "":
+	case directFetchSafeDetail.MatchString(e.detail):
+		text += ": " + e.detail
+	default:
+		text += ": detail omitted"
+	}
+	return text
 }
 
 func (e *directFetchError) Unwrap() error {
@@ -1401,64 +1408,22 @@ func directFetchPin(ctx context.Context, src fs.ObjectInfo) string {
 	return etag
 }
 
-func directFetchCredentialQueryKey(key string) bool {
-	key = strings.ToLower(key)
-	return key == "sig" || strings.Contains(key, "credential") || strings.Contains(key, "signature") ||
-		strings.Contains(key, "token") || strings.Contains(key, "secret") || strings.Contains(key, "password")
-}
-
-func safeDirectFetchText(text, sourceURL string, redactCredentialComponents bool) string {
-	if sourceURL != "" {
-		for _, form := range []string{sourceURL, url.QueryEscape(sourceURL), url.PathEscape(sourceURL)} {
-			if form != "" {
-				text = strings.ReplaceAll(text, form, "[redacted URL]")
-			}
-		}
-	}
-	text = directFetchURLPattern.ReplaceAllString(text, "[redacted URL]")
-	if redactCredentialComponents && sourceURL != "" {
-		if parsed, err := url.Parse(sourceURL); err == nil {
-			for key, values := range parsed.Query() {
-				if !directFetchCredentialQueryKey(key) {
-					continue
-				}
-				for _, value := range values {
-					for _, form := range []string{value, url.QueryEscape(value), url.PathEscape(value)} {
-						if form != "" {
-							text = strings.ReplaceAll(text, form, "[redacted URL]")
-						}
-					}
-				}
-			}
-		}
-	}
-	text = strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
-			return ' '
-		}
-		return r
-	}, strings.ToValidUTF8(text, "?"))
-	runes := []rune(text)
-	if len(runes) > 1024 {
-		text = string(runes[:1024]) + "…"
-	}
-	return text
-}
-
-func wrapDirectFetchError(operation, sourceURL string, err error) error {
+func wrapDirectFetchError(operation string, err error) error {
 	if err == nil {
 		return nil
 	}
 	directErr := &directFetchError{
 		operation: operation,
-		sourceURL: sourceURL,
 		cause:     err,
-		message:   err.Error(),
 	}
 	var apiErr smithy.APIError
 	if errors.As(err, &apiErr) {
 		directErr.code = apiErr.ErrorCode()
-		directErr.message = apiErr.ErrorMessage()
+	}
+	// Fastly sends the request ID only in the XML body
+	var requestIDErr interface{ ServiceRequestID() string }
+	if errors.As(err, &requestIDErr) {
+		directErr.requestID = requestIDErr.ServiceRequestID()
 	}
 	var responseErr interface{ HTTPResponse() *smithyhttp.Response }
 	if errors.As(err, &responseErr) {
@@ -1466,7 +1431,6 @@ func wrapDirectFetchError(operation, sourceURL string, err error) error {
 		if response != nil && response.Response != nil {
 			directErr.status = response.StatusCode
 			directErr.detail = response.Header.Get(directFetchErrorHeader)
-			directErr.requestID = response.Header.Get("x-amz-request-id")
 		}
 	}
 	return directErr
@@ -1477,17 +1441,20 @@ func directFetchFallback(err error) error {
 		return err
 	}
 	var directErr *directFetchError
-	if errors.As(err, &directErr) &&
-		(directErr.operation == "PutObject" || directErr.operation == "UploadPart") &&
-		directErr.status == http.StatusBadRequest &&
-		((directErr.code == "DirectFetchSourceStatus" && directFetchSourceStatus.MatchString(directErr.detail)) ||
-			(directErr.code == "DirectFetchMissingContentLength" && directErr.detail == "DirectFetchMissingContentLength")) {
+	if !errors.As(err, &directErr) || (directErr.operation != "PutObject" && directErr.operation != "UploadPart") {
+		return err
+	}
+	switch {
+	case directErr.status == http.StatusBadRequest && directErr.code == "DirectFetchSourceStatus" && directFetchSourceStatus.MatchString(directErr.detail),
+		directErr.status == http.StatusBadRequest && directErr.code == "DirectFetchMissingContentLength" && directErr.detail == "DirectFetchMissingContentLength",
+		// Fastly reports a source 404 as NoSuchKey without a diagnostic
+		directErr.status == http.StatusNotFound && directErr.code == "NoSuchKey":
 		return fmt.Errorf("%w: %w", fs.ErrorCantCopy, err)
 	}
 	return err
 }
 
-func (f *Fs) directFetchCall(ctx context.Context, operation, sourceURL string, call func() error) error {
+func (f *Fs) directFetchCall(ctx context.Context, operation string, call func() error) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -1499,7 +1466,7 @@ func (f *Fs) directFetchCall(ctx context.Context, operation, sourceURL string, c
 		if err != nil && ctx.Err() != nil {
 			err = ctx.Err()
 		}
-		err = wrapDirectFetchError(operation, sourceURL, err)
+		err = wrapDirectFetchError(operation, err)
 		return f.shouldRetry(ctx, err)
 	})
 }
@@ -1609,7 +1576,7 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 		return o.finishDirectFetch(ctx, sourceURL, ui.req, versionID)
 	}
 	var out *s3.PutObjectOutput
-	err = f.directFetchCall(ctx, "PutObject", sourceURL, func() error {
+	err = f.directFetchCall(ctx, "PutObject", func() error {
 		var callErr error
 		out, callErr = f.c.PutObject(ctx, ui.req, directFetchOptions(sourceURL, "", pin))
 		return callErr
@@ -1637,7 +1604,7 @@ func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int6
 	createReq := &s3.CreateMultipartUploadInput{}
 	setFrom_s3CreateMultipartUploadInput_s3PutObjectInput(createReq, req)
 	var createOut *s3.CreateMultipartUploadOutput
-	err = o.fs.directFetchCall(ctx, "CreateMultipartUpload", sourceURL, func() error {
+	err = o.fs.directFetchCall(ctx, "CreateMultipartUpload", func() error {
 		var callErr error
 		createOut, callErr = o.fs.c.CreateMultipartUpload(ctx, createReq)
 		return callErr
@@ -1672,7 +1639,7 @@ func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int6
 			Key:          req.Key,
 			UploadId:     uploadID,
 			RequestPayer: req.RequestPayer,
-		}, sourceURL)
+		})
 	})()
 
 	parts := make([]types.CompletedPart, len(ranges))
@@ -1707,7 +1674,7 @@ func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int6
 				SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 			}
 			var output *s3.UploadPartOutput
-			err := o.fs.directFetchCall(gCtx, "UploadPart", sourceURL, func() error {
+			err := o.fs.directFetchCall(gCtx, "UploadPart", func() error {
 				var callErr error
 				output, callErr = o.fs.c.UploadPart(gCtx, input, directFetchOptions(sourceURL, byteRange, pin))
 				return callErr
@@ -1751,7 +1718,7 @@ func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int6
 		IfNoneMatch:          req.IfNoneMatch,
 	}
 	var completeOut *s3.CompleteMultipartUploadOutput
-	err = o.fs.directFetchCall(ctx, "CompleteMultipartUpload", sourceURL, func() error {
+	err = o.fs.directFetchCall(ctx, "CompleteMultipartUpload", func() error {
 		var callErr error
 		completeOut, callErr = o.fs.c.CompleteMultipartUpload(ctx, completeReq)
 		return callErr
@@ -1766,7 +1733,7 @@ func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int6
 	return completeOut.VersionId, nil
 }
 
-func (f *Fs) abortDirectFetch(ctx context.Context, req *s3.AbortMultipartUploadInput, sourceURL string) error {
+func (f *Fs) abortDirectFetch(ctx context.Context, req *s3.AbortMultipartUploadInput) error {
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), directFetchCleanupTimeout)
 	defer cancel()
 	_, err := f.c.AbortMultipartUpload(cleanupCtx, req)
@@ -1774,7 +1741,7 @@ func (f *Fs) abortDirectFetch(ctx context.Context, req *s3.AbortMultipartUploadI
 	if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NoSuchUpload" {
 		return nil
 	}
-	return wrapDirectFetchError("AbortMultipartUpload", sourceURL, err)
+	return wrapDirectFetchError("AbortMultipartUpload", err)
 }
 
 func (o *Object) finishDirectFetch(ctx context.Context, sourceURL string, req *s3.PutObjectInput, versionID *string) (fs.Object, error) {
@@ -1788,7 +1755,7 @@ func (o *Object) finishDirectFetch(ctx context.Context, sourceURL string, req *s
 		SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 	}
 	var head *s3.HeadObjectOutput
-	err := o.fs.directFetchCall(ctx, "HeadObject", sourceURL, func() error {
+	err := o.fs.directFetchCall(ctx, "HeadObject", func() error {
 		var callErr error
 		head, callErr = o.fs.c.HeadObject(ctx, input)
 		return callErr

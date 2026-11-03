@@ -450,11 +450,11 @@ func runDirectFetchLiveErrorCases(ctx context.Context, t *testing.T, source, des
 			t.Fatal("expired source URL unexpectedly succeeded")
 		}
 		if !errors.Is(fetchErr, fs.ErrorCantCopy) {
-			directFetchLiveLogErrorFixture(t, "expired URL", sourceURL, fetchErr)
+			directFetchLiveLogErrorFixture(t, "expired URL", fetchErr)
 			t.Error("expired source URL was not classified as an allowed fallback")
 		}
-		directFetchLiveAssertSourceResponseFixture(t, sourceURL, fetchErr)
-		directFetchLiveLogErrorFixture(t, "expired URL", sourceURL, fetchErr)
+		directFetchLiveAssertSourceResponseFixture(t, fetchErr)
+		directFetchLiveLogErrorFixture(t, "expired URL", fetchErr)
 	})
 
 	t.Run("invalid destination credentials are final", func(t *testing.T) {
@@ -479,10 +479,10 @@ func runDirectFetchLiveErrorCases(ctx context.Context, t *testing.T, source, des
 			t.Fatal("invalid destination credentials unexpectedly succeeded")
 		}
 		if errors.Is(fetchErr, fs.ErrorCantCopy) {
-			directFetchLiveLogErrorFixture(t, "invalid destination credentials", sourceURL, fetchErr)
+			directFetchLiveLogErrorFixture(t, "invalid destination credentials", fetchErr)
 			t.Error("destination authentication error incorrectly authorized fallback")
 		}
-		directFetchLiveLogErrorFixture(t, "invalid destination credentials", sourceURL, fetchErr)
+		directFetchLiveLogErrorFixture(t, "invalid destination credentials", fetchErr)
 	})
 
 	t.Run("multipart source rejection leaves no upload", func(t *testing.T) {
@@ -521,11 +521,11 @@ func runDirectFetchLiveErrorCases(ctx context.Context, t *testing.T, source, des
 			t.Fatal("corrupted source signature unexpectedly succeeded")
 		}
 		if !errors.Is(fetchErr, fs.ErrorCantCopy) {
-			directFetchLiveLogErrorFixture(t, "multipart source rejection", corruptURL, fetchErr)
+			directFetchLiveLogErrorFixture(t, "multipart source rejection", fetchErr)
 			t.Error("corrupted source signature was not classified as an allowed fallback")
 		}
-		directFetchLiveAssertSourceResponseFixture(t, corruptURL, fetchErr)
-		directFetchLiveLogErrorFixture(t, "multipart source rejection", corruptURL, fetchErr)
+		directFetchLiveAssertSourceResponseFixture(t, fetchErr)
+		directFetchLiveLogErrorFixture(t, "multipart source rejection", fetchErr)
 		uploads, listErr := directFetchLiveMultipartUploads(ctx, dest, name)
 		directFetchLiveRequireNoError(t, listErr, "multipart cleanup verification")
 		if len(uploads) != 0 {
@@ -735,7 +735,7 @@ func directFetchLiveCorruptSignature(sourceURL string) (string, bool) {
 	return parsed.String(), true
 }
 
-func directFetchLiveAssertSourceResponseFixture(t *testing.T, sourceURL string, err error) {
+func directFetchLiveAssertSourceResponseFixture(t *testing.T, err error) {
 	t.Helper()
 	var directErr *directFetchError
 	if !errors.As(err, &directErr) {
@@ -744,22 +744,18 @@ func directFetchLiveAssertSourceResponseFixture(t *testing.T, sourceURL string, 
 	}
 	if directErr.status != http.StatusBadRequest || directErr.code != "DirectFetchSourceStatus" ||
 		!regexp.MustCompile(`^DirectFetchSourceStatus [1-5][0-9]{2}$`).MatchString(directErr.detail) {
-		detail := safeDirectFetchText(directErr.detail, sourceURL, true)
-		t.Errorf("unexpected sanitized source rejection fixture: HTTP %d code %q detail %q", directErr.status, directErr.code, detail)
+		t.Errorf("unexpected source rejection fixture: %v", directErr)
 	}
 }
 
-func directFetchLiveLogErrorFixture(t *testing.T, label, sourceURL string, err error) {
+func directFetchLiveLogErrorFixture(t *testing.T, label string, err error) {
 	t.Helper()
 	var directErr *directFetchError
 	if !errors.As(err, &directErr) {
 		t.Logf("%s fixture had no typed Direct Fetch response", label)
 		return
 	}
-	code := safeDirectFetchText(directErr.code, sourceURL, true)
-	detail := safeDirectFetchText(directErr.detail, sourceURL, true)
-	requestID := safeDirectFetchText(directErr.requestID, sourceURL, true)
-	t.Logf("%s fixture: HTTP %d code %q detail %q request %q", label, directErr.status, code, detail, requestID)
+	t.Logf("%s fixture: %v", label, directErr)
 }
 
 func directFetchLiveMultipartUploads(ctx context.Context, dest *Fs, remote string) ([]types.MultipartUpload, error) {
