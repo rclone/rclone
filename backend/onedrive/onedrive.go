@@ -41,6 +41,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -844,19 +845,33 @@ type Options struct {
 
 // Fs represents a remote OneDrive
 type Fs struct {
-	name         string             // name of this remote
-	root         string             // the path we are working on
-	opt          Options            // parsed options
-	ci           *fs.ConfigInfo     // global config
-	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the OneDrive server
-	unAuth       *rest.Client       // no authentication connection to the OneDrive server
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *fs.Pacer          // pacer for API calls
-	tokenRenewer *oauthutil.Renew   // renew the token on expiry
-	driveID      string             // ID to use for querying Microsoft Graph
-	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
-	hashType     hash.Type          // type of the hash we are using
+	name         string                 // name of this remote
+	root         string                 // the path we are working on
+	opt          Options                // parsed options
+	ci           *fs.ConfigInfo         // global config
+	features     *fs.Features           // optional features
+	srv          *rest.Client           // the connection to the OneDrive server
+	unAuth       *rest.Client           // no authentication connection to the OneDrive server
+	dirCache     *dircache.DirCache     // Map of directory path to directory id
+	pacer        *fs.Pacer              // pacer for API calls
+	tokenRenewer *oauthutil.Renew       // renew the token on expiry
+	tokenSource  *oauthutil.TokenSource // source of the API token
+	sharePoint   *sharePointClients     // authenticated clients for SharePoint hosts
+	driveID      string                 // ID to use for querying Microsoft Graph
+	driveType    string                 // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
+	hashType     hash.Type              // type of the hash we are using
+}
+
+// sharePointClients holds the clients authenticated for SharePoint hosts
+type sharePointClients struct {
+	mu    sync.Mutex
+	hosts map[string]sharePointAuth
+}
+
+// sharePointAuth is a client authenticated for a SharePoint host
+type sharePointAuth struct {
+	client      *rest.Client
+	tokenSource oauth2.TokenSource
 }
 
 // Object describes a OneDrive object
@@ -1076,6 +1091,154 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// errPreauthRetired explains an authentication failure on a URL which
+// SharePoint used to return pre-authenticated.
+var errPreauthRetired = errors.New("SharePoint refused to authenticate a request - Microsoft is retiring pre-authenticated (tempauth) URLs, see https://rclone.org/onedrive/#pre-authenticated-urls")
+
+// sharePointDomains are the domains of SharePoint Online in the
+// different Microsoft clouds
+var sharePointDomains = []string{".sharepoint.com", ".sharepoint.us", ".sharepoint-mil.us", ".sharepoint.cn", ".sharepoint.de"}
+
+// stripTempauth removes the tempauth parameter from the URLs the API
+// returns, which simulates the retirement of pre-authenticated URLs
+// in tests.
+var stripTempauth = false
+
+// returnedURL processes a URL returned by the API before use
+func returnedURL(rawURL string) string {
+	if !stripTempauth {
+		return rawURL
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	q := u.Query()
+	q.Del("tempauth")
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+// urlAuth says how a URL returned by the API is authenticated
+type urlAuth int
+
+const (
+	urlAuthNone       urlAuth = iota // call without authentication
+	urlAuthAPI                       // call with the API token
+	urlAuthSharePoint                // call with a token for the SharePoint host
+)
+
+// apiHost returns the host the API calls made with f.srv go to.
+func (f *Fs) apiHost() string {
+	endpoint := graphAPIEndpoint[f.opt.Region]
+	if f.opt.TenantURL != "" {
+		endpoint = f.opt.TenantURL
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil || u.Scheme != "https" {
+		return ""
+	}
+	return u.Host
+}
+
+// urlAuthFor returns how to authenticate a URL returned by the API,
+// such as an upload session or an async job monitor.
+//
+// Pre-authenticated URLs fail if they are sent an Authorization
+// header and tokens must not be sent to other hosts, so only HTTPS
+// URLs without tempauth on the API host or a SharePoint host are
+// authenticated.
+func (f *Fs) urlAuthFor(rawURL string) urlAuth {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Scheme != "https" || u.Query().Has("tempauth") {
+		return urlAuthNone
+	}
+	if apiHost := f.apiHost(); apiHost != "" && strings.EqualFold(u.Host, apiHost) {
+		return urlAuthAPI
+	}
+	if isSharePointHost(u.Hostname()) {
+		return urlAuthSharePoint
+	}
+	return urlAuthNone
+}
+
+// isSharePointHost returns true if host is in a SharePoint Online domain.
+func isSharePointHost(host string) bool {
+	host = strings.ToLower(host)
+	for _, domain := range sharePointDomains {
+		if strings.HasSuffix(host, domain) {
+			return true
+		}
+	}
+	return false
+}
+
+// checkSharePointRedirect stops the SharePoint token being sent to a
+// host which isn't SharePoint, as the token is added to every request
+// the client makes.
+func checkSharePointRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if req.URL.Scheme != "https" || !isSharePointHost(req.URL.Hostname()) {
+		return fmt.Errorf("refusing to send a SharePoint token on a redirect to %s://%s", req.URL.Scheme, req.URL.Host)
+	}
+	return nil
+}
+
+// clientForURL returns the client to call a URL returned by the API with.
+func (f *Fs) clientForURL(ctx context.Context, rawURL string) (*rest.Client, error) {
+	switch f.urlAuthFor(rawURL) {
+	case urlAuthAPI:
+		return f.srv, nil
+	case urlAuthSharePoint:
+		u, _ := url.Parse(rawURL)
+		return f.sharePointClient(ctx, u.Host)
+	}
+	return f.unAuth, nil
+}
+
+// sharePointClient returns a client authenticated for the SharePoint
+// host, which upload session and async job monitor URLs need once
+// they are no longer pre-authenticated.
+//
+// The token is got from the existing credentials, which Entra ID
+// allows for SharePoint as the user has consented to the Graph file
+// scopes.
+func (f *Fs) sharePointClient(ctx context.Context, host string) (*rest.Client, error) {
+	if f.tokenSource == nil || f.sharePoint == nil {
+		return nil, fmt.Errorf("%w: no credentials to get a SharePoint token with", errPreauthRetired)
+	}
+	host = strings.ToLower(host)
+	f.sharePoint.mu.Lock()
+	defer f.sharePoint.mu.Unlock()
+	sp, ok := f.sharePoint.hosts[host]
+	if !ok {
+		tokenSource := f.tokenSource.ScopedTokenSource([]string{"https://" + host + "/.default"})
+		client := oauth2.NewClient(oauthutil.Context(ctx, fshttp.NewClient(ctx)), tokenSource)
+		client.CheckRedirect = checkSharePointRedirect
+		sp = sharePointAuth{client: rest.NewClient(client), tokenSource: tokenSource}
+		f.sharePoint.hosts[host] = sp
+		fs.Debugf(f, "Using a SharePoint token for %s", host)
+	}
+	// Get the token now so failures are reported before the client is used
+	if _, err := sp.tokenSource.Token(); err != nil {
+		return nil, fmt.Errorf("%w: failed to get a SharePoint token: %w", errPreauthRetired, err)
+	}
+	return sp.client, nil
+}
+
+// checkPreauthRetired adds an explanation to a 401 error from a URL
+// returned by the API which needs a SharePoint token, as these were
+// pre-authenticated until Microsoft retired them.
+func (f *Fs) checkPreauthRetired(rawURL string, resp *http.Response, err error) error {
+	if err == nil || resp == nil || resp.StatusCode != http.StatusUnauthorized ||
+		f.driveType == driveTypePersonal || errors.Is(err, errPreauthRetired) || f.urlAuthFor(rawURL) != urlAuthSharePoint {
+		return err
+	}
+	return fmt.Errorf("%w: %w", errPreauthRetired, err)
+}
+
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	const minChunkSize = fs.SizeSuffixBase
 	if cs%chunkSizeMultiple != 0 {
@@ -1144,16 +1307,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
-		name:      name,
-		root:      root,
-		opt:       *opt,
-		ci:        ci,
-		driveID:   opt.DriveID,
-		driveType: opt.DriveType,
-		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
-		unAuth:    rest.NewClient(client).SetRoot(rootURL),
-		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		hashType:  QuickXorHashType,
+		name:        name,
+		root:        root,
+		opt:         *opt,
+		ci:          ci,
+		driveID:     opt.DriveID,
+		driveType:   opt.DriveType,
+		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
+		tokenSource: ts,
+		sharePoint:  &sharePointClients{hosts: make(map[string]sharePointAuth)},
+		unAuth:      rest.NewClient(client).SetRoot(rootURL),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		hashType:    QuickXorHashType,
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:          true,
@@ -1725,16 +1890,24 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		var resp *http.Response
 		var err error
 		var body []byte
+		var redirected bool
 		err = f.pacer.Call(func() (bool, error) {
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, location, nil)
 			if err != nil {
 				return false, err
 			}
-			// The monitor URL needs no authentication, but it should still
-			// go through the configured transport and honour ctx
-			resp, err = f.unAuth.Do(req)
+			client, err := f.clientForURL(ctx, location)
+			if err != nil {
+				return false, err
+			}
+			resp, err = client.Do(req)
 			if err != nil {
 				return fserrors.ShouldRetry(err), err
+			}
+			redirected = resp.Request.URL.String() != req.URL.String()
+			if resp.StatusCode == http.StatusUnauthorized {
+				_ = resp.Body.Close()
+				return false, f.checkPreauthRetired(location, resp, fmt.Errorf("async job monitor: HTTP error %s", resp.Status))
 			}
 			body, err = rest.ReadBody(resp)
 			return fserrors.ShouldRetry(err), err
@@ -1747,6 +1920,11 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		err = json.Unmarshal(body, &status)
 		if err != nil {
 			return fmt.Errorf("async status result not JSON: %q: %w", body, err)
+		}
+		// An authenticated monitor redirects to the new item when the
+		// job has finished instead of returning its status
+		if status.Status == "" && redirected {
+			status.Status = "completed"
 		}
 
 		switch status.Status {
@@ -1847,7 +2025,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	}
 
 	// read location header
-	location := resp.Header.Get("Location")
+	location := returnedURL(resp.Header.Get("Location"))
 	if location == "" {
 		return nil, errors.New("didn't receive location header in copy response")
 	}
@@ -1856,6 +2034,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	err = f.waitForJob(ctx, location, dstObj)
 	if err == errAsyncJobAccessDenied {
 		fs.Debugf(src, "Server-side copy failed - file not shared between drives")
+		return nil, fs.ErrorCantCopy
+	}
+	if errors.Is(err, errPreauthRetired) {
+		fs.Debugf(src, "Server-side copy can't be monitored - copying another way: %v", err)
 		return nil, fs.ErrorCantCopy
 	}
 	if err != nil {
@@ -2532,16 +2714,23 @@ func (o *Object) openContentPrefer(ctx context.Context, options ...fs.OpenOption
 	return o.openWithRedirect(ctx, &opts)
 }
 
-// openWithRedirect downloads via /content style endpoints that 302 to a preauthenticated URL.
+// openWithRedirect downloads via /content style endpoints that 302 to
+// a download URL, which is pre-authenticated or needs a SharePoint
+// token.
 func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.ReadCloser, err error) {
 	var resp *http.Response
-	// Make a note of the redirect target as we need to call it without Auth
+	// Make a note of the redirect target as it needs different auth
 	var redirectReq *http.Request
 	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 10 {
 			return errors.New("stopped after 10 redirects")
 		}
-		// Preauthenticated download URLs must not carry the Graph Authorization header.
+		if stripTempauth {
+			if u, err := url.Parse(returnedURL(req.URL.String())); err == nil {
+				req.URL = u
+			}
+		}
+		// Download URLs must not carry the Graph Authorization header.
 		req.Header.Del("Authorization")
 		// Keep Prefer on the redirect when forcing infected download; some SharePoint
 		// endpoints honor it only on the final download request.
@@ -2580,17 +2769,24 @@ func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.R
 		return nil, err
 	}
 	if redirectReq != nil {
+		redirectURL := redirectReq.URL.String()
+		var client *rest.Client
+		client, err = o.fs.clientForURL(ctx, redirectURL)
+		if err != nil {
+			return nil, err
+		}
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err = o.fs.unAuth.Do(redirectReq)
+			resp, err = client.Do(redirectReq)
 			if err != nil {
 				return shouldRetry(ctx, resp, err)
 			}
-			// unAuth.Do does not check status; treat non-2xx as failure so a malware
+			// Do does not check status; treat non-2xx as failure so a malware
 			// JSON body is not written out as file content.
 			if resp.StatusCode < 200 || resp.StatusCode > 299 {
 				body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 				_ = resp.Body.Close()
 				err = fmt.Errorf("HTTP error %d (%s) %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+				err = o.fs.checkPreauthRetired(redirectURL, resp, err)
 				if strings.Contains(string(body), "malwareDetected") || resp.Header.Get("X-Virus-Infected") != "" {
 					err = malwareDownloadError(o.fs.opt.AVOverride, err)
 				}
@@ -2652,12 +2848,16 @@ func (o *Object) getPosition(ctx context.Context, url string) (pos int64, err er
 	}
 	var info api.UploadFragmentResponse
 	var resp *http.Response
+	client, err := o.fs.clientForURL(ctx, url)
+	if err != nil {
+		return 0, err
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &info)
+		resp, err = client.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return 0, err
+		return 0, o.fs.checkPreauthRetired(url, resp, err)
 	}
 	if len(info.NextExpectedRanges) != 1 {
 		return 0, fmt.Errorf("bad number of ranges in upload position: %v", info.NextExpectedRanges)
@@ -2681,6 +2881,10 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 	var resp *http.Response
 	var body []byte
 	skip := int64(0)
+	client, err := o.fs.clientForURL(ctx, url)
+	if err != nil {
+		return nil, err
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		toSend := chunkSize - skip
 		opts := rest.Opts{
@@ -2692,7 +2896,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			Options:       options,
 		}
 		_, _ = chunk.Seek(skip, io.SeekStart)
-		resp, err = o.fs.unAuth.Call(ctx, &opts)
+		resp, err = client.Call(ctx, &opts)
 		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
 			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
 			pos, posErr := o.getPosition(ctx, url)
@@ -2731,7 +2935,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 		}
 		return false, nil
 	})
-	return info, err
+	return info, o.fs.checkPreauthRetired(url, resp, err)
 }
 
 // cancelUploadSession cancels an upload session
@@ -2742,11 +2946,15 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 		NoResponse: true,
 	}
 	var resp *http.Response
+	client, err := o.fs.clientForURL(ctx, url)
+	if err != nil {
+		return err
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.unAuth.Call(ctx, &opts)
+		resp, err = client.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
-	return
+	return o.fs.checkPreauthRetired(url, resp, err)
 }
 
 // uploadMultipart uploads a file using multipart upload
@@ -2764,7 +2972,20 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	if err != nil {
 		return nil, err
 	}
-	uploadURL := session.UploadURL
+	uploadURL := returnedURL(session.UploadURL)
+
+	// Check a session which needs SharePoint authentication can get it
+	// before reading any data, so it can be uploaded in a single part
+	// instead if it can't.
+	if o.fs.urlAuthFor(uploadURL) == urlAuthSharePoint {
+		if _, err = o.getPosition(ctx, uploadURL); err != nil {
+			if !errors.Is(err, errPreauthRetired) || size >= int64(maxSinglePartSize) {
+				return nil, err
+			}
+			fs.Debugf(o, "Uploading in a single part as the upload session can't be used: %v", err)
+			return o.uploadSinglepart(ctx, in, src, options...)
+		}
+	}
 
 	// Cancel the session if something went wrong
 	defer atexit.OnError(&err, func() {

@@ -1226,6 +1226,28 @@ rclone cleanup remote:path/subdir               # unconditionally remove all old
 
 ## Troubleshooting
 
+### Pre-authenticated URLs
+
+Microsoft is [retiring pre-authenticated (tempauth) URLs](https://devblogs.microsoft.com/microsoft365dev/pre-authenticated-tempauth-urls-are-retiring-move-to-microsoft-entra-id-tokens-before-april-1-2027/)
+in OneDrive for Business and SharePoint from April 1, 2027.
+
+Rclone uses these URLs when downloading files, when uploading files
+bigger than `--onedrive-upload-cutoff` in chunks and when doing
+server-side copies. When SharePoint returns them without
+pre-authentication rclone authenticates them with a SharePoint token
+which it gets using the existing login, so no reconfiguration is
+needed. OneDrive Personal is not affected.
+
+If rclone can't get a SharePoint token, or SharePoint refuses it, you
+will see the error `SharePoint refused to authenticate a request`. In
+this case rclone uploads files smaller than 250 MiB in a single
+request instead and copies files by downloading and uploading them,
+but bigger files can't be uploaded and downloads may fail.
+
+SharePoint does not accept tokens from the client credentials flow
+which were got with a client secret, so this affects
+`client_credentials` users.
+
 ### Excessive throttling or blocked on SharePoint
 
 If you experience excessive throttling or is being blocked on SharePoint then
