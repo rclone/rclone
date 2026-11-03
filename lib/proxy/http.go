@@ -51,12 +51,13 @@ func HTTPConnectDial(network, addr string, proxyURL *url.URL, proxyDialer proxy.
 
 	// prepare proxy host with default ports
 	host := proxyURL.Host
-	if !strings.Contains(host, ":") {
+	if proxyURL.Port() == "" {
+		port := "80"
 		if strings.EqualFold(proxyURL.Scheme, "https") {
-			host += ":443"
-		} else {
-			host += ":80"
+			port = "443"
 		}
+		// JoinHostPort brackets an IPv6 literal such as [::1]
+		host = net.JoinHostPort(proxyURL.Hostname(), port)
 	}
 
 	// connect to proxy
