@@ -3395,13 +3395,13 @@ at rest or transfer. Detailed instructions for popular OSes:
 - Generate and store a password
 
   ```powershell
-  New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"
+  Add-Type -AssemblyName System.Web; New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "$env:USERPROFILE\rclone-credential.xml"
   ```
 
 - Add the password retrieval instruction
 
   ```powershell
-  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")
+  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "powershell [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path '$env:USERPROFILE\rclone-credential.xml').Password))")
   ```
 
 #### Encrypt the config file (all systems)
