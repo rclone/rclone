@@ -3915,19 +3915,6 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return f.publicLink(ctx, remote, expire, &s3.GetObjectInput{})
 }
 
-// unsignedPresigner returns the request URL without signing it
-type unsignedPresigner struct{}
-
-// PresignHTTP returns the URL of r without the X-Amz-Expires parameter,
-// which has no effect on an unsigned URL.
-func (unsignedPresigner) PresignHTTP(ctx context.Context, credentials aws.Credentials, r *http.Request, payloadHash string, service string, region string, signingTime time.Time, optFns ...func(*v4signer.SignerOptions)) (string, http.Header, error) {
-	u := *r.URL
-	q := u.Query()
-	q.Del("X-Amz-Expires")
-	u.RawQuery = q.Encode()
-	return u.String(), nil, nil
-}
-
 func (f *Fs) publicLink(ctx context.Context, remote string, expire fs.Duration, req *s3.GetObjectInput) (link string, err error) {
 	if strings.HasSuffix(remote, "/") {
 		return "", fs.ErrorCantShareDirectories
@@ -3937,30 +3924,15 @@ func (f *Fs) publicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", err
 	}
 	o := obj.(*Object)
-	anonymous := f.c.Options().Credentials == nil
 	if expire > maxExpireDuration {
-		// Unsigned links don't expire, so the limit doesn't apply to them
-		if !anonymous {
-			fs.Logf(f, "Public Link: Reducing expiry to %v as %v is greater than the max time allowed", maxExpireDuration, expire)
-		}
+		fs.Logf(f, "Public Link: Reducing expiry to %v as %v is greater than the max time allowed", maxExpireDuration, expire)
 		expire = maxExpireDuration
 	}
 	bucket, bucketPath := f.split(remote)
 	req.Bucket = &bucket
 	req.Key = &bucketPath
 	req.VersionId = o.versionID
-	presignOpts := []func(*s3.PresignOptions){s3.WithPresignExpires(time.Duration(expire))}
-	if anonymous {
-		// Anonymous remotes can only read public objects, so return the
-		// unsigned URL. The SDK refuses to presign without credentials.
-		presignOpts = append(presignOpts, func(o *s3.PresignOptions) {
-			o.Presigner = unsignedPresigner{}
-			o.ClientOptions = append(o.ClientOptions, func(o *s3.Options) {
-				o.Credentials = &NoOpCredentialsProvider{}
-			})
-		})
-	}
-	httpReq, err := s3.NewPresignClient(f.c).PresignGetObject(ctx, req, presignOpts...)
+	httpReq, err := s3.NewPresignClient(f.c).PresignGetObject(ctx, req, s3.WithPresignExpires(time.Duration(expire)))
 	if err != nil {
 		return "", err
 	}
@@ -3991,11 +3963,7 @@ not the lifetime of the signed link. It must be an HTTP date, such as
 ` + "`Thu, 01 Jan 1970 00:00:00 GMT`" + `.
 
 The overrides are included in the signature and must not be changed in the
-returned URL. They do not modify the object's stored metadata.
-
-A remote without credentials returns an unsigned link that does not expire.
-S3 does not allow response header overrides on unsigned requests, so the
-overrides return an error on such a remote.`,
+returned URL. They do not modify the object's stored metadata.`,
 	Opts: map[string]string{
 		"expire":                       "How long the link will be valid (default 7d, maximum 7d).",
 		"response-cache-control":       "Set the Cache-Control response header.",
@@ -4268,14 +4236,6 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				req.ResponseExpires = &date
 			default:
 				return nil, fmt.Errorf("unknown link option %q", key)
-			}
-		}
-		if f.c.Options().Credentials == nil {
-			for key := range opt {
-				// S3 rejects response header overrides on unsigned requests
-				if strings.HasPrefix(key, "response-") {
-					return nil, fmt.Errorf("link option %q needs credentials: anonymous links can't override response headers", key)
-				}
 			}
 		}
 		return f.publicLink(ctx, arg[0], expire, &req)
