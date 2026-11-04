@@ -10,6 +10,10 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
+**Note**: OneDrive for Business and SharePoint users need rclone
+v1.76 or later from April 1, 2027 - see
+[Pre-authenticated URLs](#pre-authenticated-urls).
+
 ## Configuration
 
 The initial setup for OneDrive involves getting a token from
@@ -1230,6 +1234,13 @@ rclone cleanup remote:path/subdir               # unconditionally remove all old
 
 Microsoft is [retiring pre-authenticated (tempauth) URLs](https://devblogs.microsoft.com/microsoft365dev/pre-authenticated-tempauth-urls-are-retiring-move-to-microsoft-entra-id-tokens-before-april-1-2027/)
 in OneDrive for Business and SharePoint from April 1, 2027.
+
+**Upgrade to rclone v1.76 or later before April 1, 2027.** Earlier
+versions rely on pre-authenticated URLs, so after that date their
+downloads, chunked uploads and server-side copies will fail with
+OneDrive for Business and SharePoint. Rclone v1.76 and later keep
+working with the existing configuration, apart from the client
+credentials flow with a client secret (see below).
 
 Rclone uses these URLs when downloading files, when uploading files
 bigger than `--onedrive-upload-cutoff` in chunks and when doing
