@@ -861,6 +861,15 @@ func (u *UI) popupBox(text []string) {
 	u.showBox = true
 }
 
+// closeBox hides the box and disarms any menu it was showing, so a
+// later Enter can't run the handler of a dialog that was dismissed
+func (u *UI) closeBox() {
+	u.showBox = false
+	u.boxMenu = []string{}
+	u.boxMenuButton = 0
+	u.boxMenuHandler = nil
+}
+
 // togglePopupBox shows a box with the text in
 func (u *UI) togglePopupBox(text []string) {
 	if u.showBox && reflect.DeepEqual(u.boxText, text) {
@@ -996,7 +1005,7 @@ outer:
 				switch c {
 				case key(tcell.KeyEsc), key(tcell.KeyCtrlC), 'q':
 					if u.showBox || c == key(tcell.KeyEsc) {
-						u.showBox = false
+						u.closeBox()
 					} else {
 						break outer
 					}
@@ -1015,7 +1024,7 @@ outer:
 					}
 					u.up()
 				case key(tcell.KeyEnter):
-					if len(u.boxMenu) > 0 {
+					if u.showBox && len(u.boxMenu) > 0 {
 						u.handleBoxOption()
 						break
 					}
