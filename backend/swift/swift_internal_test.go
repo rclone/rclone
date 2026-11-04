@@ -2,12 +2,19 @@ package swift
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/ncw/swift/v2"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInternalUrlEncode(t *testing.T) {
@@ -65,4 +72,75 @@ func TestInternalShouldRetryHeaders(t *testing.T) {
 	dt = after.Sub(start)
 	assert.True(t, dt >= time.Hour-time.Second && dt <= time.Hour+time.Second)
 
+}
+
+func TestInternalDeleteSegmentsWithoutBulkDelete(t *testing.T) {
+	ctx := context.Background()
+	var (
+		mu          sync.Mutex
+		bulkDeletes int
+		deleted     []string
+	)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/v1.0":
+			w.Header().Set("X-Storage-Url", "http://"+r.Host+"/v1/AUTH_test")
+			w.Header().Set("X-Auth-Token", "token")
+		case r.URL.Query().Get("bulk-delete") == "1":
+			mu.Lock()
+			bulkDeletes++
+			mu.Unlock()
+			// Swift returns this when the bulk middleware isn't in the pipeline
+			w.WriteHeader(http.StatusForbidden)
+		case r.Method == http.MethodDelete && strings.HasSuffix(r.URL.Path, "/missing"):
+			w.WriteHeader(http.StatusNotFound)
+		case r.Method == http.MethodDelete:
+			mu.Lock()
+			deleted = append(deleted, r.URL.Path)
+			mu.Unlock()
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	f := &Fs{
+		c: &swift.Connection{
+			UserName: "test",
+			ApiKey:   "test",
+			AuthUrl:  ts.URL + "/v1.0",
+		},
+		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+	}
+	segments := []string{"file/00000000", "file/00000001"}
+	want := []string{
+		"/v1/AUTH_test/segments/file/00000000",
+		"/v1/AUTH_test/segments/file/00000001",
+	}
+	check := func(t *testing.T) {
+		mu.Lock()
+		defer mu.Unlock()
+		assert.Equal(t, 1, bulkDeletes)
+		assert.Equal(t, want, deleted)
+		bulkDeletes, deleted = 0, nil
+	}
+
+	t.Run("RemoveLargeObject", func(t *testing.T) {
+		o := &Object{fs: f}
+		require.NoError(t, o.removeSegmentsLargeObject(ctx, "segments", segments))
+		check(t)
+	})
+
+	t.Run("FailedUpload", func(t *testing.T) {
+		su := &segmentedUpload{f: f, container: "segments", segments: segments}
+		su.onFail()
+		check(t)
+	})
+
+	t.Run("MissingSegment", func(t *testing.T) {
+		o := &Object{fs: f}
+		require.NoError(t, o.removeSegmentsLargeObject(ctx, "segments", append(segments, "file/missing")))
+		check(t)
+	})
 }
