@@ -1677,8 +1677,8 @@ func TestSyncWithTrackRenamesStrategyLeaf(t *testing.T) {
 func toyFileTransfers(r *fstest.Run) int64 {
 	remote := r.Fremote.Name()
 	transfers := 1
-	if strings.HasPrefix(remote, "TestChunker") && strings.HasSuffix(remote, "S3") {
-		transfers++ // Extra Copy because S3 emulates Move as Copy+Delete.
+	if unWrap := r.Fremote.Features().UnWrap; strings.HasPrefix(remote, "TestChunker") && unWrap != nil && unWrap().Features().Move == nil {
+		transfers++ // Extra Copy because chunker emulates Move as Copy+Delete.
 	}
 	return int64(transfers)
 }

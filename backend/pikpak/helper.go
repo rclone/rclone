@@ -184,7 +184,7 @@ func (f *Fs) patchFile(ctx context.Context, ID string, req *api.File) (info *api
 }
 
 // getTask gets api.Task from API for the ID passed
-func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api.Task, err error) {
+func (f *Fs) getTask(ctx context.Context, ID string) (info *api.Task, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/drive/v1/tasks/" + ID,
@@ -192,27 +192,48 @@ func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
-		if checkPhase {
-			if err == nil && info.Phase != api.PhaseTypeComplete {
-				// could be pending right after the task is created
-				return true, fmt.Errorf("%s (%s) is still in %s", info.Name, info.Type, info.Phase)
-			}
-		}
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
 }
 
-// waitTask waits for async tasks to be completed
+// waitTask waits up to taskTimeout for the async task ID to complete
 func (f *Fs) waitTask(ctx context.Context, ID string) (err error) {
-	time.Sleep(taskWaitTime)
-	if info, err := f.getTask(ctx, ID, true); err != nil {
-		if info == nil {
-			return fmt.Errorf("can't verify the task is completed: %q", ID)
+	start := time.Now()
+	sleep := taskWaitTime
+	for {
+		if err := sleepCtx(ctx, sleep); err != nil {
+			return err
 		}
-		return fmt.Errorf("can't verify the task is completed: %#v", info)
+		info, err := f.getTask(ctx, ID)
+		if err != nil {
+			return fmt.Errorf("can't verify the task %q is completed: %w", ID, err)
+		}
+		switch info.Phase {
+		case api.PhaseTypeComplete:
+			fs.Debugf(f, "task %q (%s) completed after %v", ID, info.Type, time.Since(start))
+			return nil
+		case api.PhaseTypeError:
+			return fmt.Errorf("task failed: %#v", info)
+		}
+		// Tasks can stay pending for tens of seconds when the server is busy
+		if time.Since(start) > taskTimeout {
+			return fmt.Errorf("can't verify the task is completed after %v: %#v", time.Since(start), info)
+		}
+		sleep = min(2*sleep, taskMaxSleep)
 	}
-	return
+}
+
+// sleepCtx sleeps for d or until ctx is cancelled
+func sleepCtx(ctx context.Context, d time.Duration) error {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // deleteTask remove a task having the specified ID
