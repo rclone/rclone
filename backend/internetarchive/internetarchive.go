@@ -638,6 +638,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 	if err != nil {
 		return nil, err
 	}
+	if mdata != nil {
+		// IA ignores file metadata headers with the COPY directive.
+		headers["x-amz-metadata-directive"] = "REPLACE"
+	}
 	for key, value := range mdata {
 		key = strings.ToLower(key)
 		if key == "mtime" {
