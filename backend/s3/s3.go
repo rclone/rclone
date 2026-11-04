@@ -1578,7 +1578,12 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 	var out *s3.PutObjectOutput
 	err = f.directFetchCall(ctx, "PutObject", func() error {
 		var callErr error
-		out, callErr = f.c.PutObject(ctx, ui.req, directFetchOptions(sourceURL, "", pin))
+		out, callErr = f.c.PutObject(ctx, ui.req, directFetchOptions(sourceURL, "", pin), func(options *s3.Options) {
+			// A single-part Direct Fetch stores the source's x-amz-meta-*
+			// unless asked to REPLACE them with the request's, as for
+			// CopyObject
+			options.APIOptions = append(options.APIOptions, smithyhttp.SetHeaderValue("X-Amz-Metadata-Directive", "REPLACE"))
+		})
 		return callErr
 	})
 	if err != nil {

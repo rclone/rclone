@@ -629,6 +629,7 @@ func TestDirectFetchSingle(t *testing.T) {
 	assert.Equal(t, "private", put.request.Header.Get("Cache-Control"))
 	assert.Equal(t, "test", put.request.Header.Get("X-Amz-Meta-Owner"))
 	assert.NotEmpty(t, put.request.Header.Get("X-Amz-Meta-Mtime"))
+	assert.Equal(t, "REPLACE", put.request.Header.Get("X-Amz-Metadata-Directive"))
 	assertDirectFetchWireRequest(t, put, sourceURL, "")
 	assertDirectFetchPin(t, put, directFetchTestSourceETag)
 	head := <-captures
