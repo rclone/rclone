@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/rclone/rclone/fs"
@@ -434,4 +435,40 @@ func TestFileRename(t *testing.T) {
 
 func TestFileStructSize(t *testing.T) {
 	t.Logf("File struct has size %d bytes", unsafe.Sizeof(File{}))
+}
+
+// newFileQueuedForUpload creates a new file in the VFS whose upload is
+// queued, then puts the same object on the remote as if the upload had
+// landed before being cancelled.
+func newFileQueuedForUpload(t *testing.T) (r *fstest.Run, vfs *VFS) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = fs.Duration(time.Hour)
+	r, vfs = newTestVFSOpt(t, &opt)
+
+	fd, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	require.NoError(t, err)
+	_, err = fd.Write([]byte("file1 contents"))
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+
+	r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	return r, vfs
+}
+
+func TestFileRemoveCancelledUploadLeftOnRemote(t *testing.T) {
+	r, vfs := newFileQueuedForUpload(t)
+
+	require.NoError(t, vfs.Remove("file1"))
+
+	r.CheckRemoteItems(t)
+}
+
+func TestFileRenameCancelledUploadLeftOnRemote(t *testing.T) {
+	r, vfs := newFileQueuedForUpload(t)
+
+	require.NoError(t, vfs.Rename("file1", "file2"))
+
+	r.CheckRemoteItems(t)
+	require.NoError(t, vfs.Remove("file2"))
 }
