@@ -419,3 +419,32 @@ func TestOpenRedirectAuth(t *testing.T) {
 	assert.ErrorIs(t, err, errPreauthRetired)
 	assert.Empty(t, *auths)
 }
+
+// TestOpenRangeCheck checks that a download which doesn't return the
+// requested range is an error rather than wrong data.
+func TestOpenRangeCheck(t *testing.T) {
+	content := []byte("0123456789abcdefghij")
+	for _, test := range []struct {
+		name    string
+		handler http.HandlerFunc
+		wantErr error
+	}{
+		{"ignored", func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write(content)
+		}, fs.ErrorRangeIgnored},
+		{"wrong range", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Range", "bytes 0-4/20")
+			w.WriteHeader(http.StatusPartialContent)
+			_, _ = w.Write(content[:5])
+		}, nil},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			o, _ := newDownloadTest(t, content, test.handler)
+			_, err := o.Open(context.Background(), &fs.RangeOption{Start: 5, End: 9})
+			require.Error(t, err)
+			if test.wantErr != nil {
+				assert.ErrorIs(t, err, test.wantErr)
+			}
+		})
+	}
+}

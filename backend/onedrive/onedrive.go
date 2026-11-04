@@ -2808,7 +2808,19 @@ func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.R
 		// Overwrite size with actual size since size readings from Onedrive is unreliable.
 		o.size = resp.ContentLength
 	}
-	return resp.Body, err
+	return o.checkRange(resp, opts.Options)
+}
+
+// checkRange returns the body of a download, checking it is the range
+// requested in options.
+func (o *Object) checkRange(resp *http.Response, options []fs.OpenOption) (in io.ReadCloser, err error) {
+	// The size isn't passed as it is unreliable on OneDrive
+	err = rest.CheckContentRange(resp, options, -1)
+	if err != nil {
+		_ = resp.Body.Close()
+		return nil, err
+	}
+	return resp.Body, nil
 }
 
 // malwareDownloadError formats an error when the server blocks a malware-flagged file.
