@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bufio"
+	"errors"
 	"net"
 	"net/url"
 	"strings"
@@ -117,4 +118,39 @@ func TestHTTPConnectDialNon200(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, conn)
 	assert.Contains(t, err.Error(), "403")
+}
+
+// recordDialer records the address it is asked to dial and fails.
+type recordDialer struct {
+	addr string
+}
+
+func (d *recordDialer) Dial(network, addr string) (net.Conn, error) {
+	d.addr = addr
+	return nil, errors.New("not dialing")
+}
+
+// Check the proxy is dialled on the scheme's default port when the
+// proxy URL has none, including for IPv6 literals.
+func TestHTTPConnectDialDefaultPort(t *testing.T) {
+	for _, test := range []struct {
+		proxy string
+		want  string
+	}{
+		{"http://proxy.example", "proxy.example:80"},
+		{"https://proxy.example", "proxy.example:443"},
+		{"http://proxy.example:3128", "proxy.example:3128"},
+		{"http://[::1]", "[::1]:80"},
+		{"https://[2001:db8::1]", "[2001:db8::1]:443"},
+		{"http://[::1]:3128", "[::1]:3128"},
+	} {
+		t.Run(test.proxy, func(t *testing.T) {
+			proxyURL, err := url.Parse(test.proxy)
+			require.NoError(t, err)
+			dialer := &recordDialer{}
+			_, err = HTTPConnectDial("tcp", "example.com:1234", proxyURL, dialer)
+			require.Error(t, err)
+			assert.Equal(t, test.want, dialer.addr)
+		})
+	}
 }
