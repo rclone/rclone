@@ -1889,6 +1889,11 @@ will only work well for the bucket based backends (eg s3, b2,
 azureblob, swift) but these are the only backends likely to have
 millions of entries in a directory.
 
+When reading the sorted entries back from disk, most backends need
+one request per object (eg a HEAD request) to recreate it. The s3
+and azureblob backends store the data from the listing on disk with
+each entry, so they need no extra requests.
+
 ### --log-file string
 
 Log all of rclone's output to a file. This is not active by default.
