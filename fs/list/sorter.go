@@ -180,7 +180,11 @@ func (ls *Sorter) sendEntriesToExtSort(entries fs.DirEntries) (err error) {
 }
 
 func (ls *Sorter) startExtSort() (err error) {
-	fs.LogfCtx(ls.ctx, ls.f, "Switching to on disk sorting as more than %d entries in one directory detected", ls.cutoff)
+	if ls.newObjectFromSerialized != nil {
+		fs.LogfCtx(ls.ctx, ls.f, "Switching to on disk sorting as more than %d entries in one directory detected", ls.cutoff)
+	} else {
+		fs.LogfCtx(ls.ctx, ls.f, "Switching to on disk sorting as more than %d entries in one directory detected - each entry will be checked individually which may be slow, see --list-cutoff", ls.cutoff)
+	}
 	ls.inputChan = make(chan string, 100)
 	// Options to control the extsort
 	opt := extsort.Config{
