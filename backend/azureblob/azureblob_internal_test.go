@@ -691,3 +691,27 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid tag")
 	})
 }
+
+func TestSerializeObject(t *testing.T) {
+	ctx := context.Background()
+	f := &Fs{}
+	encoding := "gzip"
+	for _, o := range []*Object{
+		{fs: f, remote: "file.txt", modTime: time.Unix(1700000000, 123456789).UTC(), md5: "ASNFZ4mrze8BI0VniavN7w==", size: 42, mimeType: "text/plain", accessTier: blob.AccessTierHot, meta: map[string]string{"mtime": "2023-11-14T22:13:20.123456789Z"}},
+		{fs: f, remote: "nomd5.bin", modTime: time.Unix(1700000000, 0).UTC(), size: -1, contentEncoding: &encoding},
+	} {
+		t.Run(o.remote, func(t *testing.T) {
+			data, err := o.Serialize()
+			require.NoError(t, err)
+			got, err := f.NewObjectFromSerialized(ctx, o.remote, data)
+			require.NoError(t, err)
+			assert.Equal(t, o, got)
+		})
+	}
+
+	t.Run("WithTags", func(t *testing.T) {
+		o := &Object{fs: f, remote: "file.txt", tags: map[string]string{"a": "b"}}
+		_, err := o.Serialize()
+		assert.Error(t, err)
+	})
+}
