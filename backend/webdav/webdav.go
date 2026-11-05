@@ -27,6 +27,7 @@ import (
 
 	"github.com/Azure/go-ntlmssp"
 	"golang.org/x/sync/singleflight"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/rclone/rclone/backend/webdav/api"
 	"github.com/rclone/rclone/backend/webdav/odrvcookie"
@@ -61,11 +62,13 @@ const defaultEncodingSharepointNTLM = (encoder.EncodeWin |
 	encoder.EncodeRightSpace |
 	encoder.EncodeInvalidUtf8)
 
+const defaultEncodingDcache = encoder.Display | encoder.EncodeInvalidUtf8
+
 // Register with Fs
 func init() {
 	configEncodingHelp := fmt.Sprintf(
-		"%s\n\nDefault encoding is %s for sharepoint-ntlm or identity otherwise.",
-		config.ConfigEncodingHelp, defaultEncodingSharepointNTLM)
+		"%s\n\nDefault encoding is %s for sharepoint-ntlm, %s for dcache or identity otherwise.",
+		config.ConfigEncodingHelp, defaultEncodingSharepointNTLM, defaultEncodingDcache)
 
 	fs.Register(&fs.RegInfo{
 		Name:        "webdav",
@@ -99,6 +102,9 @@ func init() {
 			}, {
 				Value: "rclone",
 				Help:  "rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol",
+			}, {
+				Value: "dcache",
+				Help:  "dCache storage system",
 			}, {
 				Value: "other",
 				Help:  "Other site/service or software",
@@ -139,9 +145,9 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 The headers are only sent to the host in the configured URL. If the
 server redirects to another host (including a subdomain or a different
 port) the headers are not sent to it, or to any further hop in that
-redirect chain. The exception is the directory listing and file
-download requests when auth_redirect is set, as that keeps all
-credentials across redirects.
+redirect chain. The exception is when auth_redirect is set: directory
+listings, file downloads and enabled upload redirects keep credentials
+across redirects.
 `,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
@@ -172,6 +178,34 @@ Set to 0 to disable chunked uploading.
 			Advanced: true,
 			Default:  false,
 		},
+			{
+				Name: "upload_redirect",
+				Help: `Allow upload redirects before sending file data (e.g. dCache).
+
+Sends Expect: 100-continue and follows 307/308 redirects without buffering
+the file. A redirect after reading starts returns a retryable error so
+copy and sync can reopen the source and restart the transfer.
+Use --expect-continue-timeout to allow more time for the server to select
+a storage node before rclone starts sending data. The default is 1s,
+which may be too short under load; try --expect-continue-timeout 60s.
+
+Leave unset to enable this for the dcache vendor and disable it for other vendors.
+`,
+				Advanced: true,
+				Default:  fs.Tristate{},
+			},
+			{
+				Name: "upload_redirect_no_content_type",
+				Help: `Omit Content-Type on redirected uploads.
+
+Enable this with upload_redirect if the storage pool rejects uploads with
+"501 Content-Type is not implemented", as some dCache pools do.
+
+Leave unset to enable this for the dcache vendor and disable it for other vendors.
+`,
+				Advanced: true,
+				Default:  fs.Tristate{},
+			},
 			fshttp.UnixSocketConfig,
 			{
 				Name: "auth_redirect",
@@ -187,6 +221,8 @@ to an unknown webserver.
 However this is desirable in some circumstances. If you are getting
 an error like "401 Unauthorized" when rclone is attempting to read
 files from the webdav server then you can try this option.
+
+This also applies to upload redirects when upload_redirect is enabled.
 
 Note that enabling this also permits sending your credentials over a
 plaintext HTTP connection if the server redirects from HTTPS to HTTP,
@@ -214,6 +250,8 @@ type Options struct {
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
 	UnixSocket         string               `config:"unix_socket"`
 	AuthRedirect       bool                 `config:"auth_redirect"`
+	UploadRedirect     fs.Tristate          `config:"upload_redirect"`
+	OmitContentType    fs.Tristate          `config:"upload_redirect_no_content_type"`
 }
 
 // Fs represents a remote webdav
@@ -525,6 +563,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Enc == encoder.EncodeZero && opt.Vendor == "sharepoint-ntlm" {
 		opt.Enc = defaultEncodingSharepointNTLM
 	}
+	if opt.Enc == encoder.EncodeZero && opt.Vendor == "dcache" {
+		opt.Enc = defaultEncodingDcache
+	}
 
 	// Parse the endpoint
 	u, err := url.Parse(opt.URL)
@@ -573,7 +614,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	for i := 0; i < len(opt.Headers); i += 2 {
 		headerNames = append(headerNames, opt.Headers[i])
 	}
-	f.checkRedirect = rest.StripHeadersOnCrossHostRedirectFn(headerNames...)
+	stripHeaders := rest.StripHeadersOnCrossHostRedirectFn(headerNames...)
+	f.checkRedirect = func(req *http.Request, via []*http.Request) error {
+		f.restoreRedirectPath(req, via)
+		return stripHeaders(req, via)
+	}
 	client.CheckRedirect = f.checkRedirect
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
@@ -655,6 +700,21 @@ func (f *Fs) fetchBearerToken(cmd fs.SpaceSepList) (string, error) {
 		return "", fmt.Errorf("failed to get bearer token using %q: %s: %w", f.opt.BearerTokenCommand, stderrString, err)
 	}
 	return stdoutString, nil
+}
+
+func (f *Fs) restoreRedirectPath(req *http.Request, via []*http.Request) {
+	// dCache may normalize redirect paths to NFC, but pools require the original path.
+	if f.opt.Vendor == "dcache" && len(via) > 0 && norm.NFC.String(req.URL.Path) == norm.NFC.String(via[0].URL.Path) {
+		req.URL.Path, req.URL.RawPath = via[0].URL.Path, via[0].URL.RawPath
+	}
+}
+
+func (f *Fs) authRedirect(req *http.Request, via []*http.Request) error {
+	if f.opt.AuthRedirect {
+		f.restoreRedirectPath(req, via)
+		return rest.ClientWithAuthRedirects(&http.Client{}).CheckRedirect(req, via)
+	}
+	return f.checkRedirect(req, via)
 }
 
 // preserveMethodRedirect is an http.Client.CheckRedirect function
@@ -790,10 +850,20 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.canStream = true
 		f.precision = time.Second
 		f.useOCMtime = true
+	case "dcache":
+		f.useStandardProps = true
+		// dCache COPY uses a third-party-copy protocol rather than WebDAV COPY.
+		f.features.Copy = nil
 	case "other":
 		f.useStandardProps = true
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
+	}
+	if !f.opt.UploadRedirect.Valid {
+		f.opt.UploadRedirect = fs.Tristate{Valid: true, Value: vendor == "dcache"}
+	}
+	if !f.opt.OmitContentType.Valid {
+		f.opt.OmitContentType = fs.Tristate{Valid: true, Value: vendor == "dcache"}
 	}
 
 	// Remove PutStream from optional features
@@ -875,7 +945,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		ExtraHeaders: map[string]string{
 			"Depth": depth,
 		},
-		AuthRedirect: f.opt.AuthRedirect, // allow redirects to preserve Auth
+		CheckRedirect: f.authRedirect,
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
@@ -1630,7 +1700,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		ExtraHeaders: map[string]string{
 			"Depth": "0",
 		},
-		AuthRedirect: o.fs.opt.AuthRedirect, // allow redirects to preserve Auth
+		CheckRedirect: o.fs.authRedirect,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -1772,6 +1842,7 @@ func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string
 // Standard update in one request (no chunks)
 func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func() (io.ReadCloser, error), filePath string, size int64, contentType string, extraHeaders map[string]string, rootURL string, options ...fs.OpenOption) (err error) {
 	var resp *http.Response
+	var finishBody func()
 
 	if extraHeaders == nil {
 		extraHeaders = map[string]string{}
@@ -1789,10 +1860,52 @@ func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func(
 		ExtraHeaders:  extraHeaders,
 		RootURL:       rootURL,
 	}
+	if o.fs.opt.UploadRedirect.Value {
+		opts.ExtraHeaders["Expect"] = "100-continue"
+		// net/http sends the body after an early final response on keep-alive connections.
+		opts.Close = true
+		if getBody == nil {
+			in := &uploadRedirectReader{in: body}
+			finishBody = func() {
+				// Redirected transports can finish reading after Client.Do returns.
+				in.mu.Lock()
+				in.in = nil
+				in.mu.Unlock()
+				in.reads.Wait()
+			}
+			opts.Body = io.NopCloser(in)
+			opts.GetBody = func() (io.ReadCloser, error) {
+				if size == 0 {
+					return http.NoBody, nil
+				}
+				next, err := in.redirect()
+				if err != nil {
+					return nil, err
+				}
+				in = next
+				return io.NopCloser(in), nil
+			}
+		}
+		opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			req.Close = true
+			// net/http leaves this unset on redirects, disabling expect-continue.
+			req.ProtoMajor, req.ProtoMinor = 1, 1
+			if o.fs.opt.OmitContentType.Value {
+				req.Header.Del("Content-Type")
+			}
+			if req.Response.StatusCode != http.StatusTemporaryRedirect && req.Response.StatusCode != http.StatusPermanentRedirect {
+				return errors.New("upload redirect must use HTTP status 307 or 308")
+			}
+			return o.fs.authRedirect(req, via)
+		}
+	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
+	if finishBody != nil {
+		finishBody()
+	}
 	if err != nil {
 		// Give the WebDAV server a chance to get its internal state in order after the
 		// error.  The error may have been local in which case we closed the connection.
@@ -1805,6 +1918,40 @@ func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func(
 		return err
 	}
 	return nil
+}
+
+// uploadRedirectReader transfers ownership of an unread stream between requests.
+type uploadRedirectReader struct {
+	mu      sync.Mutex
+	reads   sync.WaitGroup
+	in      io.Reader
+	started bool
+}
+
+func (r *uploadRedirectReader) Read(p []byte) (int, error) {
+	r.mu.Lock()
+	in := r.in
+	if in == nil {
+		r.mu.Unlock()
+		return 0, errors.New("upload stream belongs to a redirected request")
+	}
+	r.started = true
+	r.reads.Add(1)
+	r.mu.Unlock()
+	defer r.reads.Done()
+	return in.Read(p)
+}
+
+func (r *uploadRedirectReader) redirect() (*uploadRedirectReader, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	// A transport read may race with the redirect after the expect timeout.
+	if r.started {
+		return nil, fserrors.RetryError(errors.New("cannot redirect upload after reading from the stream"))
+	}
+	next := &uploadRedirectReader{in: r.in}
+	r.in = nil
+	return next, nil
 }
 
 // Remove an object
