@@ -2091,6 +2091,55 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil, nil)
 }
 
+// serializedObject is the data from a listing needed to recreate an Object
+type serializedObject struct {
+	MD5          string    `json:"m,omitempty"`
+	Bytes        int64     `json:"b"`
+	LastModified time.Time `json:"t"`
+	StorageClass *string   `json:"c,omitempty"`
+	VersionID    *string   `json:"v,omitempty"`
+	DeleteMarker bool      `json:"d,omitempty"`
+}
+
+// Serialize returns data from which NewObjectFromSerialized recreates o
+//
+// Only objects whose metadata hasn't been read can be serialized.
+func (o *Object) Serialize() ([]byte, error) {
+	if len(o.meta) > 0 || o.mimeType != "" {
+		return nil, errors.New("can't serialize object with metadata")
+	}
+	return json.Marshal(serializedObject{
+		MD5:          o.md5,
+		Bytes:        o.bytes,
+		LastModified: o.lastModified,
+		StorageClass: o.storageClass,
+		VersionID:    o.versionID,
+		DeleteMarker: o.meta != nil,
+	})
+}
+
+// NewObjectFromSerialized recreates the Object at remote from data
+// returned by Serialize without a remote call
+func (f *Fs) NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (fs.Object, error) {
+	var s serializedObject
+	if err := json.Unmarshal(data, &s); err != nil {
+		return nil, err
+	}
+	o := &Object{
+		fs:           f,
+		remote:       remote,
+		md5:          s.MD5,
+		bytes:        s.Bytes,
+		lastModified: s.LastModified,
+		storageClass: s.StorageClass,
+		versionID:    s.VersionID,
+	}
+	if s.DeleteMarker {
+		o.meta = map[string]string{}
+	}
+	return o, nil
+}
+
 // Gets the bucket location
 func (f *Fs) getBucketLocation(ctx context.Context, bucket string) (string, error) {
 	region, err := manager.GetBucketRegion(ctx, f.c, bucket)
@@ -5544,18 +5593,20 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = &Fs{}
-	_ fs.Purger          = &Fs{}
-	_ fs.Copier          = &Fs{}
-	_ fs.PutStreamer     = &Fs{}
-	_ fs.ListRer         = &Fs{}
-	_ fs.ListPer         = &Fs{}
-	_ fs.Commander       = &Fs{}
-	_ fs.CleanUpper      = &Fs{}
-	_ fs.OpenChunkWriter = &Fs{}
-	_ fs.Object          = &Object{}
-	_ fs.MimeTyper       = &Object{}
-	_ fs.GetTierer       = &Object{}
-	_ fs.SetTierer       = &Object{}
-	_ fs.Metadataer      = &Object{}
+	_ fs.Fs                 = &Fs{}
+	_ fs.Purger             = &Fs{}
+	_ fs.Copier             = &Fs{}
+	_ fs.PutStreamer        = &Fs{}
+	_ fs.ListRer            = &Fs{}
+	_ fs.ListPer            = &Fs{}
+	_ fs.Commander          = &Fs{}
+	_ fs.CleanUpper         = &Fs{}
+	_ fs.OpenChunkWriter    = &Fs{}
+	_ fs.ObjectDeserializer = &Fs{}
+	_ fs.Object             = &Object{}
+	_ fs.MimeTyper          = &Object{}
+	_ fs.GetTierer          = &Object{}
+	_ fs.SetTierer          = &Object{}
+	_ fs.Metadataer         = &Object{}
+	_ fs.ObjectSerializer   = &Object{}
 )

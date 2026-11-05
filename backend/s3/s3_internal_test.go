@@ -973,3 +973,28 @@ func TestBufferForObjectLockMD5(t *testing.T) {
 		assert.Equal(t, inUse, pool.Global().InUse(), "pool buffers leaked")
 	})
 }
+
+func TestSerializeObject(t *testing.T) {
+	ctx := context.Background()
+	f := &Fs{}
+	storageClass, versionID := "GLACIER", "v1"
+	for _, o := range []*Object{
+		{fs: f, remote: "file.txt", md5: "0123456789abcdef0123456789abcdef", bytes: 42, lastModified: time.Unix(1700000000, 123456789).UTC(), storageClass: &storageClass, versionID: &versionID},
+		{fs: f, remote: "multipart.bin", bytes: 1 << 30, lastModified: time.Unix(1700000000, 0).UTC()},
+		{fs: f, remote: "deleted.txt", lastModified: time.Unix(1700000000, 0).UTC(), meta: map[string]string{}},
+	} {
+		t.Run(o.remote, func(t *testing.T) {
+			data, err := o.Serialize()
+			require.NoError(t, err)
+			got, err := f.NewObjectFromSerialized(ctx, o.remote, data)
+			require.NoError(t, err)
+			assert.Equal(t, o, got)
+		})
+	}
+
+	t.Run("WithMetadata", func(t *testing.T) {
+		o := &Object{fs: f, remote: "file.txt", meta: map[string]string{"mtime": "1"}}
+		_, err := o.Serialize()
+		assert.Error(t, err)
+	})
+}

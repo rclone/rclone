@@ -51,6 +51,9 @@ type Sorter struct {
 	sorter     *extsort.StringSorter // external string sort
 	errs       *errcount.ErrCount    // accumulate errors
 	tempDir    string                // directory for temp files (empty for default)
+
+	// recreates objects from serialized data if f supports it, else nil
+	newObjectFromSerialized func(ctx context.Context, remote string, data []byte) (fs.Object, error)
 }
 
 // KeyFn turns an entry into a sort key
@@ -70,7 +73,7 @@ func NewSorter(ctx context.Context, f NewObjecter, callback fs.ListRCallback, ke
 	if keyFn == nil {
 		keyFn = identityKeyFn
 	}
-	return &Sorter{
+	ls := &Sorter{
 		ctx:      ctx,
 		ci:       ci,
 		cancel:   cancel,
@@ -79,20 +82,47 @@ func NewSorter(ctx context.Context, f NewObjecter, callback fs.ListRCallback, ke
 		keyFn:    keyFn,
 		cutoff:   ci.ListCutoff,
 		errs:     errcount.New(),
-	}, nil
+	}
+	if do, ok := f.(fs.Fs); ok {
+		ls.newObjectFromSerialized = do.Features().NewObjectFromSerialized
+	}
+	return ls, nil
 }
 
 // Turn a directory entry into a combined key and data for extsort
+//
+// The key is one of
+//
+//	sortKey NUL remote/                  - a directory
+//	sortKey NUL remote                   - an object recreated with NewObject
+//	sortKey NUL NUL remote NUL data      - an object recreated from data
 func (ls *Sorter) entryToKey(entry fs.DirEntry) string {
-	// To start with we just use the Remote to recover the object
-	// To make more efficient we would serialize the object here
 	remote := entry.Remote()
 	remote = strings.TrimRight(remote, "/")
 	if _, isDir := entry.(fs.Directory); isDir {
 		remote += "/"
+	} else if data, ok := ls.serialize(entry); ok {
+		return ls.keyFn(entry) + "\x00\x00" + remote + "\x00" + string(data)
 	}
 	key := ls.keyFn(entry) + "\x00" + remote
 	return key
+}
+
+// serialize returns the data to recreate entry without a remote call
+// if both the Fs and the entry support it.
+func (ls *Sorter) serialize(entry fs.DirEntry) (data []byte, ok bool) {
+	if ls.newObjectFromSerialized == nil {
+		return nil, false
+	}
+	serializer, ok := entry.(fs.ObjectSerializer)
+	if !ok {
+		return nil, false
+	}
+	data, err := serializer.Serialize()
+	if err != nil || strings.IndexByte(string(data), 0) >= 0 {
+		return nil, false
+	}
+	return data, true
 }
 
 // Turn an exsort key back into a directory entry
@@ -102,6 +132,19 @@ func (ls *Sorter) keyToEntry(ctx context.Context, key string) (entry fs.DirEntry
 		return nil, errors.New("sorter: failed to deserialize: missing null")
 	}
 	remote := key[null+1:]
+	if rest, isSerialized := strings.CutPrefix(remote, "\x00"); isSerialized {
+		null = strings.LastIndexByte(rest, 0)
+		if null < 0 {
+			return nil, errors.New("sorter: failed to deserialize: missing data")
+		}
+		remote = rest[:null]
+		obj, err := ls.newObjectFromSerialized(ctx, remote, []byte(rest[null+1:]))
+		if err == nil {
+			return obj, nil
+		}
+		// Fall back to reading the object from the remote
+		fs.DebugfCtx(ctx, ls.f, "sorter: failed to recreate object %q from data: %v", remote, err)
+	}
 	if remote, isDir := strings.CutSuffix(remote, "/"); isDir {
 		// Is a directory
 		//
