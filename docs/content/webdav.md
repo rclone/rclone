@@ -501,7 +501,7 @@ Kerberos, and various bearer tokens, including
 and [OpenID-Connect](https://en.wikipedia.org/wiki/OpenID_Connect)
 access tokens.
 
-Configure as normal using the `other` type.  Don't enter a username or
+Configure as normal using the `dcache` vendor. Don't enter a username or
 password, instead enter your Macaroon as the `bearer_token`.
 
 The config will end up looking something like this.
@@ -510,11 +510,36 @@ The config will end up looking something like this.
 [dcache]
 type = webdav
 url = https://dcache...
-vendor = other
+vendor = dcache
 user =
 pass =
 bearer_token = your-macaroon
 ```
+
+The `dcache` vendor enables `upload_redirect` and
+`upload_redirect_no_content_type` by default. Uploads follow 307/308 redirects
+directly to a storage pool without buffering the file, and omit Content-Type
+on redirected requests for compatibility with dCache pools. Both options
+can be explicitly set to `false` in the advanced configuration. For other
+vendors they default to `false`; set them to `true` to enable them, for example
+with `--webdav-upload-redirect=true`. Existing remotes using `vendor = other`
+can switch to `vendor = dcache` to get these defaults.
+
+The dCache vendor encodes invalid UTF-8 bytes in filenames and preserves the
+original Unicode spelling when a door normalizes a redirect path. Copies
+stream through rclone because dCache's third-party-copy protocol is not
+implemented by this backend.
+
+The default `--expect-continue-timeout` is only `1s`. If pool selection is
+slow, especially with many concurrent transfers, increase it, for example
+to `60s`. This is the maximum wait, not a delay added to each upload.
+If a redirect arrives after rclone starts reading the upload stream, the
+attempt returns a retryable error rather than sending incomplete data.
+Copy and sync reopen the source and retry within `--low-level-retries`.
+Upload redirects follow the normal
+WebDAV credential/header policy. `auth_redirect` defaults to `false`,
+including for dCache. Set it to `true` if the pool requires the bearer token
+or other credentials to be preserved across hosts.
 
 There is a [script](https://github.com/sara-nl/GridScripts/blob/master/get-macaroon)
 that obtains a Macaroon from a dCache WebDAV endpoint, and creates an rclone config
@@ -553,7 +578,7 @@ documentation](https://indigo-dc.gitbooks.io/oidc-agent/).
 The rclone `bearer_token_command` configuration option is used to
 fetch the access token from oidc-agent.
 
-Configure as a normal WebDAV endpoint, using the 'other' vendor,
+Configure as a normal WebDAV endpoint, using the 'dcache' vendor,
 leaving the username and password empty.  When prompted, choose to
 edit the advanced config and enter the command to get a bearer token
 (e.g., `oidc-agent XDC`).
