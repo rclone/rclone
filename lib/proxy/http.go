@@ -79,7 +79,10 @@ func HTTPConnectDial(network, addr string, proxyURL *url.URL, proxyDialer proxy.
 	// send CONNECT
 	user := proxyURL.User
 	if user != nil {
-		credential := base64.StdEncoding.EncodeToString([]byte(user.String()))
+		// Use the decoded user name and password - user.String() would
+		// send them percent-encoded (eg "me%40example.com").
+		password, _ := user.Password()
+		credential := base64.StdEncoding.EncodeToString([]byte(user.Username() + ":" + password))
 		_, err = fmt.Fprintf(conn, "CONNECT %s HTTP/1.1\r\nHost: %s\r\nProxy-Authorization: Basic %s\r\n\r\n", addr, addr, credential)
 	} else {
 		_, err = fmt.Fprintf(conn, "CONNECT %s HTTP/1.1\r\nHost: %s\r\n\r\n", addr, addr)

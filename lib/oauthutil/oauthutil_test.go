@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 // TestAuthServerHandleAuth checks that only a callback carrying the
@@ -143,6 +144,60 @@ func TestConfigOauthPKCE(t *testing.T) {
 			} else {
 				assert.Empty(t, codeVerifier)
 			}
+		})
+	}
+}
+
+// TestScopedTokenSource checks that a token for other scopes is
+// fetched with the current refresh token, or with client credentials,
+// and that it is cached without touching the stored token.
+func TestScopedTokenSource(t *testing.T) {
+	for _, clientCredentials := range []bool{false, true} {
+		t.Run(fmt.Sprintf("clientCredentials=%v", clientCredentials), func(t *testing.T) {
+			var mu sync.Mutex
+			var forms []url.Values
+			tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_ = r.ParseForm()
+				mu.Lock()
+				forms = append(forms, r.PostForm)
+				mu.Unlock()
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = fmt.Fprint(w, `{"access_token":"scoped_access","token_type":"Bearer","refresh_token":"new_refresh","expires_in":3600}`)
+			}))
+			defer tokenServer.Close()
+
+			storedToken := `{"access_token":"access","token_type":"Bearer","refresh_token":"refresh","expiry":"2099-01-01T00:00:00Z"}`
+			m := configmap.Simple{"token": storedToken}
+			ctx := Context(context.Background(), tokenServer.Client())
+			_, ts, err := NewClientWithBaseClient(ctx, "remote", m, &Config{
+				ClientID:             "client_id",
+				ClientSecret:         "client_secret",
+				TokenURL:             tokenServer.URL + "/token",
+				Scopes:               []string{"main"},
+				ClientCredentialFlow: clientCredentials,
+				AuthStyle:            oauth2.AuthStyleInParams,
+			}, tokenServer.Client())
+			require.NoError(t, err)
+
+			src := ts.ScopedTokenSource([]string{"https://other/.default"})
+			for range 2 {
+				token, err := src.Token()
+				require.NoError(t, err)
+				assert.Equal(t, "scoped_access", token.AccessToken)
+			}
+
+			require.Len(t, forms, 1, "the scoped token should be cached")
+			form := forms[0]
+			assert.Equal(t, "https://other/.default", form.Get("scope"))
+			assert.Equal(t, "client_id", form.Get("client_id"))
+			if clientCredentials {
+				assert.Equal(t, "client_credentials", form.Get("grant_type"))
+				assert.Empty(t, form.Get("refresh_token"))
+			} else {
+				assert.Equal(t, "refresh_token", form.Get("grant_type"))
+				assert.Equal(t, "refresh", form.Get("refresh_token"))
+			}
+			assert.Equal(t, storedToken, m["token"], "the stored token must not change")
 		})
 	}
 }
