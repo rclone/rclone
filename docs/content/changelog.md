@@ -11,7 +11,7 @@ description: "Rclone Changelog"
 [See commits](https://github.com/rclone/rclone/compare/v1.75.1...v1.75.2)
 
 - Security
-  - b2: Fix account token and SSE-C key leaking on redirects from `--b2-download-url` GHSA-gpw7-77cq-9f72 CVE-PENDING (Nick Craig-Wood)
+  - b2: Fix account token and SSE-C key leaking on redirects from `--b2-download-url` GHSA-gpw7-77cq-9f72 CVE-2026-116196 (Nick Craig-Wood)
   - build
     - Fix multiple CVEs by upgrading to go1.26.9 (Nick Craig-Wood)
       - CVE-2026-97032: net/http: HTTP/2 server crash due to HPACK encoder race
@@ -37,28 +37,28 @@ description: "Rclone Changelog"
     - Update google.golang.org/grpc to fix CVE-2026-84445 (dependabot[bot])
       - CVE-2026-84445: xds: server panic on a request missing both :authority and Host headers
   - fshttp: Drop `--header` values over HTTP after HTTPS downgrade GHSA-rrwf-2qr6-p832 CVE-PENDING (Nick Craig-Wood)
-  - http: Stop a path starting with // moving the remote to another host GHSA-xqmq-v4wj-rw5m CVE-PENDING (Nick Craig-Wood)
-  - lib/http: Require authentication for OPTIONS requests GHSA-gj73-fh6v-92fj CVE-PENDING (Nick Craig-Wood)
-  - local: Fix .rclonelink names escaping the root with `--links` GHSA-55qp-jrwr-x827 CVE-PENDING (Nick Craig-Wood)
+  - http: Stop a path starting with // moving the remote to another host GHSA-xqmq-v4wj-rw5m CVE-2026-116192 (Nick Craig-Wood)
+  - lib/http: Require authentication for OPTIONS requests GHSA-gj73-fh6v-92fj CVE-2026-116193 (Nick Craig-Wood)
+  - local: Fix .rclonelink names escaping the root with `--links` GHSA-55qp-jrwr-x827 CVE-2026-116195 (Nick Craig-Wood)
   - netstorage
-    - Stop a path starting with // moving the remote to another host GHSA-xqmq-v4wj-rw5m CVE-PENDING (Nick Craig-Wood)
-    - Stop a listing resume token moving signed requests to another host GHSA-xqmq-v4wj-rw5m CVE-PENDING (Nick Craig-Wood)
+    - Stop a path starting with // moving the remote to another host GHSA-xqmq-v4wj-rw5m CVE-2026-116192 (Nick Craig-Wood)
+    - Stop a listing resume token moving signed requests to another host GHSA-xqmq-v4wj-rw5m CVE-2026-116192 (Nick Craig-Wood)
   - pcloud
-    - Fix OAuth config accepting callbacks without state GHSA-hvpr-p4pv-4f46 CVE-PENDING (Nick Craig-Wood)
+    - Fix OAuth config accepting callbacks without state GHSA-hvpr-p4pv-4f46 CVE-2026-116194 (Nick Craig-Wood)
     - Only accept pCloud hosts from the hostname in the OAuth callback GHSA-hvpr-p4pv-4f46 (Nick Craig-Wood)
   - selfupdate
-    - Fix hash check trusting unsigned data in the signed SHA256SUMS GHSA-w33h-3qgq-8mv8 CVE-PENDING (Nick Craig-Wood)
+    - Fix hash check trusting unsigned data in the signed SHA256SUMS GHSA-w33h-3qgq-8mv8 CVE-2026-116189 (Nick Craig-Wood)
     - Fix release verification instructions trusting unsigned hashes GHSA-w33h-3qgq-8mv8 (Nick Craig-Wood)
-  - serve nfs: Fix path traversal by refusing unsafe file names in the VFS GHSA-44pm-2q5p-fm63 CVE-PENDING (Nick Craig-Wood)
+  - serve nfs: Fix path traversal by refusing unsafe file names in the VFS GHSA-44pm-2q5p-fm63 CVE-2026-116191 (Nick Craig-Wood)
   - serve s3
     - Fix presigned URL being turned into a copy of any object GHSA-w3h7-jxxq-vfrp CVE-PENDING (Nick Craig-Wood)
-    - Stop auth proxy users listing or using each other's multipart uploads and metadata GHSA-35g6-9fjv-rmx5 CVE-PENDING (Nick Craig-Wood)
-    - Fix multipart buffer limits being bypassed by overflowing part sizes GHSA-qjw8-8hmp-c3m6 (Nick Craig-Wood)
+    - Stop auth proxy users listing or using each other's multipart uploads and metadata GHSA-35g6-9fjv-rmx5 CVE-2026-116187 (Nick Craig-Wood)
+    - Fix multipart buffer limits being bypassed by overflowing part sizes GHSA-qjw8-8hmp-c3m6 CVE-2026-116188 (Nick Craig-Wood)
     - Add `--multipart-max-uploads` to limit uploads in progress (Nick Craig-Wood)
     - Add `--multipart-streaming-buffer-total` to limit memory across uploads (Nick Craig-Wood)
     - Add `--metadata-max-objects` to limit the metadata kept in memory (Nick Craig-Wood)
-  - serve webdav: Fix path traversal above the served directory GHSA-44pm-2q5p-fm63 CVE-PENDING (Nick Craig-Wood)
-  - webdav: Fix headers option leaking to other hosts on redirect GHSA-3rqf-7h69-gg5v CVE-PENDING (Nick Craig-Wood)
+  - serve webdav: Fix path traversal above the served directory GHSA-44pm-2q5p-fm63 CVE-2026-116191 (Nick Craig-Wood)
+  - webdav: Fix headers option leaking to other hosts on redirect GHSA-3rqf-7h69-gg5v CVE-2026-116190 (Nick Craig-Wood)
 - Bug Fixes
   - accounting
     - Stop averaging when the last check finishes (Kunpeng Xie)
@@ -229,7 +229,7 @@ description: "Rclone Changelog"
       - CVE-2026-56855: ssh: a malicious peer could send crafted messages on an established channel, deadlocking the connection
     - Update golang.org/x/image to v0.45.0 to fix CVE-2026-46603 (Nick Craig-Wood)
       - CVE-2026-46603: excessive memory allocation during VP8L decoding
-  - fs: Confine directory listing entries that escape the root GHSA-3vxh-3pcx-9m8q GHSA-38xv-hf3p-h7mq CVE-2026-88046 (Nick Craig-Wood)
+  - fs: Confine directory listing entries that escape the root GHSA-3vxh-3pcx-9m8q CVE-2026-93986 GHSA-38xv-hf3p-h7mq CVE-2026-88046 (Nick Craig-Wood)
   - fshttp: Don't send `--header` values to other hosts on redirect GHSA-486v-q2wf-fp2r CVE-2026-88013 (Nick Craig-Wood)
   - http: Don't leak configured headers to other hosts or over plaintext on redirect GHSA-486v-q2wf-fp2r CVE-2026-88013 (Nick Craig-Wood)
   - lib/rest: Check HTTPS downgrades against the original request on redirect GHSA-486v-q2wf-fp2r CVE-2026-88013 (Nick Craig-Wood)
@@ -238,9 +238,9 @@ description: "Rclone Changelog"
     - Fix btime escaping the root via a planted symlink GHSA-f8g7-2xjc-7mfh CVE-2026-88016 (Nick Craig-Wood)
     - Fix panic on Range request past the end of a symlink GHSA-p6m2-r3w9-mpxw CVE-2026-88015 (Nick Craig-Wood)
   - serve docker
-    - Reject volume names that escape the base directory GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
-    - Reject volume names resolving to the base directory itself GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
-    - Re-derive volume mountpoint from name when restoring state GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
+    - Reject volume names that escape the base directory GHSA-p6vx-hf7p-98j6 CVE-2026-93987 (Nick Craig-Wood)
+    - Reject volume names resolving to the base directory itself GHSA-p6vx-hf7p-98j6 CVE-2026-93987 (Nick Craig-Wood)
+    - Re-derive volume mountpoint from name when restoring state GHSA-p6vx-hf7p-98j6 CVE-2026-93987 (Nick Craig-Wood)
   - serve ftp: Fix auth-proxy sessions sharing credentials by username GHSA-c476-6w5q-jw77 CVE-2026-88017 (Nick Craig-Wood)
   - serve s3
     - Fix memory exhaustion from client-declared multipart part size GHSA-2p48-j3qc-rx9f CVE-2026-88045 (Nick Craig-Wood)
@@ -352,26 +352,26 @@ description: "Rclone Changelog"
   - [Scality](/s3/#scality) (RING / ARTESCA)
   - [Zero Services](/s3/#zero-z3) (ZERO-Z3)
 - Security
-  - archive: Don't crash on malformed squashfs images GHSA-6jcg-q3wp-x2f4 (Nick Craig-Wood)
+  - archive: Don't crash on malformed squashfs images GHSA-6jcg-q3wp-x2f4 CVE-2026-79775 (Nick Craig-Wood)
   - ftp: Fix ftp command injection when encoding doesn't include CRLF GHSA-8c48-q9wj-3w37 CVE-2026-71311 (Nick Craig-Wood)
   - lib/http: Use TLS on all `--addr` listeners when `--cert` and `--key` are set GHSA-mfvx-7rcj-9m5g (Nick Craig-Wood)
   - lib/proxy: Fix unbounded HTTP CONNECT headers causing OOM GHSA-xhf4-832v-7xcr CVE-2026-71310 (Nick Craig-Wood)
   - local: Stop source file names escaping the destination directory GHSA-7p4m-qxvv-g567 CVE-2026-71313 (Nick Craig-Wood)
   - rc
-    - Don't expose pprof debug handlers on an unauthenticated server GHSA-mfvx-7rcj-9m5g CVE-PENDING (Nick Craig-Wood)
+    - Don't expose pprof debug handlers on an unauthenticated server GHSA-mfvx-7rcj-9m5g CVE-2026-79776 (Nick Craig-Wood)
     - Require authentication to list the remotes with `--rc-serve` GHSA-mfvx-7rcj-9m5g (Nick Craig-Wood)
-    - Fix leaking stack traces on panics GHSA-gwfq-86j8-7qhv (Nick Craig-Wood)
+    - Fix leaking stack traces on panics GHSA-gwfq-86j8-7qhv CVE-2026-79777 (Nick Craig-Wood)
   - s3
-    - Fix redirect credential leaks, reject HTTPS->HTTP and strip secrets GHSA-8mxv-9xhp-86h4 (Nick Craig-Wood)
-    - Strip S3 Express session token on cross-host redirects GHSA-8mxv-9xhp-86h4 (Nick Craig-Wood)
+    - Fix redirect credential leaks, reject HTTPS->HTTP and strip secrets GHSA-8mxv-9xhp-86h4 CVE-2026-79780 (Nick Craig-Wood)
+    - Strip S3 Express session token on cross-host redirects GHSA-8mxv-9xhp-86h4 CVE-2026-79780 (Nick Craig-Wood)
   - serve ftp: Use constant time comparison for password check GHSA-mfvx-7rcj-9m5g (Nick Craig-Wood)
   - serve restic: Fix path traversal above the served directory GHSA-45pq-889g-fcgh CVE-2026-71309 (Nick Craig-Wood)
-  - serve sftp: Don't crash the whole server on a bad request GHSA-6jcg-q3wp-x2f4 (Nick Craig-Wood)
+  - serve sftp: Don't crash the whole server on a bad request GHSA-6jcg-q3wp-x2f4 CVE-2026-79775 (Nick Craig-Wood)
   - sftp: Fix command injection via crafted filenames on PowerShell remotes GHSA-2m8m-jhrm-w6j2 CVE-2026-71312 (Nick Craig-Wood)
-  - vfs: Don't crash the process if a backend panics on a background goroutine GHSA-6jcg-q3wp-x2f4 (Nick Craig-Wood)
+  - vfs: Don't crash the process if a backend panics on a background goroutine GHSA-6jcg-q3wp-x2f4 CVE-2026-79775 (Nick Craig-Wood)
   - webdav
-    - Fix HTTPS to HTTP redirects leaking credentials GHSA-h4mf-4v27-hggj (Nick Craig-Wood)
-    - Tus: fix potential nil pointer crash GHSA-3x6r-wxxg-53vv (Nick Craig-Wood)
+    - Fix HTTPS to HTTP redirects leaking credentials GHSA-h4mf-4v27-hggj CVE-2026-79779 (Nick Craig-Wood)
+    - Tus: fix potential nil pointer crash GHSA-3x6r-wxxg-53vv CVE-2026-79778 (Nick Craig-Wood)
   - Update `google.golang.org/grpc` to fix multiple security problems (Nick Craig-Wood)
 - New Features
   - build: Update all dependencies (Nick Craig-Wood)
@@ -600,14 +600,14 @@ description: "Rclone Changelog"
   - serve restic: Fix `--private-repos` isolation bypass CVE-2026-59733 (Nick Craig-Wood)
   - serve s3
     - Fix spurious 404 on HEAD/GET during VFS writeback (max)
-    - Fix path traversal letting clients see files in the root GHSA-8v25-v8p6-qf7v (Nick Craig-Wood)
+    - Fix path traversal letting clients see files in the root GHSA-8v25-v8p6-qf7v CVE-2026-79781 (Nick Craig-Wood)
   - serve webdav: Fix MOVE overwrite failing without Overwrite header (Sanjay Santhanam)
   - serve/http: Fix `--disable-zip` so it works over rc (Nick Craig-Wood)
 - VFS
   - Fix hang reopening a file during the handle-caching grace period (Nick Craig-Wood)
 - Local
   - Stop `--links` symlinks escaping the destination directory CVE-2026-54572 (Nick Craig-Wood)
-  - Don't restore setuid/setgid/sticky bits from metadata by default GHSA-945v-v9p3-v5xw (Nick Craig-Wood)
+  - Don't restore setuid/setgid/sticky bits from metadata by default GHSA-945v-v9p3-v5xw CVE-2026-79783 (Nick Craig-Wood)
 - Drive
   - Warn when non-exportable Google documents are skipped (Nick Craig-Wood)
   - Fix stray %!(EXTRA) in unexportable google document log message (Nick Craig-Wood)

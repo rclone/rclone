@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bufio"
+	"encoding/base64"
 	"net"
 	"net/url"
 	"strings"
@@ -117,4 +118,54 @@ func TestHTTPConnectDialNon200(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, conn)
 	assert.Contains(t, err.Error(), "403")
+}
+
+// Check that the Proxy-Authorization header carries the decoded user
+// name and password, not their percent-encoded form.
+func TestHTTPConnectDialAuth(t *testing.T) {
+	for _, test := range []struct {
+		userInfo string
+		want     string
+	}{
+		{userInfo: "user:pass", want: "user:pass"},
+		{userInfo: "me%40example.com:p%40ss%3Aword", want: "me@example.com:p@ss:word"},
+		{userInfo: "user", want: "user:"},
+	} {
+		t.Run(test.userInfo, func(t *testing.T) {
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			defer func() {
+				_ = listener.Close()
+			}()
+			authHeader := make(chan string, 1)
+			go func() {
+				conn, err := listener.Accept()
+				if err != nil {
+					return
+				}
+				defer func() {
+					_ = conn.Close()
+				}()
+				br := bufio.NewReader(conn)
+				auth := ""
+				for {
+					line, err := br.ReadString('\n')
+					if err != nil || line == "\r\n" || line == "\n" {
+						break
+					}
+					if value, ok := strings.CutPrefix(line, "Proxy-Authorization: "); ok {
+						auth = strings.TrimSpace(value)
+					}
+				}
+				authHeader <- auth
+				_, _ = conn.Write([]byte("HTTP/1.1 200 Connection established\r\n\r\n"))
+			}()
+			proxyURL, err := url.Parse("http://" + test.userInfo + "@" + listener.Addr().String())
+			require.NoError(t, err)
+			conn, err := HTTPConnectDial("tcp", "example.com:1234", proxyURL, nil)
+			require.NoError(t, err)
+			_ = conn.Close()
+			assert.Equal(t, "Basic "+base64.StdEncoding.EncodeToString([]byte(test.want)), <-authHeader)
+		})
+	}
 }

@@ -1216,6 +1216,9 @@ func rcGetFile(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 				start := offset
 				if start < 0 {
 					start += size
+					if start < 0 {
+						start = 0
+					}
 				}
 				if start > size {
 					start = size
