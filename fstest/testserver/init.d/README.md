@@ -33,9 +33,16 @@ to ensure multiple copies of the server aren't running at once.
 Including this is mandatory. It will call your `start()`, `stop()` and
 `status()` functions.
 
+`stop()` must be idempotent and clean up any remaining owned resources:
+the wrapper calls it when the reference count reaches zero or on
+`force-stop`, even if `status()` reports that the server has exited.
+Cleanup failures must return non-zero; `reset` preserves state on failure.
+
 `docker.bash` contains library functions to help with docker
 implementations. It contains implementations of `stop()` and
-`status()` so all you have to do is write a `start()` function.
+`status()` for containers run with `--rm`, so all you have to do is write a
+`start()` function. Override `stop()` if your fixture also owns networks,
+stopped containers or other resources.
 
 `rclone-serve.bash` contains functions to help with `rclone serve`
 based implementations. It contains implementations of `stop()` and
