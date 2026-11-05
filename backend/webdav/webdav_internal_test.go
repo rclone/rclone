@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -23,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 func TestChunkedUploadRetriesOnlyFailedChunk(t *testing.T) {
@@ -169,6 +171,349 @@ func TestHeaders(t *testing.T) {
 	// send an About response since that is all the dummy server can return
 	_, err := f.Features().About(context.Background())
 	require.NoError(t, err)
+}
+
+func TestDcacheEncoding(t *testing.T) {
+	for _, name := range []string{"valid.txt", "␁", "．", "．．", "a／b"} {
+		t.Run(name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/"+name, r.URL.Path)
+				w.WriteHeader(http.StatusMultiStatus)
+				_, _ = io.WriteString(w, fileInfoResponse)
+			}))
+			defer server.Close()
+			ctx := context.Background()
+			f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{"url": server.URL, "vendor": "dcache"})
+			require.NoError(t, err)
+			_, err = f.NewObject(ctx, name)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestUploadRedirect(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		status     int
+		readBody   bool
+		chain      bool
+		empty      bool
+		auth       bool
+		omitType   bool
+		dcache     bool
+		defaults   bool
+		disabled   bool
+		wantError  string
+		delay      time.Duration
+		expect     time.Duration
+		decomposed bool
+	}{
+		{name: "307", status: http.StatusTemporaryRedirect},
+		{name: "slow door short timeout", status: http.StatusTemporaryRedirect, delay: 100 * time.Millisecond, expect: 10 * time.Millisecond, wantError: "after reading"},
+		{name: "slow door long timeout", status: http.StatusTemporaryRedirect, delay: 100 * time.Millisecond, expect: time.Second},
+		{name: "308", status: http.StatusPermanentRedirect},
+		{name: "redirect chain", status: http.StatusTemporaryRedirect, chain: true},
+		{name: "empty file", status: http.StatusTemporaryRedirect, empty: true},
+		{name: "preserve auth", status: http.StatusTemporaryRedirect, auth: true},
+		{name: "omit content type", status: http.StatusTemporaryRedirect, omitType: true},
+		{name: "dcache defaults", status: http.StatusTemporaryRedirect, dcache: true, defaults: true, omitType: true},
+		{name: "other defaults", status: http.StatusTemporaryRedirect, defaults: true, disabled: true, wantError: "307"},
+		{name: "dcache keep content type", status: http.StatusTemporaryRedirect, dcache: true},
+		{name: "dcache preserves Unicode path", status: http.StatusTemporaryRedirect, dcache: true, decomposed: true},
+		{name: "dcache preserves authenticated Unicode path", status: http.StatusTemporaryRedirect, dcache: true, decomposed: true, auth: true},
+		{name: "other uses redirect Unicode path", status: http.StatusTemporaryRedirect, decomposed: true},
+		{name: "dcache disable redirects", status: http.StatusTemporaryRedirect, dcache: true, disabled: true, wantError: "307"},
+		{name: "no redirect", status: http.StatusCreated, readBody: true},
+		{name: "body already sent", status: http.StatusTemporaryRedirect, readBody: true, wantError: "after reading"},
+		{name: "method changing redirect", status: http.StatusFound, wantError: "307 or 308"},
+		{name: "disabled", status: http.StatusTemporaryRedirect, disabled: true, wantError: "307"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			content := "abcdefghij"
+			if test.empty {
+				content = ""
+			}
+			var uploads atomic.Int32
+			pool := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodPut {
+					assert.Equal(t, "100-continue", r.Header.Get("Expect"))
+					assert.EqualValues(t, len(content), r.ContentLength)
+					if test.omitType {
+						assert.Empty(t, r.Header.Get("Content-Type"))
+					} else {
+						assert.Contains(t, r.Header.Get("Content-Type"), "text/plain")
+					}
+				}
+				assert.Equal(t, "token=secret", r.URL.RawQuery)
+				if test.decomposed {
+					want := "/caf\u00e9.txt"
+					if test.dcache {
+						want = norm.NFD.String(want)
+					}
+					assert.Equal(t, want, r.URL.Path)
+				}
+				if test.chain && r.URL.Path == "/pool" {
+					w.Header().Set("Connection", "close")
+					w.Header().Set("Location", "/final?token=secret")
+					w.WriteHeader(http.StatusTemporaryRedirect)
+					return
+				}
+				if test.auth {
+					assert.Equal(t, "Bearer macaroon", r.Header.Get("Authorization"))
+					assert.Equal(t, "private", r.Header.Get("X-Secret"))
+				} else {
+					assert.Empty(t, r.Header.Get("Authorization"))
+					assert.Empty(t, r.Header.Get("X-Secret"))
+				}
+				if r.Method == http.MethodGet {
+					_, _ = io.WriteString(w, content)
+					return
+				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				body, err := io.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, content, string(body))
+				uploads.Add(1)
+				w.WriteHeader(http.StatusCreated)
+			}))
+			defer pool.Close()
+			door := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodGet:
+					redirectPath := (&url.URL{Path: norm.NFC.String(r.URL.Path)}).EscapedPath()
+					w.Header().Set("Location", strings.Replace(pool.URL, "127.0.0.1", "localhost", 1)+redirectPath+"?token=secret")
+					w.WriteHeader(http.StatusTemporaryRedirect)
+				case http.MethodPut:
+					if !test.disabled {
+						assert.Equal(t, "100-continue", r.Header.Get("Expect"))
+					} else {
+						assert.Empty(t, r.Header.Get("Expect"))
+					}
+					assert.Equal(t, "Bearer macaroon", r.Header.Get("Authorization"))
+					time.Sleep(test.delay)
+					if test.readBody {
+						body, err := io.ReadAll(r.Body)
+						assert.NoError(t, err)
+						assert.Equal(t, content, string(body))
+					}
+					redirectPath := "/pool"
+					if test.decomposed {
+						redirectPath = (&url.URL{Path: norm.NFC.String(r.URL.Path)}).EscapedPath()
+					}
+					w.Header().Set("Location", strings.Replace(pool.URL, "127.0.0.1", "localhost", 1)+redirectPath+"?token=secret")
+					w.WriteHeader(test.status)
+				case "PROPFIND":
+					w.WriteHeader(http.StatusMultiStatus)
+					_, _ = io.WriteString(w, fileInfoResponse)
+				default:
+					w.WriteHeader(http.StatusCreated)
+				}
+			}))
+			defer door.Close()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			ctx, ci := fs.AddConfig(ctx)
+			if test.expect != 0 {
+				ci.ExpectContinueTimeout = fs.Duration(test.expect)
+			}
+			configfile.Install()
+			m := configmap.Simple{
+				"url": door.URL, "vendor": "other", "upload_redirect": fmt.Sprint(!test.disabled),
+				"bearer_token": "macaroon", "headers": "X-Secret,private",
+				"auth_redirect":                   fmt.Sprint(test.auth),
+				"upload_redirect_no_content_type": fmt.Sprint(test.omitType),
+			}
+			if test.dcache {
+				m["vendor"] = "dcache"
+			}
+			if test.defaults {
+				delete(m, "upload_redirect")
+				delete(m, "upload_redirect_no_content_type")
+				delete(m, "auth_redirect")
+			}
+			ri, err := fs.Find("webdav")
+			require.NoError(t, err)
+			f, err := webdav.NewFs(ctx, remoteName, "", fs.ConfigMap("webdav", ri.Options, remoteName, m))
+			require.NoError(t, err)
+			name := "file.txt"
+			if test.decomposed {
+				name = norm.NFD.String("caf\u00e9.txt")
+			}
+			src := object.NewStaticObjectInfo(name, time.Now(), int64(len(content)), true, nil, f)
+			// Hide Seek and concrete reader types to exercise a streaming upload.
+			o, err := f.Put(ctx, struct{ io.Reader }{strings.NewReader(content)}, src)
+			if test.wantError != "" {
+				require.ErrorContains(t, err, test.wantError)
+				assert.Zero(t, uploads.Load())
+			} else {
+				require.NoError(t, err)
+				if test.status == http.StatusCreated {
+					assert.Zero(t, uploads.Load())
+				} else {
+					assert.EqualValues(t, 1, uploads.Load())
+				}
+				if test.decomposed {
+					in, err := o.Open(ctx)
+					require.NoError(t, err)
+					body, err := io.ReadAll(in)
+					require.NoError(t, err)
+					require.NoError(t, in.Close())
+					assert.Equal(t, content, string(body))
+				}
+			}
+		})
+	}
+}
+
+func TestUploadRedirectRetriesLocalCopy(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		alwaysLate bool
+		timeout    bool
+	}{
+		{name: "after continue"},
+		{name: "after expect timeout", timeout: true},
+		{name: "retry limit", alwaysLate: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			ctx, ci := fs.AddConfig(ctx)
+			ci.LowLevelRetries = 2
+			ci.BufferSize = 128 * 1024
+			ci.ExpectContinueTimeout = fs.Duration(10 * time.Millisecond)
+			content := strings.Repeat("upload redirect replay\n", 65536)
+			var puts, uploads atomic.Int32
+			pool := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodPut, r.Method)
+				body, err := io.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, content, string(body))
+				uploads.Add(1)
+				w.WriteHeader(http.StatusCreated)
+			}))
+			defer pool.Close()
+			door := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodPut:
+					attempt := puts.Add(1)
+					if test.timeout && attempt == 1 {
+						// Read without sending 100 Continue, so the client must hit its expect timeout.
+						conn, rw, err := w.(http.Hijacker).Hijack()
+						require.NoError(t, err)
+						defer func() { assert.NoError(t, conn.Close()) }()
+						_, err = io.CopyN(io.Discard, rw, r.ContentLength)
+						require.NoError(t, err)
+						_, err = fmt.Fprintf(rw, "HTTP/1.1 307 Temporary Redirect\r\nLocation: %s\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", pool.URL)
+						require.NoError(t, err)
+						assert.NoError(t, rw.Flush())
+						return
+					}
+					if test.alwaysLate || attempt == 1 {
+						// Reading the body sends 100 Continue before the redirect.
+						_, err := io.Copy(io.Discard, r.Body)
+						assert.NoError(t, err)
+					}
+					w.Header().Set("Location", pool.URL)
+					w.WriteHeader(http.StatusTemporaryRedirect)
+				case "PROPFIND":
+					w.WriteHeader(http.StatusMultiStatus)
+					_, _ = io.WriteString(w, strings.Replace(fileInfoResponse, ">10<", fmt.Sprintf(">%d<", len(content)), 1))
+				default:
+					w.WriteHeader(http.StatusNoContent)
+				}
+			}))
+			defer door.Close()
+			configfile.Install()
+			dst, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{"url": door.URL, "vendor": "dcache"})
+			require.NoError(t, err)
+			srcFs, err := local.NewFs(ctx, "local", t.TempDir(), configmap.Simple{})
+			require.NoError(t, err)
+			info := object.NewStaticObjectInfo("file.txt", time.Now(), int64(len(content)), true, nil, srcFs)
+			src, err := srcFs.Put(ctx, strings.NewReader(content), info)
+			require.NoError(t, err)
+			_, err = operations.Copy(ctx, dst, nil, "file.txt", src)
+			if test.alwaysLate {
+				require.ErrorContains(t, err, "after reading")
+				assert.Zero(t, uploads.Load())
+			} else {
+				require.NoError(t, err)
+				assert.EqualValues(t, 1, uploads.Load())
+			}
+			assert.EqualValues(t, 2, puts.Load(), "retry budget must be respected")
+		})
+	}
+}
+
+type blockedUploadReader struct {
+	started chan struct{}
+	release chan struct{}
+	first   bool
+}
+
+func (r *blockedUploadReader) Read(p []byte) (int, error) {
+	if !r.first {
+		r.first = true
+		p[0] = 'a'
+		return 1, nil
+	}
+	close(r.started)
+	<-r.release
+	return 0, io.EOF
+}
+
+func TestUploadRedirectWaitsForReader(t *testing.T) {
+	in := &blockedUploadReader{started: make(chan struct{}), release: make(chan struct{})}
+	responded := make(chan struct{})
+	pool := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b [1]byte
+		_, err := io.ReadFull(r.Body, b[:])
+		assert.NoError(t, err)
+		<-in.started
+		w.Header().Set("Connection", "close")
+		w.WriteHeader(http.StatusForbidden)
+		w.(http.Flusher).Flush()
+		close(responded)
+	}))
+	defer pool.Close()
+	door := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			w.Header().Set("Location", pool.URL)
+			w.WriteHeader(http.StatusTemporaryRedirect)
+		} else {
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}))
+	defer door.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{"url": door.URL, "upload_redirect": "true"})
+	require.NoError(t, err)
+	done := make(chan error, 1)
+	go func() {
+		src := object.NewStaticObjectInfo("file.txt", time.Now(), 2, true, nil, f)
+		_, err := f.Put(ctx, in, src)
+		done <- err
+	}()
+	select {
+	case <-responded:
+	case <-ctx.Done():
+		close(in.release)
+		t.Fatal("pool did not respond")
+	}
+	select {
+	case err := <-done:
+		close(in.release)
+		t.Fatalf("upload returned while source read was active: %v", err)
+	case <-time.After(1500 * time.Millisecond):
+	}
+	close(in.release)
+	select {
+	case err := <-done:
+		require.Error(t, err)
+	case <-ctx.Done():
+		t.Fatal("upload did not finish after releasing source")
+	}
 }
 
 // TestListAllAuthRedirect checks auth_redirect is honoured on listAll PROPFIND.
