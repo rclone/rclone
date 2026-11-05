@@ -252,6 +252,18 @@ func TestFinishUpload(t *testing.T) {
 		assert.Empty(t, o.sha256)
 	})
 
+	t.Run("IgnoreChecksum", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, nil, &calls)
+		defer server.Close()
+		ctx, ci := fs.AddConfig(ctx)
+		ci.IgnoreChecksum = true
+		o := &Object{fs: testFs(t, server)}
+		require.NoError(t, o.finishUpload(ctx, info(), src))
+		assert.Empty(t, calls)
+		assert.Empty(t, o.sha256)
+	})
+
 	t.Run("NoSourceHash", func(t *testing.T) {
 		var calls []string
 		server := metaServer(t, nil, &calls)

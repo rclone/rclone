@@ -1747,6 +1747,9 @@ func (o *Object) finishUpload(ctx context.Context, info *api.Item, src fs.Object
 		o.modTime = src.ModTime(ctx).Truncate(time.Millisecond)
 		o.hasMTime = true
 	}
+	if fs.GetConfig(ctx).IgnoreChecksum {
+		return nil
+	}
 	sum, err := src.Hash(ctx, hash.SHA256)
 	if err != nil || sum == "" {
 		return nil

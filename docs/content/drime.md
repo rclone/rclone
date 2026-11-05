@@ -85,23 +85,27 @@ rclone copy /home/source remote:backup
 
 ### Modification times and hashes
 
-Drime supports modification times with millisecond precision and the
-SHA-256 hash.
+Drime supports modification times and the SHA-256 hash.
 
-The modification time is stored in the file's `client_last_modified`
-attribute and is set on upload and by `SetModTime`. Drime's directory
-listing doesn't return it, so rclone reads it with one extra API call
-per file when it needs to compare modification times. Using
-`--checksum` or `--size-only` avoids these calls. Files that were
-uploaded without a modification time fall back to the time they were
-last updated on Drime.
+When rclone uploads a file, it sets the modification time and checks
+the upload against the source's SHA-256. If the check fails, the upload
+is reported as corrupted. Drime then stores the hash. Use
+`--ignore-checksum` to skip the check.
 
-The SHA-256 is only available for files where Drime has a `file_hash`
-recorded. Drime doesn't compute it on upload, so after each upload
-rclone asks Drime to verify the stored data against the source's
-SHA-256 (this makes Drime read the file once). Drime records the hash
-only if it matches, and rclone fails the upload as corrupted if it
-doesn't. Files uploaded by other tools may have no hash.
+Some files have no hash on Drime. This includes files uploaded by
+earlier versions of rclone, by other tools, with `rclone rcat`, or with
+`--ignore-checksum`. How a file is handled depends on whether it has a
+hash:
+
+| Situation | File has a hash | File has no hash |
+|---|---|---|
+| Same size and modification time | Skipped | Skipped |
+| Same size, different modification time | Only the modification time is updated | Uploaded again, which records the hash |
+| Same size, `--checksum` or `rclone check` | Compared by hash | Treated as unchanged |
+| Different size | Uploaded again | Uploaded again |
+
+To add a hash without waiting for the modification time to change,
+upload the file again with `--ignore-times`.
 
 
 ### Restricted filename characters
