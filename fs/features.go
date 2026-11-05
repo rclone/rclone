@@ -174,9 +174,7 @@ type Features struct {
 	// immediately.
 	ListP func(ctx context.Context, dir string, callback ListRCallback) error
 
-	// NewObjectFromSerialized recreates the Object at remote from
-	// data returned by ObjectSerializer.Serialize without a remote
-	// call.
+	// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
 	NewObjectFromSerialized func(ctx context.Context, remote string, data []byte) (Object, error)
 
 	// About gets quota information from the Fs
@@ -715,11 +713,12 @@ type ListPer interface {
 
 // ObjectDeserializer is an optional interface for Fs
 type ObjectDeserializer interface {
-	// NewObjectFromSerialized recreates the Object at remote from
-	// data returned by ObjectSerializer.Serialize without a remote
-	// call.
+	// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
 	NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (Object, error)
 }
+
+// NewObjectFromSerializedFn describes the NewObjectFromSerialized function pointer
+type NewObjectFromSerializedFn func(ctx context.Context, remote string, data []byte) (Object, error)
 
 // RangeSeeker is the interface that wraps the RangeSeek method.
 //

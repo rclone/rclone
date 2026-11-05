@@ -696,10 +696,13 @@ func TestSerializeObject(t *testing.T) {
 	ctx := context.Background()
 	f := &Fs{}
 	encoding := "gzip"
-	for _, o := range []*Object{
+	objects := []*Object{
+		// Every field set, meta holds the modification time
 		{fs: f, remote: "file.txt", modTime: time.Unix(1700000000, 123456789).UTC(), md5: "ASNFZ4mrze8BI0VniavN7w==", size: 42, mimeType: "text/plain", accessTier: blob.AccessTierHot, meta: map[string]string{"mtime": "2023-11-14T22:13:20.123456789Z"}},
+		// No MD5 and unknown size, as when decompressing
 		{fs: f, remote: "nomd5.bin", modTime: time.Unix(1700000000, 0).UTC(), size: -1, contentEncoding: &encoding},
-	} {
+	}
+	for _, o := range objects {
 		t.Run(o.remote, func(t *testing.T) {
 			data, err := o.Serialize()
 			require.NoError(t, err)
