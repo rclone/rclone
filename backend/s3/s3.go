@@ -2115,9 +2115,9 @@ type serializedObject struct {
 }
 
 // Serialize returns data from which NewObjectFromSerialized recreates o
-//
-// Only objects whose metadata hasn't been read can be serialized.
 func (o *Object) Serialize() ([]byte, error) {
+	// Skip objects with metadata as it holds HEAD-only fields
+	// Objects from listing never have them
 	if len(o.meta) > 0 || o.mimeType != "" {
 		return nil, errors.New("can't serialize object with metadata")
 	}
@@ -2131,8 +2131,7 @@ func (o *Object) Serialize() ([]byte, error) {
 	})
 }
 
-// NewObjectFromSerialized recreates the Object at remote from data
-// returned by Serialize without a remote call
+// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
 func (f *Fs) NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (fs.Object, error) {
 	var s serializedObject
 	if err := json.Unmarshal(data, &s); err != nil {

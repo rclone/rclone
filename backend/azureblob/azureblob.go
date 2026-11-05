@@ -890,8 +890,7 @@ func (o *Object) Serialize() ([]byte, error) {
 	})
 }
 
-// NewObjectFromSerialized recreates the Object at remote from data
-// returned by Serialize without a remote call
+// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
 func (f *Fs) NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (fs.Object, error) {
 	var s serializedObject
 	if err := json.Unmarshal(data, &s); err != nil {
