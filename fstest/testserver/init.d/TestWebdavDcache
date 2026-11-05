@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+NAME=${RCLONE_TESTSERVER_DCACHE_NAME:-rclone-test-webdav-dcache}
+NETWORK=${NAME}-net
+IMAGE=${RCLONE_TESTSERVER_DCACHE_IMAGE:-rclone/test-dcache:11.2.11}
+USER=rclone
+PASS=password
+HERE=$(cd "$(dirname "$0")" && pwd)
+CHECK=$HERE/../images/test-dcache/check.py
+
+. "$HERE/docker.bash"
+
+stop() {
+    docker info >/dev/null || return 1
+    if docker container inspect "$NAME" >/dev/null 2>&1; then
+        if [[ $(docker inspect -f '{{index .Config.Labels "rclone.testserver"}}' "$NAME") != TestWebdavDcache ]]; then
+            echo "Refusing to remove an unrelated container: $NAME" >&2
+            return 1
+        fi
+        if [[ $(docker inspect -f '{{.State.Running}}' "$NAME") == true ]]; then
+            docker stop -t 60 "$NAME" >/dev/null
+        fi
+        docker rm -v "$NAME" >/dev/null
+    fi
+    if docker network inspect "$NETWORK" >/dev/null 2>&1; then
+        if [[ $(docker network inspect -f '{{index .Labels "rclone.testserver"}}' "$NETWORK") != TestWebdavDcache ]]; then
+            echo "Refusing to remove an unrelated network: $NETWORK" >&2
+            return 1
+        fi
+        docker network rm "$NETWORK" >/dev/null
+    fi
+}
+
+start() {
+    if [[ $(uname -s) != Linux ]]; then
+        echo "The dCache fixture requires native Linux Docker bridge networking" >&2
+        return 1
+    fi
+    docker info >/dev/null
+    stop
+    if [[ -r /proc/sys/user/max_net_namespaces ]] && [[ $(</proc/sys/user/max_net_namespaces) == 0 ]]; then
+        echo "Docker network namespaces are disabled: /proc/sys/user/max_net_namespaces is 0" >&2
+        return 1
+    fi
+    if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+        echo "Build the dCache fixture image first; see fstest/testserver/images/test-dcache/README.md" >&2
+        return 1
+    fi
+    local encoded
+    encoded=$(rclone --config /notfound obscure "$PASS")
+    trap stop EXIT
+    docker network create --internal --label rclone.testserver=TestWebdavDcache "$NETWORK" >/dev/null
+    docker run -d --name "$NAME" --network "$NETWORK" \
+        --label rclone.testserver=TestWebdavDcache --memory 3g --memory-swap 3g \
+        --cpus 2 --stop-timeout 60 "$IMAGE" >/dev/null
+    local url output deadline remaining ready=false
+    url="http://$(docker_ip):2880/public/"
+    deadline=$((SECONDS + 180))
+    output="server exited before readiness"
+    while (( SECONDS < deadline )); do
+        if ! status >/dev/null; then
+            break
+        fi
+        remaining=$((deadline - SECONDS))
+        if output=$(timeout "${remaining}s" python3 "$CHECK" "$url" "$USER" "$PASS" 2>&1); then
+            ready=true
+            break
+        fi
+        sleep 2
+    done
+    echo "$output" >&2
+    if ! $ready; then
+        docker logs --tail 80 "$NAME" >&2 || true
+        return 1
+    fi
+    echo type=webdav
+    echo vendor=dcache
+    echo "url=$url"
+    echo "user=$USER"
+    echo "pass=$encoded"
+    echo "_connect=$(docker_ip):2880"
+    trap - EXIT
+}
+
+. "$HERE/run.bash"
