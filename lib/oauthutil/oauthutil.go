@@ -444,6 +444,46 @@ func (ts *TokenSource) OnExpiry() <-chan time.Time {
 // Check interface satisfied
 var _ oauth2.TokenSource = (*TokenSource)(nil)
 
+// ScopedTokenSource returns a TokenSource which gets tokens for scopes
+// instead of the configured ones, using the same credentials as ts.
+//
+// Without the client credentials flow this redeems the current
+// refresh token of ts for the new scopes, which providers such as
+// Microsoft Entra ID allow for other resources the user has consented
+// to. The tokens are cached until they expire but are never saved in
+// the config file.
+func (ts *TokenSource) ScopedTokenSource(scopes []string) oauth2.TokenSource {
+	return oauth2.ReuseTokenSource(nil, scopedTokenSource{ts: ts, scopes: scopes})
+}
+
+// scopedTokenSource fetches tokens for scopes using the credentials in ts
+type scopedTokenSource struct {
+	ts     *TokenSource
+	scopes []string
+}
+
+// Token fetches a new token for the scopes
+func (s scopedTokenSource) Token() (*oauth2.Token, error) {
+	conf := s.ts.config.MakeClientCredentialsConfig()
+	conf.Scopes = s.scopes
+	if !s.ts.config.ClientCredentialFlow {
+		token, err := s.ts.Token()
+		if err != nil {
+			return nil, err
+		}
+		if token.RefreshToken == "" {
+			return nil, errors.New("no refresh token to get a token for other scopes")
+		}
+		// clientcredentials allows grant_type to be overridden, which
+		// makes it a refresh request which can set the scopes
+		conf.EndpointParams = url.Values{
+			"grant_type":    {"refresh_token"},
+			"refresh_token": {token.RefreshToken},
+		}
+	}
+	return conf.Token(s.ts.ctx)
+}
+
 // Context returns a context with our HTTP Client baked in for oauth2
 func Context(ctx context.Context, client *http.Client) context.Context {
 	return context.WithValue(ctx, oauth2.HTTPClient, client)

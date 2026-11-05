@@ -767,3 +767,36 @@ func TestMiddlewareResponseHeaders(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAuthorization(t *testing.T) {
+	for _, test := range []struct {
+		header string
+		user   string
+		pass   string
+		ok     bool
+	}{
+		{"", "", "", false},
+		{"Basic dXNlcjpwYXNz", "user", "pass", true},
+		// The auth scheme is case-insensitive (RFC 7617 section 2, RFC 9110 section 11.1)
+		{"basic dXNlcjpwYXNz", "user", "pass", true},
+		{"BASIC dXNlcjpwYXNz", "user", "pass", true},
+		{"Basic dXNlcjo=", "user", "", true},
+		{"Basic dXNlcg==", "user", "", false},
+		{"Basic !!!", "", "", false},
+		{"Bearer dXNlcjpwYXNz", "", "", false},
+		{"Basicx dXNlcjpwYXNz", "", "", false},
+	} {
+		t.Run(test.header, func(t *testing.T) {
+			r := httptest.NewRequest("GET", "/", nil)
+			if test.header != "" {
+				r.Header.Set("Authorization", test.header)
+			}
+			user, pass, ok := parseAuthorization(r)
+			require.Equal(t, test.ok, ok)
+			if test.ok {
+				require.Equal(t, test.user, user)
+				require.Equal(t, test.pass, pass)
+			}
+		})
+	}
+}
