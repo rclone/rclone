@@ -71,6 +71,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Max total size of objects in the cache",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_cache_max_files",
+	Default: 0,
+	Help:    "Max total number of objects in the cache",
+	Groups:  "VFS",
+}, {
 	Name:    "vfs_cache_min_free_space",
 	Default: fs.SizeSuffix(-1),
 	Help:    "Target minimum free space on the disk containing the cache",
@@ -203,6 +208,7 @@ type Options struct {
 	CacheMode          CacheMode     `config:"vfs_cache_mode"`
 	CacheMaxAge        fs.Duration   `config:"vfs_cache_max_age"`
 	CacheMaxSize       fs.SizeSuffix `config:"vfs_cache_max_size"`
+	CacheMaxFiles      int           `config:"vfs_cache_max_files"`
 	CacheMinFreeSpace  fs.SizeSuffix `config:"vfs_cache_min_free_space"`
 	CachePollInterval  fs.Duration   `config:"vfs_cache_poll_interval"`
 	CaseInsensitive    bool          `config:"vfs_case_insensitive"`
