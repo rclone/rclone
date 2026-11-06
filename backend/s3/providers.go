@@ -31,6 +31,7 @@ type Quirks struct {
 	UseMultipartUploads         *bool  `yaml:"use_multipart_uploads,omitempty"`
 	UseUnsignedPayload          *bool  `yaml:"use_unsigned_payload,omitempty"`
 	ListVersionsOldestFirst     *bool  `yaml:"list_versions_oldest_first,omitempty"`
+	EqualPartSizes              *bool  `yaml:"equal_part_sizes,omitempty"`
 	UseXID                      *bool  `yaml:"use_x_id,omitempty"`
 	SignAcceptEncoding          *bool  `yaml:"sign_accept_encoding,omitempty"`
 	EtagIsNotMD5                *bool  `yaml:"etag_is_not_md5,omitempty"`

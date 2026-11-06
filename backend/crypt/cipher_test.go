@@ -3,6 +3,7 @@ package crypt
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
@@ -1642,6 +1643,272 @@ func TestPutGetBlock(t *testing.T) {
 	block := c.getBlock()
 	c.putBlock(block)
 	c.putBlock(block)
+}
+
+// testPlaintext returns n bytes of deterministic, incompressible test data
+func testPlaintext(n int64) []byte {
+	buf := make([]byte, n)
+	x := uint32(2463534242)
+	for i := range buf {
+		x ^= x << 13
+		x ^= x >> 17
+		x ^= x << 5
+		buf[i] = byte(x)
+	}
+	return buf
+}
+
+// encryptInChunks encrypts plaintext chunk by chunk, chunkSize plaintext
+// bytes each, in the order given (ascending if nil), and returns the
+// ciphertext assembled in file order.
+func encryptInChunks(t *testing.T, c *Cipher, fileNonce nonce, plaintext []byte, chunkSize int64, order []int) []byte {
+	size := int64(len(plaintext))
+	numChunks := int(max((size+chunkSize-1)/chunkSize, 1))
+	if order == nil {
+		for i := range numChunks {
+			order = append(order, i)
+		}
+	}
+	require.Len(t, order, numChunks)
+	parts := make([][]byte, numChunks)
+	for _, i := range order {
+		start := int64(i) * chunkSize
+		end := min(start+chunkSize, size)
+		var buf bytes.Buffer
+		n, err := c.encryptChunk(&buf, bytes.NewReader(plaintext[start:end]), fileNonce, start/blockDataSize, i == 0)
+		require.NoError(t, err)
+		assert.Equal(t, end-start, n)
+		assert.Equal(t, encryptedChunkSize(end-start, i == 0), int64(buf.Len()))
+		parts[i] = buf.Bytes()
+	}
+	return bytes.Join(parts, nil)
+}
+
+// The chunk encrypter must produce, chunk by chunk and in any order,
+// exactly the bytes the sequential encrypter produces for the whole file.
+func TestEncryptChunk(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	// A nonce about to carry out of its first eight bytes, so that the
+	// nonce.add of the chunks and the nonce.increment of the sequential
+	// encrypter have to agree across the carry
+	fileNonce := nonce{0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 0x02, 0x03}
+	sizes := []int64{0, 1, blockDataSize - 1, blockDataSize, blockDataSize + 1, 2*blockDataSize - 1, 2 * blockDataSize, 5*blockDataSize + 17, 8 * blockDataSize}
+	chunkSizes := []int64{blockDataSize, 2 * blockDataSize, 3 * blockDataSize}
+	for _, size := range sizes {
+		plaintext := testPlaintext(size)
+		enc, err := c.newEncrypter(bytes.NewReader(plaintext), &fileNonce)
+		require.NoError(t, err)
+		want, err := io.ReadAll(enc)
+		require.NoError(t, err)
+		assert.Equal(t, c.EncryptedSize(size), int64(len(want)))
+		for _, chunkSize := range chunkSizes {
+			got := encryptInChunks(t, c, fileNonce, plaintext, chunkSize, nil)
+			assert.True(t, bytes.Equal(want, got), "size %d chunk %d ascending", size, chunkSize)
+			numChunks := int(max((size+chunkSize-1)/chunkSize, 1))
+			descending := make([]int, 0, numChunks)
+			for i := numChunks - 1; i >= 0; i-- {
+				descending = append(descending, i)
+			}
+			got = encryptInChunks(t, c, fileNonce, plaintext, chunkSize, descending)
+			assert.True(t, bytes.Equal(want, got), "size %d chunk %d descending", size, chunkSize)
+		}
+	}
+}
+
+// Encrypting the same chunk again must give identical ciphertext, which
+// is what a retry of the chunk relies on.
+func TestEncryptChunkRetryIdentical(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	fileNonce := nonce{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24}
+	plaintext := testPlaintext(3*blockDataSize + 5)
+	var first, second bytes.Buffer
+	n, err := c.encryptChunk(&first, bytes.NewReader(plaintext), fileNonce, 7, false)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(plaintext)), n)
+	n, err = c.encryptChunk(&second, bytes.NewReader(plaintext), fileNonce, 7, false)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(plaintext)), n)
+	assert.True(t, bytes.Equal(first.Bytes(), second.Bytes()))
+	// and a different block index gives different ciphertext for the same plaintext
+	var other bytes.Buffer
+	_, err = c.encryptChunk(&other, bytes.NewReader(plaintext), fileNonce, 8, false)
+	require.NoError(t, err)
+	assert.False(t, bytes.Equal(first.Bytes(), other.Bytes()))
+}
+
+// Ciphertext assembled from chunks must be readable at any offset by the
+// decrypter, across block and chunk boundaries.
+func TestEncryptChunkRangeRead(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	fileNonce := nonce{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	plaintext := testPlaintext(5*blockDataSize + 100)
+	size := int64(len(plaintext))
+	chunkSize := int64(2 * blockDataSize)
+	ciphertext := encryptInChunks(t, c, fileNonce, plaintext, chunkSize, nil)
+	open := func(ctx context.Context, offset, limit int64) (io.ReadCloser, error) {
+		end := int64(len(ciphertext))
+		if limit >= 0 {
+			end = min(offset+limit, end)
+		}
+		return io.NopCloser(bytes.NewReader(ciphertext[offset:end])), nil
+	}
+	for _, test := range []struct {
+		offset, limit int64
+	}{
+		{0, -1},
+		{0, 5},
+		{5, 100},
+		{blockDataSize - 1, 2},
+		{blockDataSize, blockDataSize},
+		{blockDataSize + 1, 10},
+		{chunkSize - 1, 2},
+		{chunkSize, 3},
+		{2*chunkSize + 7, 5000},
+		{4 * blockDataSize, -1},
+		{size - 100, -1},
+		{size - 1, 1},
+	} {
+		rc, err := c.DecryptDataSeek(context.Background(), open, test.offset, test.limit)
+		require.NoError(t, err)
+		got, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		end := size
+		if test.limit >= 0 {
+			end = min(test.offset+test.limit, size)
+		}
+		assert.True(t, bytes.Equal(plaintext[test.offset:end], got), "offset %d limit %d", test.offset, test.limit)
+	}
+}
+
+// The block authenticators of a file are the same whether it is
+// encrypted in one go or in chunks, and change with the data
+func TestBlockTags(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	fileNonce := nonce{1, 2, 3}
+	plaintext := testPlaintext(5*blockDataSize + 17)
+	size := int64(len(plaintext))
+
+	enc, err := c.newEncrypter(bytes.NewReader(plaintext), &fileNonce)
+	require.NoError(t, err)
+	whole := newBlockTags(true)
+	_, err = io.CopyBuffer(whole, enc, make([]byte, 7777))
+	require.NoError(t, err)
+	assert.Len(t, whole.tags, 6)
+
+	var chunked []uint64
+	const chunk = 2 * blockDataSize
+	for start := int64(0); start < size; start += chunk {
+		tags := newBlockTags(start == 0)
+		_, err := c.encryptChunk(tags, bytes.NewReader(plaintext[start:min(start+chunk, size)]), fileNonce, start/blockDataSize, start == 0)
+		require.NoError(t, err)
+		chunked = append(chunked, tags.tags...)
+	}
+	assert.Equal(t, whole.tags, chunked)
+
+	changed := bytes.Clone(plaintext)
+	changed[3*blockDataSize+5] ^= 1
+	tags := newBlockTags(false)
+	_, err = c.encryptChunk(tags, bytes.NewReader(changed[2*blockDataSize:4*blockDataSize]), fileNonce, 2, false)
+	require.NoError(t, err)
+	require.Len(t, tags.tags, 2)
+	assert.Equal(t, whole.tags[2], tags.tags[0])
+	assert.NotEqual(t, whole.tags[3], tags.tags[1])
+}
+
+func TestChunkBlocks(t *testing.T) {
+	for _, test := range []struct {
+		chunkSize, maxChunkSize, want int64
+	}{
+		// no limit known - rounded up
+		{1, 0, 1},
+		{blockSize - 1, 0, 1},
+		{blockSize, 0, 1},
+		{blockSize + 1, 0, 2},
+		{5 << 20, 0, 80},
+		{256 << 20, 0, 4096},
+		{1 << 30, 0, 16381},
+		{5 << 30, 0, 81901},
+		// a limit well above the chunk changes nothing
+		{256 << 20, 5 << 30, 4096},
+		{1 << 30, 5 << 30, 16381},
+		// the chunk is the biggest part the remote takes - rounded down
+		{256 << 20, 256 << 20, 4094},
+		{1 << 30, 1 << 30, 16380},
+		{4000 << 20, 4000 << 20, 63984},
+		{5 << 30, 5 << 30, 81900},
+		// a limit with room for exactly one block and the header
+		{blockSize, blockSize + int64(fileHeaderSize), 1},
+		// a limit too small for one block and the header gives none
+		{blockSize, blockSize + int64(fileHeaderSize) - 1, 0},
+		{100, 100, 0},
+	} {
+		what := fmt.Sprintf("chunkSize %d maxChunkSize %d", test.chunkSize, test.maxChunkSize)
+		got := chunkBlocks(test.chunkSize, test.maxChunkSize)
+		assert.Equal(t, test.want, got, what)
+		up := max((test.chunkSize+blockSize-1)/blockSize, 1)
+		if got == up {
+			// never shorter than the chunk size asked for - a minimum part size
+			assert.GreaterOrEqual(t, encryptedChunkSize(got*blockDataSize, false), test.chunkSize, what)
+		} else {
+			// rounded down only when the first chunk wouldn't fit the biggest part
+			assert.Less(t, got, up, what)
+			assert.Greater(t, encryptedChunkSize(up*blockDataSize, true), test.maxChunkSize, what)
+		}
+		if test.maxChunkSize >= blockSize+int64(fileHeaderSize) {
+			// never longer than the biggest part, header included
+			assert.LessOrEqual(t, encryptedChunkSize(got*blockDataSize, true), test.maxChunkSize, what)
+		}
+	}
+}
+
+// The sizes around a 256 MiB chunk, compared with the sequential
+// encrypter by hash so the ciphertext needn't be held in memory. Slow,
+// so skipped with -short.
+func TestEncryptChunkLargeSizes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 256 MiB encryptions in short mode")
+	}
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	fileNonce := nonce{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01}
+	const chunkSize = 64 << 20
+	plaintext := testPlaintext(256<<20 + blockDataSize)
+	for _, size := range []int64{256<<20 - blockDataSize, 256 << 20, 256<<20 + blockDataSize} {
+		enc, err := c.newEncrypter(bytes.NewReader(plaintext[:size]), &fileNonce)
+		require.NoError(t, err)
+		want := sha256.New()
+		wantLen, err := io.Copy(want, enc)
+		require.NoError(t, err)
+		assert.Equal(t, c.EncryptedSize(size), wantLen)
+
+		got := sha256.New()
+		var gotLen int64
+		numChunks := int((size + chunkSize - 1) / chunkSize)
+		for i := range numChunks {
+			start := int64(i) * chunkSize
+			end := min(start+chunkSize, size)
+			n, err := c.encryptChunk(got, bytes.NewReader(plaintext[start:end]), fileNonce, start/blockDataSize, i == 0)
+			require.NoError(t, err)
+			assert.Equal(t, end-start, n)
+			gotLen += encryptedChunkSize(end-start, i == 0)
+		}
+		assert.Equal(t, wantLen, gotLen, "size %d", size)
+		assert.Equal(t, want.Sum(nil), got.Sum(nil), "size %d", size)
+	}
+}
+
+func TestEncryptedChunkSize(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	for _, size := range []int64{0, 1, blockDataSize - 1, blockDataSize, blockDataSize + 1, 3*blockDataSize + 17} {
+		assert.Equal(t, c.EncryptedSize(size), encryptedChunkSize(size, true), "size %d", size)
+		assert.Equal(t, c.EncryptedSize(size)-int64(fileHeaderSize), encryptedChunkSize(size, false), "size %d", size)
+	}
 }
 
 func TestKey(t *testing.T) {

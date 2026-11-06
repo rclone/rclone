@@ -16,3 +16,4 @@ acl: {}
 bucket_acl: true
 quirks:
   force_path_style: true
+  equal_part_sizes: true # all parts but the last must be the same size
