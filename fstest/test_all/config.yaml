@@ -759,7 +759,7 @@ backends:
    ignoretests:
      # The TestBisyncRemoteLocal/check_access_filters tests fail due to duplicated objects
      - cmd/bisync
-   fastlist: false
+   fastlist: true
    extratime: 2.0
    listretries: 5
  - backend: "kdrive"

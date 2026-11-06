@@ -13,6 +13,7 @@ import (
 
 	"github.com/rclone/rclone/backend/drime/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
@@ -155,4 +156,123 @@ func TestGetItemListError(t *testing.T) {
 	require.Error(t, err)
 	assert.NotErrorIs(t, err, fs.ErrorObjectNotFound)
 	assert.Contains(t, err.Error(), "access denied")
+}
+
+// treeServer serves /drive/file-entries from tree, the children of each
+// folder keyed by its ID, the way Drime does: testPerPage entries a page
+// with a total and last_page which only say whether there is another
+// page. A parentIds[] listing including a folder in refuse answers 500.
+//
+// It records the parentIds[] of each first page asked for in groups.
+func treeServer(t *testing.T, tree map[string][]api.Item, refuse map[string]bool, groups *[][]string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		page, err := strconv.Atoi(params.Get("page"))
+		require.NoError(t, err)
+		parents := params["parentIds[]"]
+		if page == 1 && len(parents) > 0 {
+			*groups = append(*groups, parents)
+		}
+		if id := params.Get("folderId"); id != "" {
+			parents = []string{id}
+		} else {
+			for _, id := range parents {
+				if refuse[id] {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+		}
+		var entries []api.Item
+		for _, id := range parents {
+			entries = append(entries, tree[id]...)
+		}
+		start := min((page-1)*testPerPage, len(entries))
+		end := min(start+testPerPage, len(entries))
+		lastPage := page
+		if end < len(entries) {
+			lastPage = page + 1
+		}
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{
+			"current_page": page,
+			"last_page":    lastPage,
+			"per_page":     testPerPage,
+			"total":        (page + 1) * testPerPage,
+			"data":         entries[start:end],
+		}))
+	}))
+}
+
+// TestListR checks that ListR lists every entry of a tree exactly once,
+// asking for the children of up to listRGrouping folders at a time, and
+// lists folders drime won't list together one at a time.
+func TestListR(t *testing.T) {
+	// 60 folders under the root, each holding 3 files and a folder
+	// holding 2 files
+	tree := map[string][]api.Item{}
+	subIDs := map[string]string{}
+	var want []string
+	id := 10000
+	add := func(parentID, name, itemType string) string {
+		id++
+		itemID := strconv.Itoa(id)
+		tree[parentID] = append(tree[parentID], api.Item{ID: json.Number(itemID), Name: name, Type: itemType, ParentID: json.Number(parentID)})
+		return itemID
+	}
+	for i := range 60 {
+		dir := fmt.Sprintf("dir%02d", i)
+		dirID := add("1", dir, api.ItemTypeFolder)
+		want = append(want, dir, dir+"/sub")
+		for j := range 3 {
+			add(dirID, fmt.Sprintf("file%d", j), "text")
+			want = append(want, fmt.Sprintf("%s/file%d", dir, j))
+		}
+		subID := add(dirID, "sub", api.ItemTypeFolder)
+		subIDs[dir] = subID
+		for j := range 2 {
+			add(subID, fmt.Sprintf("file%d", j), "text")
+			want = append(want, fmt.Sprintf("%s/sub/file%d", dir, j))
+		}
+	}
+	refusedID := tree["1"][7].ID.String()
+
+	for _, test := range []struct {
+		name   string
+		refuse map[string]bool
+	}{
+		{name: "Grouped"},
+		{name: "Refused", refuse: map[string]bool{refusedID: true}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			var groups [][]string
+			server := treeServer(t, tree, test.refuse, &groups)
+			defer server.Close()
+			f := testFs(t, server)
+			f.dirCache = dircache.New("", "1", f)
+
+			var got []string
+			require.NoError(t, f.ListR(ctx, "", func(entries fs.DirEntries) error {
+				for _, entry := range entries {
+					got = append(got, entry.Remote())
+				}
+				return nil
+			}))
+			assert.ElementsMatch(t, want, got)
+
+			var groupSizes []int
+			for _, group := range groups {
+				groupSizes = append(groupSizes, len(group))
+			}
+			// two levels of 60 folders, each group asked for once
+			assert.Equal(t, []int{50, 10, 50, 10}, groupSizes)
+
+			dirID, err := f.dirCache.FindDir(ctx, "dir59/sub", false)
+			require.NoError(t, err)
+			assert.Equal(t, subIDs["dir59"], dirID, "directory IDs cached")
+		})
+	}
 }
