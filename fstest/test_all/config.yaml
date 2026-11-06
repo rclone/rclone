@@ -566,6 +566,17 @@ backends:
      - TestIndexChangedFiles
    ignoretests:
      - cmd/bisync
+ - backend:  "tarkle"
+   remote:   "TestTarkle:"
+   fastlist: true
+   extratime: 3.0
+   ignoretests:
+     - cmd/bisync
+   ignore:
+     # This test's fixed future sentinel date (2030-01-01, chosen to sort after every other
+     # fstest fixture time) collides with the API's deliberate rejection of modified_at values
+     # more than a day in the future (a sanity guard against garbage client clocks, not a bug).
+     - TestIndexChangedDirTime
  - backend:  "union"
    remote:   "TestUnion:"
    fastlist: false
