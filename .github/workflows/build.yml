@@ -447,7 +447,13 @@ jobs:
           echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
 
       - name: arm-v7a gomobile build
-        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
+        run: |
+          for i in 1 2 3; do
+            env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile && break
+            [ $i = 3 ] && exit 1
+            echo "gomobile bind failed (attempt $i/3), retrying in 10s..."
+            sleep 10
+          done
 
       - name: arm-v7a Set environment variables
         run: |
