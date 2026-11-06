@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -615,4 +616,111 @@ func TestNextcloudPublicShareHeader(t *testing.T) {
 			assert.Equal(t, test.want, got.Load().(string))
 		})
 	}
+}
+
+// rangeServer is a WebDAV server keeping its files in memory. If
+// acceptRanges is set it writes the body of a PUT with a Content-Range
+// header at that offset, otherwise it stores the body as the whole file.
+type rangeServer struct {
+	t            *testing.T
+	acceptRanges bool
+	mu           sync.Mutex
+	files        map[string][]byte
+	puts         []string // path and Content-Range of each PUT
+}
+
+func (s *rangeServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	name := r.URL.Path
+	switch r.Method {
+	case http.MethodPut:
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(s.t, err)
+		contentRange := r.Header.Get("Content-Range")
+		s.puts = append(s.puts, strings.TrimSpace(name+" "+contentRange))
+		if contentRange == "" || !s.acceptRanges {
+			s.files[name] = body
+		} else {
+			var start int64
+			_, err := fmt.Sscanf(contentRange, "bytes %d-", &start)
+			assert.NoError(s.t, err)
+			data := s.files[name]
+			if end := start + int64(len(body)); int64(len(data)) < end {
+				data = append(data, make([]byte, end-int64(len(data)))...)
+			}
+			copy(data[start:], body)
+			s.files[name] = data
+		}
+		w.WriteHeader(http.StatusCreated)
+	case "PROPFIND":
+		data, ok := s.files[name]
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusMultiStatus)
+		_, _ = fmt.Fprintf(w, `<d:multistatus xmlns:d="DAV:"><d:response><d:href>%s</d:href><d:propstat><d:prop><d:getcontentlength>%d</d:getcontentlength><d:resourcetype/></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`, name, len(data))
+	case "MOVE":
+		destination, err := url.Parse(r.Header.Get("Destination"))
+		assert.NoError(s.t, err)
+		assert.Equal(s.t, "T", r.Header.Get("Overwrite"))
+		s.files[destination.Path] = s.files[name]
+		delete(s.files, name)
+		w.WriteHeader(http.StatusCreated)
+	case "DELETE":
+		if _, ok := s.files[name]; !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		delete(s.files, name)
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		s.t.Errorf("unexpected request %s %s", r.Method, name)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+// rangeUpload uploads body as remote to a new rangeServer holding
+// "/file.bin", with range_upload_chunk_size set to 4 bytes.
+func rangeUpload(t *testing.T, acceptRanges bool, remote string, body []byte) (*rangeServer, error) {
+	s := &rangeServer{t: t, acceptRanges: acceptRanges, files: map[string][]byte{"/file.bin": []byte("old")}}
+	ts := httptest.NewServer(s)
+	defer ts.Close()
+	configfile.Install()
+	ctx := context.Background()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type":                    "webdav",
+		"url":                     ts.URL,
+		"range_upload_chunk_size": "4B",
+	})
+	require.NoError(t, err)
+	src := object.NewStaticObjectInfo(remote, time.Now(), int64(len(body)), true, nil, f)
+	_, err = f.Put(ctx, bytes.NewReader(body), src)
+	return s, err
+}
+
+func TestRangeUploadWritesChunksThenMoves(t *testing.T) {
+	s, err := rangeUpload(t, true, "file.bin", []byte("abcdefghij"))
+	require.NoError(t, err)
+	assert.Equal(t, map[string][]byte{"/file.bin": []byte("abcdefghij")}, s.files)
+	require.Len(t, s.puts, 3)
+	part, _, _ := strings.Cut(s.puts[0], " ")
+	assert.True(t, strings.HasPrefix(part, "/file.bin.") && strings.HasSuffix(part, ".partial"), part)
+	assert.Equal(t, []string{part, part + " bytes 4-7/10", part + " bytes 8-9/10"}, s.puts)
+}
+
+func TestRangeUploadOfSmallFileIsOnePut(t *testing.T) {
+	s, err := rangeUpload(t, true, "file.bin", []byte("abcd"))
+	require.NoError(t, err)
+	assert.Equal(t, map[string][]byte{"/file.bin": []byte("abcd")}, s.files)
+	assert.Equal(t, []string{"/file.bin"}, s.puts)
+}
+
+func TestRangeUploadStopsWhenRangesAreIgnored(t *testing.T) {
+	s, err := rangeUpload(t, false, "file.bin", []byte("abcdefghij"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "doesn't support partial PUT requests")
+	assert.Len(t, s.puts, 2, "should stop after the first chunk with a Content-Range")
+	assert.Equal(t, map[string][]byte{"/file.bin": []byte("old")}, s.files, "should keep the old file and remove the temporary one")
 }
