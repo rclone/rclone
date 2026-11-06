@@ -2,7 +2,10 @@ module github.com/rclone/rclone
 
 go 1.26.0
 
-godebug x509negativeserial=1
+godebug (
+	multipathtcp=0
+	x509negativeserial=1
+)
 
 require (
 	bazil.org/fuse v0.0.0-20230120002735-62a210ff1fd5
@@ -17,7 +20,6 @@ require (
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v1.1.2
-	github.com/abbot/go-http-auth v0.4.0
 	github.com/adrg/xdg v0.5.3
 	github.com/anacrolix/dms v1.8.0
 	github.com/apache/arrow-go/v18 v18.7.0 // indirect
@@ -74,7 +76,7 @@ require (
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
 	github.com/rclone/Proton-API-Bridge v1.0.5
 	github.com/rclone/go-proton-api v1.0.4
-	github.com/rclone/gofakes3 v0.0.11
+	github.com/rclone/gofakes3 v0.0.12
 	github.com/rfjakob/eme v1.2.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.16.0
@@ -125,7 +127,7 @@ require (
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/anchore/go-lzo v0.1.1 // indirect
-	github.com/andybalholm/brotli v1.2.2 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.22 // indirect
@@ -261,7 +263,7 @@ require (
 	golang.org/x/image v0.47.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
-	google.golang.org/grpc v1.85.0-dev.0.20260825072537-93e31b48545e // indirect
+	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

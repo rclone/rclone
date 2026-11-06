@@ -95,6 +95,12 @@ func TestCountSuffixSet(t *testing.T) {
 		{"1iB", 0, true},
 		{"1Ki", 0, true},
 		{"1KiB", 0, true},
+		{"9E", 9 * 1000 * 1000 * 1000 * 1000 * 1000 * 1000, false},
+		{"9.3E", 0, true},
+		{"10E", 0, true},
+		{"infk", 0, true},
+		{"nank", 0, true},
+		{"NaNM", 0, true},
 	} {
 		ss := CountSuffix(0)
 		err := ss.Set(test.in)

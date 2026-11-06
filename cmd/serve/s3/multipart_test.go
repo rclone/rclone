@@ -6,12 +6,16 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math"
 	"net/url"
 	"path"
+	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -23,6 +27,8 @@ import (
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
@@ -219,9 +225,10 @@ func TestMultipartOutOfOrder(t *testing.T) {
 }
 
 // TestMultipartNonContiguous checks that a multipart upload with a gap in the
-// part numbers (which the in-order stream can't place) is rejected.
+// part numbers (which the in-order stream can't place) is rejected, and
+// can be completed once the gap is filled.
 func TestMultipartNonContiguous(t *testing.T) {
-	core, _, bucket := newMultipartTestServer(t, false)
+	core, f, bucket := newMultipartTestServer(t, false)
 	ctx := context.Background()
 	const object = "gap.bin"
 
@@ -229,14 +236,29 @@ func TestMultipartNonContiguous(t *testing.T) {
 	require.NoError(t, err)
 
 	var parts []minio.CompletePart
-	for _, pn := range []int{1, 2, 4} { // part 3 missing
-		data := []byte(random.String(40 * 1024))
-		p, err := core.PutObjectPart(ctx, bucket, object, uploadID, pn, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	var want []byte
+	data := map[int][]byte{}
+	putPart := func(pn int) {
+		data[pn] = []byte(random.String(40 * 1024))
+		p, err := core.PutObjectPart(ctx, bucket, object, uploadID, pn, bytes.NewReader(data[pn]), int64(len(data[pn])), minio.PutObjectPartOptions{})
 		require.NoError(t, err)
 		parts = append(parts, minio.CompletePart{PartNumber: pn, ETag: p.ETag})
 	}
+	for _, pn := range []int{1, 2, 4} { // part 3 missing
+		putPart(pn)
+	}
 	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, minio.PutObjectOptions{})
 	require.Error(t, err)
+
+	// The upload is left open, so the missing part can be added
+	putPart(3)
+	slices.SortFunc(parts, func(a, b minio.CompletePart) int { return a.PartNumber - b.PartNumber })
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	for pn := 1; pn <= 4; pn++ {
+		want = append(want, data[pn]...)
+	}
+	assert.Equal(t, want, readObject(t, f, bucket, object))
 }
 
 // requireOnly asserts that the bucket contains only the expected
@@ -742,10 +764,10 @@ func TestMultipartReaper(t *testing.T) {
 	requireOnly(t, f, bucket)
 }
 
-// TestMultipartCompleteFailureForgotten checks that a completion which
-// tears the upload down removes it from gofakes3's records too, so it
-// isn't left in listings or memory.
-func TestMultipartCompleteFailureForgotten(t *testing.T) {
+// TestMultipartCompleteFailureRetry checks that a completion which
+// fails with a wrong part list leaves the upload in place, so it can be
+// retried with the right one, as on S3.
+func TestMultipartCompleteFailureRetry(t *testing.T) {
 	core, f, bucket := newMultipartTestServer(t, false)
 	ctx := context.Background()
 	const object = "bad-complete.bin"
@@ -753,17 +775,22 @@ func TestMultipartCompleteFailureForgotten(t *testing.T) {
 	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
 	require.NoError(t, err)
 	data := []byte(random.String(50 * 1024))
-	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	part, err := core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
 	require.NoError(t, err)
 
 	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{{PartNumber: 1, ETag: `"00000000000000000000000000000000"`}}, minio.PutObjectOptions{})
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "InvalidPart")
 
 	// FIXME gofakes3 lists nothing when the delimiter is empty
 	uploads, err := core.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
 	require.NoError(t, err)
-	assert.Empty(t, uploads.Uploads)
-	requireOnly(t, f, bucket)
+	assert.Len(t, uploads.Uploads, 1)
+
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{{PartNumber: 1, ETag: part.ETag}}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, data, readObject(t, f, bucket, object))
+	requireOnly(t, f, bucket, object)
 }
 
 // TestMultipartReapExpiredUploads checks the reaper's rules directly: an
@@ -1863,4 +1890,267 @@ func TestMultipartMaxUploads(t *testing.T) {
 	b.reapExpiredUploads(time.Now(), time.Hour)
 	_, err = b.CreateMultipartUpload(ctx, bucket, "5", nil)
 	require.NoError(t, err)
+}
+
+// TestMultipartAbortRemovesDirs checks that aborting an upload removes
+// the directories made for it, but not those which existed already, so
+// the bucket can be deleted.
+func TestMultipartAbortRemovesDirs(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+
+	// A directory which exists already with an object in
+	putTestObject(t, f, bucket, "existing/keep.txt")
+
+	for _, object := range []string{"new/dir/aborted.bin", "existing/dir/aborted.bin"} {
+		uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+		require.NoError(t, err)
+		data := []byte(random.String(1024))
+		_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+		require.NoError(t, err)
+		require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object, uploadID))
+	}
+	requireOnly(t, f, bucket, "existing")
+	requireOnly(t, f, path.Join(bucket, "existing"), "keep.txt")
+
+	// Once the object is gone the bucket can be deleted
+	require.NoError(t, core.RemoveObject(ctx, bucket, "existing/keep.txt", minio.RemoveObjectOptions{}))
+	require.NoError(t, core.RemoveBucket(ctx, bucket))
+}
+
+// TestDeleteBucketEmptyDirs checks a bucket holding only empty
+// directories, which S3 clients can't see, can be deleted, but not one
+// holding an object.
+func TestDeleteBucketEmptyDirs(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+
+	putTestObject(t, f, bucket, "a/b/object.txt")
+	require.NoError(t, f.Mkdir(ctx, path.Join(bucket, "c/d")))
+	err := core.RemoveBucket(ctx, bucket)
+	require.Error(t, err)
+	assert.Equal(t, "BucketNotEmpty", minio.ToErrorResponse(err).Code)
+	requireOnly(t, f, bucket, "a", "c")
+
+	require.NoError(t, core.RemoveObject(ctx, bucket, "a/b/object.txt", minio.RemoveObjectOptions{}))
+	require.NoError(t, core.RemoveBucket(ctx, bucket))
+	_, err = f.List(ctx, bucket)
+	assert.ErrorIs(t, err, fs.ErrorDirNotFound)
+}
+
+// TestMultipartETagAndParts checks the ETag of a completed multipart
+// upload is the MD5 of the object, so is the same as HEAD returns, and
+// that its parts can be read with partNumber.
+func TestMultipartETagAndParts(t *testing.T) {
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			core, _, bucket := newMultipartTestServerBacking(t, tc.backing, false)
+			ctx := context.Background()
+			const object = "multipart.bin"
+			partSizes := []int{120 * 1024, 100 * 1024, 53 * 1024}
+
+			uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			var want []byte
+			var parts []minio.CompletePart
+			for i, size := range partSizes {
+				data := []byte(random.String(size))
+				want = append(want, data...)
+				p, err := core.PutObjectPart(ctx, bucket, object, uploadID, i+1, bytes.NewReader(data), int64(size), minio.PutObjectPartOptions{})
+				require.NoError(t, err)
+				parts = append(parts, minio.CompletePart{PartNumber: i + 1, ETag: p.ETag})
+			}
+			info, err := core.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			wantMD5 := md5.Sum(want)
+			assert.Equal(t, hex.EncodeToString(wantMD5[:]), info.ETag)
+
+			stat, err := core.StatObject(ctx, bucket, object, minio.StatObjectOptions{})
+			require.NoError(t, err)
+			assert.Equal(t, info.ETag, stat.ETag)
+
+			var start int
+			for i, size := range partSizes {
+				obj, _, _, err := core.GetObject(ctx, bucket, object, minio.GetObjectOptions{PartNumber: i + 1})
+				require.NoError(t, err)
+				data, err := io.ReadAll(obj)
+				require.NoError(t, err)
+				require.NoError(t, obj.Close())
+				assert.Equal(t, want[start:start+size], data, "part %d", i+1)
+				start += size
+			}
+		})
+	}
+}
+
+// TestETagHashConsistent checks the ETags returned when objects are
+// made are the same as HEAD and listings return for them, whatever
+// --etag-hash is.
+func TestETagHashConsistent(t *testing.T) {
+	for _, etagHash := range []string{"", "SHA1"} {
+		for _, tc := range testRemotes {
+			t.Run(fmt.Sprintf("%s/%q", tc.name, etagHash), func(t *testing.T) {
+				// A directory marker on a memory remote is a virtual
+				// directory, which stops the VFS shared by the servers
+				// of plain ":memory:" seeing new buckets, so this needs
+				// its own.
+				backing := tc.backing
+				if backing == ":memory:" {
+					backing = fmt.Sprintf(":memory,description=etag%d:", testBackingCounter.Add(1))
+				}
+				core, f, bucket := newMultipartTestServerOpt(t, backing, false, func(opt *Options) {
+					opt.EtagHash = etagHash
+				})
+				ctx := context.Background()
+				sha1Hex := func(data []byte) string {
+					if etagHash == "" {
+						return ""
+					}
+					sum := sha1.Sum(data)
+					return hex.EncodeToString(sum[:])
+				}
+				// The backend gives the hashes of objects, but not of
+				// directory markers
+				wantETag := func(data []byte) string {
+					if !f.Hashes().Contains(hash.SHA1) {
+						return ""
+					}
+					return sha1Hex(data)
+				}
+				etags := map[string]string{}
+
+				data := []byte("put object")
+				info, err := core.PutObject(ctx, bucket, "put.txt", bytes.NewReader(data), int64(len(data)), "", "", minio.PutObjectOptions{})
+				require.NoError(t, err)
+				assert.Equal(t, wantETag(data), info.ETag, "put")
+				etags["put.txt"] = info.ETag
+
+				info, err = core.PutObject(ctx, bucket, "dir/", bytes.NewReader(nil), 0, "", "", minio.PutObjectOptions{})
+				require.NoError(t, err)
+				assert.Equal(t, sha1Hex(nil), info.ETag, "directory marker")
+				etags["dir/"] = info.ETag
+
+				uploadID, err := core.NewMultipartUpload(ctx, bucket, "multipart.bin", minio.PutObjectOptions{})
+				require.NoError(t, err)
+				var all []byte
+				var parts []minio.CompletePart
+				for i, size := range []int{100 * 1024, 30 * 1024} {
+					data := []byte(random.String(size))
+					all = append(all, data...)
+					p, err := core.PutObjectPart(ctx, bucket, "multipart.bin", uploadID, i+1, bytes.NewReader(data), int64(size), minio.PutObjectPartOptions{})
+					require.NoError(t, err)
+					parts = append(parts, minio.CompletePart{PartNumber: i + 1, ETag: p.ETag})
+				}
+				complete, err := core.CompleteMultipartUpload(ctx, bucket, "multipart.bin", uploadID, parts, minio.PutObjectOptions{})
+				require.NoError(t, err)
+				assert.Equal(t, wantETag(all), complete.ETag, "multipart")
+				etags["multipart.bin"] = complete.ETag
+
+				for key, etag := range etags {
+					stat, err := core.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
+					require.NoError(t, err, key)
+					assert.Equal(t, etag, stat.ETag, "HEAD %s", key)
+				}
+				listed := map[string]string{}
+				result, err := core.ListObjects(bucket, "", "", "", 1000)
+				require.NoError(t, err)
+				for _, obj := range result.Contents {
+					listed[obj.Key] = strings.Trim(obj.ETag, `"`)
+				}
+				assert.Equal(t, etags, listed)
+			})
+		}
+	}
+}
+
+// TestETagMD5WithoutRemoteMD5 checks that with MD5 ETags on a remote
+// which can't give the MD5 of objects, the ETags returned when objects
+// are made are the same as HEAD and listings return for them, and are
+// kept when an object is copied onto itself.
+func TestETagMD5WithoutRemoteMD5(t *testing.T) {
+	backing := ":crypt,remote='" + t.TempDir() + "',password=" + obscure.MustObscure("password") + ":"
+	core, f, bucket := newMultipartTestServerBacking(t, backing, false)
+	require.False(t, f.Hashes().Contains(hash.MD5))
+	ctx := context.Background()
+	md5Hex := func(data []byte) string {
+		sum := md5.Sum(data)
+		return hex.EncodeToString(sum[:])
+	}
+	etags := map[string]string{}
+
+	data := []byte("put object")
+	info, err := core.PutObject(ctx, bucket, "put.txt", bytes.NewReader(data), int64(len(data)), "", "", minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, md5Hex(data), info.ETag, "put")
+	etags["put.txt"] = info.ETag
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, "multipart.bin", minio.PutObjectOptions{})
+	require.NoError(t, err)
+	var all []byte
+	var parts []minio.CompletePart
+	for i, size := range []int{100 * 1024, 30 * 1024} {
+		data := []byte(random.String(size))
+		all = append(all, data...)
+		p, err := core.PutObjectPart(ctx, bucket, "multipart.bin", uploadID, i+1, bytes.NewReader(data), int64(size), minio.PutObjectPartOptions{})
+		require.NoError(t, err)
+		parts = append(parts, minio.CompletePart{PartNumber: i + 1, ETag: p.ETag})
+	}
+	complete, err := core.CompleteMultipartUpload(ctx, bucket, "multipart.bin", uploadID, parts, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, md5Hex(all), complete.ETag, "multipart")
+	etags["multipart.bin"] = complete.ETag
+
+	// Replacing the metadata of an object leaves its data and so its
+	// ETag unchanged
+	_, err = core.CopyObject(ctx, bucket, "multipart.bin", bucket, "multipart.bin", map[string]string{
+		"x-amz-metadata-directive": "REPLACE",
+		"x-amz-meta-potato":        "jersey royal",
+	}, minio.CopySrcOptions{}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	for key, etag := range etags {
+		stat, err := core.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
+		require.NoError(t, err, key)
+		assert.Equal(t, etag, stat.ETag, "HEAD %s", key)
+	}
+	stat, err := core.StatObject(ctx, bucket, "multipart.bin", minio.StatObjectOptions{PartNumber: 2})
+	require.NoError(t, err)
+	assert.Equal(t, int64(30*1024), stat.Size, "part 2 size after copy")
+
+	listed := map[string]string{}
+	result, err := core.ListObjects(bucket, "", "", "", 1000)
+	require.NoError(t, err)
+	for _, obj := range result.Contents {
+		listed[obj.Key] = strings.Trim(obj.ETag, `"`)
+	}
+	assert.Equal(t, etags, listed)
+}
+
+// TestMultipartObjectMD5OnlyForMD5ETags checks that a multipart upload only
+// hashes the object as it is written when the ETag is its MD5.
+func TestMultipartObjectMD5OnlyForMD5ETags(t *testing.T) {
+	ctx := context.Background()
+	for _, tc := range []struct {
+		etagHash string
+		want     bool
+	}{
+		{"MD5", true},
+		{"", false},
+		{"SHA1", false},
+	} {
+		t.Run(fmt.Sprintf("%q", tc.etagHash), func(t *testing.T) {
+			b, _ := newTestBackend(t)
+			b.s.opt.EtagHash = tc.etagHash
+			b.s.etagHashType = hash.None
+			if tc.etagHash != "" {
+				require.NoError(t, b.s.etagHashType.Set(tc.etagHash))
+			}
+			uploadID, err := b.CreateMultipartUpload(ctx, "bucket", "key", nil)
+			require.NoError(t, err)
+			up, err := b.loadUpload(ctx, uploadID)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, up.objectMD5 != nil)
+			require.NoError(t, b.AbortMultipartUpload(ctx, "bucket", "key", uploadID))
+		})
+	}
 }

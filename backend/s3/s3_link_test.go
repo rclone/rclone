@@ -225,3 +225,31 @@ func TestPublicLink(t *testing.T) {
 	_, err = f.PublicLink(context.Background(), "missing", fs.DurationOff, false)
 	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
 }
+
+func TestPublicLinkRequestFixups(t *testing.T) {
+	for _, tt := range []struct {
+		name               string
+		useXID             bool
+		signAcceptEncoding bool
+	}{
+		{"no x-id", false, true},
+		{"unsigned Accept-Encoding", true, false},
+		{"no x-id and unsigned Accept-Encoding", false, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newLinkTestFs(t)
+			f.opt.UseXID = fs.Tristate{Value: tt.useXID, Valid: true}
+			f.opt.SignAcceptEncoding = fs.Tristate{Value: tt.signAcceptEncoding, Valid: true}
+			c, _, err := s3Connection(f.ctx, &f.opt, getClient(f.ctx, &f.opt))
+			require.NoError(t, err)
+			f.c = c
+			link, err := f.PublicLink(context.Background(), "file", fs.Duration(time.Hour), false)
+			require.NoError(t, err)
+			u, err := url.Parse(link)
+			require.NoError(t, err)
+			assert.Equal(t, tt.useXID, u.Query().Has("x-id"))
+			assert.Equal(t, "host", u.Query().Get("X-Amz-SignedHeaders"))
+			assert.Equal(t, u.Query().Get("X-Amz-Signature"), linkSignature(t, u))
+		})
+	}
+}

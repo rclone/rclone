@@ -177,9 +177,12 @@ jobs:
           # https://github.com/Homebrew/brew/issues/15621#issuecomment-1619266788
           # https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6319008
           unset HOMEBREW_NO_INSTALL_FROM_API
-          brew untap --force homebrew/core
-          brew untap --force homebrew/cask
-          brew untap --force aws/tap
+          # brew untap fails if the tap isn't installed, which varies between runner images
+          for tap in homebrew/core homebrew/cask aws/tap; do
+            if brew tap | grep -qx "$tap"; then
+              brew untap --force "$tap"
+            fi
+          done
           brew update
           brew install --cask macfuse
           brew install git-annex git-annex-remote-rclone

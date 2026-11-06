@@ -72,6 +72,8 @@ const (
 	minSleep         = 100 * time.Millisecond
 	maxSleep         = 2 * time.Second
 	taskWaitTime     = 500 * time.Millisecond
+	taskMaxSleep     = 5 * time.Second
+	taskTimeout      = 5 * time.Minute
 	decayConstant    = 2 // bigger for slower decay, exponential
 	rootURL          = "https://api-drive.mypikpak.com"
 
@@ -1388,6 +1390,8 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	if err != nil {
 		return fmt.Errorf("failed to make multipart upload: %w", err)
 	}
+	// Stop the form writer reading in if the request fails before sending it all
+	defer func() { _ = formReader.Close() }()
 
 	contentLength := overhead + size
 	opts := rest.Opts{

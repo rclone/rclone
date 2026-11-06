@@ -9,8 +9,16 @@ package sftp
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pkg/sftp"
 	_ "github.com/rclone/rclone/backend/local"
@@ -23,6 +31,7 @@ import (
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -102,6 +111,190 @@ func TestNewServerPerServerAuthProxy(t *testing.T) {
 	}()
 	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
 	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
+// TestAuthProxyPublicKeyAsPassword checks that a public key which has
+// just been used to log in through the auth proxy can't be sent as a
+// password from the same address to get the same backend without the
+// proxy being asked.
+func TestAuthProxyPublicKeyAsPassword(t *testing.T) {
+	// The proxy accepts any public key but refuses every password, so
+	// a password login can only succeed by skipping the proxy
+	t.Setenv("RCLONE_TEST_PROXY_KEY_ONLY", "1")
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run ../proxy/proxy_code.go"
+
+	opt := Opt
+	opt.ListenAddr = testBindAddress
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		assert.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	addr := w.Addr().String()
+
+	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	signer, err := ssh.NewSignerFromKey(privateKey)
+	require.NoError(t, err)
+	publicKeyString := base64.StdEncoding.EncodeToString(signer.PublicKey().Marshal())
+
+	login := func(auth ssh.AuthMethod) error {
+		client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
+			User:            "victim",
+			Auth:            []ssh.AuthMethod{auth},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		})
+		if err != nil {
+			return err
+		}
+		_ = client.Close()
+		return nil
+	}
+
+	// Check the proxy refuses the public key as a password on a cold cache
+	require.ErrorContains(t, login(ssh.Password(publicKeyString)), "unable to authenticate")
+
+	// The owner of the key logs in with it
+	require.NoError(t, login(ssh.PublicKeys(signer)))
+
+	// Now the public key must still be refused as a password
+	require.ErrorContains(t, login(ssh.Password(publicKeyString)), "unable to authenticate")
+}
+
+// querySigner offers a public key without being able to sign with it,
+// so the client only asks the server whether the key is acceptable.
+type querySigner struct {
+	key ssh.PublicKey
+}
+
+func (s querySigner) PublicKey() ssh.PublicKey {
+	return s.key
+}
+
+func (s querySigner) Sign(io.Reader, []byte) (*ssh.Signature, error) {
+	return nil, errors.New("no private key")
+}
+
+// TestAuthProxyPublicKeyQuery checks that offering a public key without
+// proving possession of its private key doesn't run the auth proxy or
+// log in.
+func TestAuthProxyPublicKeyQuery(t *testing.T) {
+	runLog := filepath.Join(t.TempDir(), "proxy-runs")
+	t.Setenv("RCLONE_TEST_PROXY_RUN_LOG", runLog)
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run ../proxy/proxy_code.go"
+
+	opt := Opt
+	opt.ListenAddr = testBindAddress
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		assert.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	addr := w.Addr().String()
+
+	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	signer, err := ssh.NewSignerFromKey(privateKey)
+	require.NoError(t, err)
+
+	login := func(auth ssh.AuthMethod) error {
+		client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
+			User:            "victim",
+			Auth:            []ssh.AuthMethod{auth},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		})
+		if err != nil {
+			return err
+		}
+		_ = client.Close()
+		return nil
+	}
+	proxyRuns := func() int {
+		data, err := os.ReadFile(runLog)
+		if os.IsNotExist(err) {
+			return 0
+		}
+		require.NoError(t, err)
+		return strings.Count(string(data), "\n")
+	}
+
+	// Offering the key without signing must not run the proxy
+	require.Error(t, login(ssh.PublicKeys(querySigner{signer.PublicKey()})))
+	assert.Equal(t, 0, proxyRuns())
+
+	// The owner of the key can still log in with it
+	require.NoError(t, login(ssh.PublicKeys(signer)))
+	assert.Equal(t, 1, proxyRuns())
+
+	// A key the client signs with must still be refused if the proxy
+	// refuses it
+	t.Setenv("RCLONE_TEST_PROXY_REFUSE_KEYS", "1")
+	_, otherPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	otherSigner, err := ssh.NewSignerFromKey(otherPrivateKey)
+	require.NoError(t, err)
+	require.ErrorContains(t, login(ssh.PublicKeys(otherSigner)), "unable to authenticate")
+	assert.Equal(t, 2, proxyRuns())
+}
+
+// TestAuthorizedKeys checks that only keys in --authorized-keys can log
+// in, and only when the client signs with the private key.
+func TestAuthorizedKeys(t *testing.T) {
+	newSigner := func() ssh.Signer {
+		_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+		require.NoError(t, err)
+		signer, err := ssh.NewSignerFromKey(privateKey)
+		require.NoError(t, err)
+		return signer
+	}
+	signer := newSigner()
+	otherSigner := newSigner()
+
+	authKeysFile := filepath.Join(t.TempDir(), "authorized_keys")
+	require.NoError(t, os.WriteFile(authKeysFile, ssh.MarshalAuthorizedKey(signer.PublicKey()), 0600))
+
+	f, err := fs.NewFs(context.Background(), t.TempDir())
+	require.NoError(t, err)
+	opt := Opt
+	opt.ListenAddr = testBindAddress
+	opt.AuthorizedKeys = authKeysFile
+	w, err := newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	go func() {
+		assert.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	addr := w.Addr().String()
+
+	login := func(auth ssh.AuthMethod) error {
+		client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
+			User:            testUser,
+			Auth:            []ssh.AuthMethod{auth},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		})
+		if err != nil {
+			return err
+		}
+		_ = client.Close()
+		return nil
+	}
+
+	require.NoError(t, login(ssh.PublicKeys(signer)))
+	require.ErrorContains(t, login(ssh.PublicKeys(otherSigner)), "unable to authenticate")
+	require.Error(t, login(ssh.PublicKeys(querySigner{signer.PublicKey()})))
 }
 
 func TestRc(t *testing.T) {

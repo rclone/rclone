@@ -1502,11 +1502,21 @@ func (c *chunkingReader) rollback(ctx context.Context, metaObject fs.Object) {
 func (f *Fs) removeOldChunks(ctx context.Context, remote string) {
 	oldFsObject, err := f.NewObject(ctx, remote)
 	if err == nil {
-		oldObject := oldFsObject.(*Object)
-		for _, chunk := range oldObject.chunks {
-			if err := chunk.Remove(ctx); err != nil {
-				fs.Errorf(chunk, "Failed to remove old chunk: %v", err)
-			}
+		removeStaleChunks(ctx, oldFsObject.(*Object), nil)
+	}
+}
+
+func removeStaleChunks(ctx context.Context, oldObject *Object, currentChunks []fs.Object) {
+	currentRemotes := make(map[string]struct{}, len(currentChunks))
+	for _, chunk := range currentChunks {
+		currentRemotes[chunk.Remote()] = struct{}{}
+	}
+	for _, chunk := range oldObject.chunks {
+		if _, found := currentRemotes[chunk.Remote()]; found {
+			continue
+		}
+		if err := chunk.Remove(ctx); err != nil {
+			fs.Errorf(chunk, "Failed to remove old chunk: %v", err)
 		}
 	}
 }
@@ -1687,11 +1697,19 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 		// metadata format which might involve unsupported chunk types.
 		return nil, fmt.Errorf("can't %s this file: %w", opName, err)
 	}
+	// Snapshot destination chunks before its metadata is replaced.
+	var oldObject *Object
+	if oldFsObject, err := f.NewObject(ctx, remote); err == nil {
+		oldObject = oldFsObject.(*Object)
+	}
 	if !o.isComposite() {
 		fs.Debugf(o, "%s non-chunked object...", opName)
 		oResult, err := do(ctx, o.mainChunk(), remote) // chain operation to a single wrapped chunk
 		if err != nil {
 			return nil, err
+		}
+		if oldObject != nil {
+			removeStaleChunks(ctx, oldObject, nil)
 		}
 		return f.newObject("", oResult, nil), nil
 	}
@@ -1757,6 +1775,9 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 	if err != nil {
 		silentlyRemove(ctx, newObj)
 		return nil, err
+	}
+	if oldObject != nil {
+		removeStaleChunks(ctx, oldObject, newChunks)
 	}
 	return newObj, nil
 }

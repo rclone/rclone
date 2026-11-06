@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fspath"
 )
 
@@ -160,10 +161,21 @@ func stop(name string) {
 func stopNothing() {
 }
 
+// maxWrapDepth limits how many wrapping remotes Start follows
+const maxWrapDepth = 10
+
 // Start starts the test server for remoteName.
+//
+// If remoteName has no start command but wraps another remote (via
+// its "remote" config value), such as chunker or crypt, the server
+// for the wrapped remote is started instead.
 //
 // This must be stopped by calling the function returned when finished.
 func Start(remote string) (fn func(), err error) {
+	return startRemote(remote, 0)
+}
+
+func startRemote(remote string, depth int) (fn func(), err error) {
 	// don't start the local backend
 	if remote == "" {
 		return stopNothing, nil
@@ -186,8 +198,11 @@ func Start(remote string) (fn func(), err error) {
 		return nil, err
 	}
 
-	// If remote has no start command then do nothing
+	// If remote has no start command then start the remote it wraps, if any
 	if !hasStartCommand(name) {
+		if wrapped := config.GetValue(name, "remote"); wrapped != "" && depth < maxWrapDepth {
+			return startRemote(wrapped, depth+1)
+		}
 		return stopNothing, nil
 	}
 

@@ -3,6 +3,7 @@ package onedrive
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -42,6 +44,10 @@ const (
 	testUserID = "ryan@contoso.com" // demo user from doc examples (can't share files with yourself)
 	// https://learn.microsoft.com/en-us/onedrive/developer/rest-api/api/driveitem_invite?view=odsp-graph-online#http-request-1
 )
+
+func init() {
+	flag.BoolVar(&stripTempauth, "strip-tempauth", false, "Remove tempauth from URLs the API returns to simulate the retirement of pre-authenticated URLs")
+}
 
 // TestMain drives the tests
 func TestMain(m *testing.M) {
@@ -769,4 +775,97 @@ func TestListDirectorySize(t *testing.T) {
 	assert.Equal(t, "photos", dir.Remote())
 	assert.Equal(t, int64(2646204760), dir.Size())
 	assert.Equal(t, int64(3), dir.Items())
+}
+
+// TestWaitForJobUsesConfiguredClient checks that the async job monitor is
+// polled with the configured HTTP client and request context rather than
+// http.DefaultClient, so proxy, TLS and timeout options and cancellation apply.
+func TestWaitForJobUsesConfiguredClient(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.UserAgent = "rclone-waitforjob-test"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "rclone-waitforjob-test", r.UserAgent())
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.AsyncOperationStatus{Status: "deleteFailed"})
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(ctx))
+
+	err := f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "deleteFailed")
+}
+
+// TestWaitForJobCancel checks that cancelling the context stops a poll of
+// the async job monitor which is not answering.
+func TestWaitForJobCancel(t *testing.T) {
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(func() { close(release) })
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt"}) }()
+	select {
+	case err := <-done:
+		assert.ErrorIs(t, err, context.DeadlineExceeded)
+	case <-time.After(5 * time.Second):
+		t.Fatal("waitForJob did not return after the context was cancelled")
+	}
+}
+
+// TestWaitForJobUnauthorized checks that a monitor URL which refuses
+// the request fails straight away instead of polling until the timeout.
+func TestWaitForJobUnauthorized(t *testing.T) {
+	var polls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		polls.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(map[string]any{"error": map[string]any{"code": "unauthenticated", "message": "no token"}})
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+	f.driveType = driveTypeBusiness
+
+	err := f.waitForJob(context.Background(), server.URL+"/monitor", &Object{remote: "file.txt"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "401")
+	assert.Equal(t, int32(1), polls.Load())
+}
+
+// TestWaitForJobRedirectCompleted checks that a monitor which
+// redirects to the new item, as it does when authenticated, is taken
+// to mean the job has finished.
+func TestWaitForJobRedirectCompleted(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/monitor":
+			http.Redirect(w, r, "/item", http.StatusSeeOther)
+		case "/item":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, `{"id":"newid","name":"file.txt","size":5,"file":{}}`)
+		default:
+			t.Errorf("unexpected request %s", r.URL)
+		}
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt", hasMetaData: true})
+	require.NoError(t, err)
 }

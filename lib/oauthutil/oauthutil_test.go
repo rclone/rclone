@@ -1,11 +1,23 @@
 package oauthutil
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
+	"strings"
+	"sync"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 // TestAuthServerHandleAuth checks that only a callback carrying the
@@ -37,6 +49,155 @@ func TestAuthServerHandleAuth(t *testing.T) {
 			} else {
 				assert.Equal(t, "", result.Code)
 			}
+		})
+	}
+}
+
+// TestConfigOauthPKCE verifies that the PKCE verifier generated with
+// the authorization URL on the remote setup path (title bar redirect)
+// is used when the pasted verification code is exchanged for a token
+func TestConfigOauthPKCE(t *testing.T) {
+	for _, usePKCE := range []bool{true, false} {
+		t.Run(fmt.Sprintf("usePKCE=%v", usePKCE), func(t *testing.T) {
+			// Fake token server which captures the code_verifier of the exchange
+			var mu sync.Mutex
+			var codeVerifier string
+			tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_ = r.ParseForm()
+				mu.Lock()
+				codeVerifier = r.PostFormValue("code_verifier")
+				mu.Unlock()
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = fmt.Fprint(w, `{"access_token":"access_token","token_type":"Bearer"}`)
+			}))
+			defer tokenServer.Close()
+
+			testConfig := &Config{
+				ClientID:     "client_id",
+				ClientSecret: "client_secret",
+				AuthURL:      tokenServer.URL + "/auth",
+				TokenURL:     tokenServer.URL + "/token",
+				RedirectURL:  TitleBarRedirectURL,
+				UsePKCE:      usePKCE,
+			}
+			ri := &fs.RegInfo{
+				Name: "testpkce",
+				Config: func(ctx context.Context, name string, m configmap.Mapper, in fs.ConfigIn) (*fs.ConfigOut, error) {
+					return ConfigOut("", &Options{OAuth2Config: testConfig})
+				},
+			}
+			m := configmap.Simple{}
+			ctx := context.Background()
+
+			// Start the oauth flow as if the backend had returned OAuth
+			// options from a state "oauth" with an empty result
+			in := fs.ConfigIn{State: fs.StatePush("", "*oauth", "", "oauth", "")}
+
+			// *oauth: no token yet so goto *oauth-confirm
+			out, err := ConfigOAuth(ctx, "remote", m, ri, in)
+			require.NoError(t, err)
+			require.True(t, strings.HasPrefix(out.State, "*oauth-confirm"), out.State)
+
+			// *oauth-confirm: replace the token -> *oauth-islocal
+			out, err = ConfigOAuth(ctx, "remote", m, ri, fs.ConfigIn{State: out.State, Result: "true"})
+			require.NoError(t, err)
+			require.True(t, strings.HasPrefix(out.State, "*oauth-islocal"), out.State)
+
+			// *oauth-islocal: no browser on this machine -> *oauth-remote
+			out, err = ConfigOAuth(ctx, "remote", m, ri, fs.ConfigIn{State: out.State, Result: "false"})
+			require.NoError(t, err)
+			require.True(t, strings.HasPrefix(out.State, "*oauth-remote"), out.State)
+
+			// *oauth-remote: title bar redirect so no webserver is
+			// needed: show the authorization URL and ask for the code
+			out, err = ConfigOAuth(ctx, "remote", m, ri, fs.ConfigIn{State: out.State})
+			require.NoError(t, err)
+			require.True(t, strings.HasPrefix(out.State, "*oauth-do"), out.State)
+			require.NotNil(t, out.Option)
+			authURL := regexp.MustCompile(`https?://\S+`).FindString(out.Option.Help)
+			require.NotEmpty(t, authURL)
+			u, err := url.Parse(authURL)
+			require.NoError(t, err)
+			challenge := u.Query().Get("code_challenge")
+			if usePKCE {
+				require.Equal(t, "S256", u.Query().Get("code_challenge_method"))
+				require.NotEmpty(t, challenge)
+			}
+
+			// *oauth-do: exchange the pasted code for a token
+			out, err = ConfigOAuth(ctx, "remote", m, ri, fs.ConfigIn{State: out.State, Result: "verification-code"})
+			require.NoError(t, err)
+			require.True(t, strings.HasPrefix(out.State, "*oauth-done"), out.State)
+
+			// The token must have been stored
+			token, ok := m.Get("token")
+			require.True(t, ok)
+			require.Contains(t, token, "access_token")
+
+			// The exchange must have been made with the verifier which
+			// matches the challenge sent in the authorization URL
+			mu.Lock()
+			defer mu.Unlock()
+			if usePKCE {
+				sum := sha256.Sum256([]byte(codeVerifier))
+				assert.Equal(t, challenge, base64.RawURLEncoding.EncodeToString(sum[:]))
+			} else {
+				assert.Empty(t, codeVerifier)
+			}
+		})
+	}
+}
+
+// TestScopedTokenSource checks that a token for other scopes is
+// fetched with the current refresh token, or with client credentials,
+// and that it is cached without touching the stored token.
+func TestScopedTokenSource(t *testing.T) {
+	for _, clientCredentials := range []bool{false, true} {
+		t.Run(fmt.Sprintf("clientCredentials=%v", clientCredentials), func(t *testing.T) {
+			var mu sync.Mutex
+			var forms []url.Values
+			tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_ = r.ParseForm()
+				mu.Lock()
+				forms = append(forms, r.PostForm)
+				mu.Unlock()
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = fmt.Fprint(w, `{"access_token":"scoped_access","token_type":"Bearer","refresh_token":"new_refresh","expires_in":3600}`)
+			}))
+			defer tokenServer.Close()
+
+			storedToken := `{"access_token":"access","token_type":"Bearer","refresh_token":"refresh","expiry":"2099-01-01T00:00:00Z"}`
+			m := configmap.Simple{"token": storedToken}
+			ctx := Context(context.Background(), tokenServer.Client())
+			_, ts, err := NewClientWithBaseClient(ctx, "remote", m, &Config{
+				ClientID:             "client_id",
+				ClientSecret:         "client_secret",
+				TokenURL:             tokenServer.URL + "/token",
+				Scopes:               []string{"main"},
+				ClientCredentialFlow: clientCredentials,
+				AuthStyle:            oauth2.AuthStyleInParams,
+			}, tokenServer.Client())
+			require.NoError(t, err)
+
+			src := ts.ScopedTokenSource([]string{"https://other/.default"})
+			for range 2 {
+				token, err := src.Token()
+				require.NoError(t, err)
+				assert.Equal(t, "scoped_access", token.AccessToken)
+			}
+
+			require.Len(t, forms, 1, "the scoped token should be cached")
+			form := forms[0]
+			assert.Equal(t, "https://other/.default", form.Get("scope"))
+			assert.Equal(t, "client_id", form.Get("client_id"))
+			if clientCredentials {
+				assert.Equal(t, "client_credentials", form.Get("grant_type"))
+				assert.Empty(t, form.Get("refresh_token"))
+			} else {
+				assert.Equal(t, "refresh_token", form.Get("grant_type"))
+				assert.Equal(t, "refresh", form.Get("refresh_token"))
+			}
+			assert.Equal(t, storedToken, m["token"], "the stored token must not change")
 		})
 	}
 }

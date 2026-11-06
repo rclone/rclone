@@ -190,7 +190,7 @@ header is added and the default (private) will be used.
 			Name: "sse_customer_key",
 			Help: `To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data.
 
-Alternatively you can provide --sse-customer-key-base64.`,
+Alternatively you can provide --s3-sse-customer-key-base64.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -201,7 +201,7 @@ Alternatively you can provide --sse-customer-key-base64.`,
 			Name: "sse_customer_key_base64",
 			Help: `If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data.
 
-Alternatively you can provide --sse-customer-key.`,
+Alternatively you can provide --s3-sse-customer-key.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1446,10 +1446,15 @@ func fixupRequest(o *s3.Options, opt *Options) {
 	)
 
 	o.APIOptions = append(o.APIOptions, func(stack *middleware.Stack) error {
-		if err := stack.Finalize.Insert(fixup, "Signing", middleware.Before); err != nil {
+		// Presigning replaces the "Signing" middleware before APIOptions run
+		signing := "Signing"
+		if _, ok := stack.Finalize.Get(signing); !ok {
+			signing = "PresignHTTPRequest"
+		}
+		if err := stack.Finalize.Insert(fixup, signing, middleware.Before); err != nil {
 			return err
 		}
-		if err := stack.Finalize.Insert(restore, "Signing", middleware.After); err != nil {
+		if err := stack.Finalize.Insert(restore, signing, middleware.After); err != nil {
 			return err
 		}
 		return nil
@@ -2978,8 +2983,9 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	bucket, directory := f.split(dir)
-	// Remove directory marker file
-	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
+	// Remove directory marker file, including the one of the root
+	// when it is a directory in the bucket
+	if f.opt.DirectoryMarkers && bucket != "" && directory != "" {
 		o := &Object{
 			fs:     f,
 			remote: dir + "/",

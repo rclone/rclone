@@ -98,3 +98,28 @@ func TestRepeatableReader(t *testing.T) {
 	assert.Equal(t, b[2:7], dst)
 
 }
+
+func TestRepeatableReaderSeekUnavailableReturnsCacheLength(t *testing.T) {
+	r := NewRepeatableReader(bytes.NewBufferString("0123456789abcdef"))
+	dst := make([]byte, 10)
+	n, err := r.Read(dst)
+	require.NoError(t, err)
+	require.Equal(t, 10, n)
+
+	// Past the cache from the current position
+	_, err = r.Seek(-2, io.SeekCurrent)
+	require.NoError(t, err)
+	pos, err := r.Seek(5, io.SeekCurrent)
+	assert.EqualError(t, err, "fs.RepeatableReader.Seek: offset is unavailable")
+	assert.Equal(t, int64(10), pos)
+
+	// Past the cache from the end
+	pos, err = r.Seek(5, io.SeekEnd)
+	assert.EqualError(t, err, "fs.RepeatableReader.Seek: offset is unavailable")
+	assert.Equal(t, int64(10), pos)
+
+	// The read position is unchanged by a failed seek
+	pos, err = r.Seek(0, io.SeekCurrent)
+	require.NoError(t, err)
+	assert.Equal(t, int64(8), pos)
+}

@@ -84,15 +84,15 @@ backends:
    remote:   "TestChunkerS3:"
    fastlist: true
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bS3:"
+   remote:   "TestChunkerChunk50bMinio:"
    fastlist: true
    maxfile:  1k
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMD5HashS3:"
+   remote:   "TestChunkerChunk50bMD5HashMinio:"
    fastlist: true
    maxfile:  1k
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bSHA1HashS3:"
+   remote:   "TestChunkerChunk50bSHA1HashMinio:"
    fastlist: true
    maxfile:  1k
  - backend:  "chunker"
@@ -100,11 +100,11 @@ backends:
    fastlist: true
    maxfile:  6k
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMD5QuickS3:"
+   remote:   "TestChunkerChunk50bMD5QuickMinio:"
    fastlist: true
    maxfile:  1k
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bSHA1QuickS3:"
+   remote:   "TestChunkerChunk50bSHA1QuickMinio:"
    fastlist: true
    maxfile:  1k
  ## end chunker
@@ -762,3 +762,12 @@ backends:
    fastlist: false
    extratime: 2.0
    listretries: 5
+ - backend: "kdrive"
+   remote: "TestKdrive:"
+   ignore:
+     # The bisync normalization test fails as the kDrive server normalizes file names to NFC
+     - TestBisyncRemoteRemote/normalization
+     # the dates used in TestIndexChangedDirTime are far away in the future, this isn't handled by kdrive
+     - TestIndexChangedDirTime
+   fastlist: true
+   extratime: 2.0

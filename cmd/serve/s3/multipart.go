@@ -27,7 +27,6 @@ import (
 	"io"
 	"math"
 	"path"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -35,6 +34,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
+	fshash "github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pool"
@@ -58,11 +58,14 @@ type multipartUpload struct {
 	bucket, key string
 	fp          string // final object path
 	streamFp    string // path the parts are written to (fp when the remote has no server-side move or copy)
+	madeDir     string // top-most directory made for the upload, or "" if none
 	meta        map[string]string
 
 	fh     io.WriteCloser // sink the in-order parts are written to, opened by sink (guarded by mu)
 	vfs    *vfs.VFS       // the VFS fh is created on, used for all later operations
 	tenant *tenant        // the user the upload belongs to
+
+	objectMD5 hash.Hash // MD5 of the data written to the sink, so of the whole object once complete, or nil if not needed for the ETag
 
 	mu        sync.Mutex
 	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
@@ -285,6 +288,9 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	if err != nil {
 		return "", err
 	}
+	if node, err := _vfs.Stat(fp); err == nil && node.IsDir() {
+		return "", errIsDirectory(objectName)
+	}
 	// Reserve a place before doing anything with the remote, so a refused
 	// upload leaves nothing behind.
 	t := b.tenant(ctx)
@@ -293,8 +299,11 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	}
 
 	objectDir := path.Dir(fp)
+	var madeDir string
 	if objectDir != "." {
-		if err := mkdirRecursive(objectDir, _vfs); err != nil {
+		madeDir, err = mkdirRecursive(objectDir, _vfs)
+		if err != nil {
+			removeMadeDirs(objectDir, madeDir, _vfs)
 			b.releaseUpload(t)
 			return "", err
 		}
@@ -315,8 +324,13 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta, int64(b.s.opt.MultipartStreamingBufferLimit))
 	up.budget = t.budget
 	up.vfs = _vfs
+	up.madeDir = madeDir
+	if b.s.etagHash(_vfs) == fshash.MD5 {
+		up.objectMD5 = md5.New()
+	}
 
 	if err := b.addUpload(t, uploadID, up); err != nil {
+		removeMadeDirs(objectDir, madeDir, _vfs)
 		b.releaseUpload(t)
 		return "", err
 	}
@@ -674,9 +688,9 @@ func (up *multipartUpload) stopStreaming(err error) error {
 	return err
 }
 
-// sink returns the handle the parts are written to, creating it on first
-// use. Call with the sink owned (up.pumping).
-func (up *multipartUpload) sink() (io.WriteCloser, error) {
+// sink returns the writer the parts are written to, creating the handle
+// it writes to on first use. Call with the sink owned (up.pumping).
+func (up *multipartUpload) sink() (io.Writer, error) {
 	up.mu.Lock()
 	defer up.mu.Unlock()
 	if up.closed {
@@ -689,7 +703,23 @@ func (up *multipartUpload) sink() (io.WriteCloser, error) {
 		}
 		up.fh = fh
 	}
-	return up.fh, nil
+	if up.objectMD5 == nil {
+		return up.fh, nil
+	}
+	return hashingWriter{w: up.fh, hash: up.objectMD5}, nil
+}
+
+// hashingWriter writes to w, adding what is written to hash.
+type hashingWriter struct {
+	w    io.Writer
+	hash hash.Hash
+}
+
+// Write writes p to w, adding the bytes written to hash.
+func (h hashingWriter) Write(p []byte) (n int, err error) {
+	n, err = h.w.Write(p)
+	_, _ = h.hash.Write(p[:n])
+	return n, err
 }
 
 // copyToSink copies body into sink and hasher, returning the number of
@@ -873,19 +903,22 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	defer up.endActivity()
 
-	// gofakes3 keeps its record of an upload whose completion fails, so
-	// forgetUpload removes that too, as the upload can't be retried.
+	// A completion which fails before the commit leaves the upload as
+	// it was, so the client can upload any missing parts and retry it,
+	// as on S3. gofakes3 keeps its record of the upload too.
 	if err := up.validate(input); err != nil {
-		b.forgetUpload(uploadID, up)
 		return "", "", err
 	}
 
-	// close commits the upload, failing with the upload left open if the
-	// streamed parts don't form the complete object; forgetUpload then
-	// tears it down. (After a successful or failed commit the abort it
-	// does is a no-op.)
+	// close commits the upload, failing with ErrInvalidPart and the
+	// upload left open if the streamed parts don't form the complete
+	// object. Any other failure is of the commit, so the upload can't be
+	// retried and forgetUpload tears it down. (After a failed commit the
+	// abort it does is a no-op.)
 	if err := up.close(); err != nil {
-		b.forgetUpload(uploadID, up)
+		if !errors.Is(err, gofakes3.ErrInvalidPart) {
+			b.forgetUpload(uploadID, up)
+		}
 		return "", "", err
 	}
 
@@ -896,15 +929,45 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	// so that the client can retry the CompleteMultipartUpload: the
 	// committed close is idempotent, so the retry just renames again.
 	if up.streamFp != up.fp {
-		if err := up.vfs.Rename(up.streamFp, up.fp); err != nil {
+		if err := b.commitObject(ctx, up.vfs, up.streamFp, up.fp); err != nil {
 			return "", "", err
 		}
 	}
 	b.deleteUpload(uploadID, up)
 
-	_ = up.tenant.storeMeta(up.vfs, up.fp, up.meta)
+	// The ETag is the one HEAD returns for the object. With MD5
+	// ETags the MD5 of the object, which the backend may not have, is
+	// stored with the part sizes so HEAD returns it while the object
+	// is unchanged.
+	var etagHash []byte
+	if up.objectMD5 != nil {
+		etagHash = up.objectMD5.Sum(nil)
+	}
+	_ = up.tenant.storeObjectMeta(up.vfs, up.fp, objectMeta{
+		meta:      up.meta,
+		hash:      etagHash,
+		partSizes: up.listedPartSizes(input),
+	})
+	if etagHash == nil {
+		// The upload is complete, so isn't failed if the object can't be read
+		if node, err := up.vfs.Stat(up.fp); err == nil {
+			etagHash = b.objectHash(ctx, up.vfs, up.fp, node)
+		}
+	}
 
-	return "", up.multipartETag(input), nil
+	return "", quoteETag(etagHash), nil
+}
+
+// listedPartSizes returns the sizes of the parts listed in input, in
+// order.
+func (up *multipartUpload) listedPartSizes(input *gofakes3.CompleteMultipartUploadRequest) []int64 {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	sizes := make([]int64, 0, len(input.Parts))
+	for _, p := range input.Parts {
+		sizes = append(sizes, up.partSizes[p.PartNumber])
+	}
+	return sizes
 }
 
 // AbortMultipartUpload tears down an in-progress upload, discarding any data
@@ -1020,10 +1083,13 @@ func (b *s3Backend) forgetAllUploads() {
 // remote commits the partial data instead - see abort.)
 func (b *s3Backend) discardUpload(up *multipartUpload) {
 	b.forgetPath(up.vfs, up.streamFp)
-	if up.streamFp == up.fp {
-		return
+	if up.streamFp != up.fp {
+		_ = up.vfs.Remove(up.streamFp)
 	}
-	_ = up.vfs.Remove(up.streamFp)
+	// Remove the directories made for the upload if they are still
+	// empty, as an empty directory left behind would stop the bucket
+	// being deleted.
+	removeMadeDirs(path.Dir(up.fp), up.madeDir, up.vfs)
 }
 
 // forgetPath invalidates the parent directory's cached VFS listing so that
@@ -1150,25 +1216,4 @@ func (up *multipartUpload) abort() error {
 		return nil
 	}
 	return fh.Close()
-}
-
-// multipartETag computes the S3 multipart ETag for the assembled object:
-//
-//	hex(md5(concat(part_md5s_in_order))) + "-" + N
-func (up *multipartUpload) multipartETag(input *gofakes3.CompleteMultipartUploadRequest) string {
-	partNumbers := make([]int, 0, len(input.Parts))
-	for _, p := range input.Parts {
-		partNumbers = append(partNumbers, p.PartNumber)
-	}
-	sort.Ints(partNumbers)
-
-	up.mu.Lock()
-	concat := make([]byte, 0, len(partNumbers)*md5.Size)
-	for _, n := range partNumbers {
-		concat = append(concat, up.partMD5s[n]...)
-	}
-	up.mu.Unlock()
-
-	sum := md5.Sum(concat)
-	return fmt.Sprintf("%q", fmt.Sprintf("%s-%d", hex.EncodeToString(sum[:]), len(partNumbers)))
 }
