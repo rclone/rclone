@@ -306,6 +306,8 @@ func (o *Option) String() string {
 		return CommaSepList(x).String()
 	case SizeSuffix:
 		return x.stringRoundTrip()
+	case CountSuffix:
+		return x.stringRoundTrip()
 	}
 	return fmt.Sprint(v)
 }
