@@ -515,8 +515,10 @@ func (c *Cache) CleanUp() error {
 }
 
 // walk walks the cache calling the function
-func (c *Cache) walk(dir string, fn func(osPath string, fi os.FileInfo, name string) error) error {
-	return filepath.Walk(dir, func(osPath string, fi os.FileInfo, err error) error {
+func (c *Cache) walk(dir string, fn func(osPath string, entry os.DirEntry, name string) error) error {
+	// Reload only needs the entry type; avoid a separate stat for every
+	// cached path before the item itself loads its persisted metadata.
+	return filepath.WalkDir(dir, func(osPath string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -531,7 +533,7 @@ func (c *Cache) walk(dir string, fn func(osPath string, fi os.FileInfo, name str
 		// And convert into slashes
 		name = filepath.ToSlash(name)
 
-		return fn(osPath, fi, name)
+		return fn(osPath, entry, name)
 	})
 }
 
@@ -542,8 +544,8 @@ func (c *Cache) walk(dir string, fn func(osPath string, fi os.FileInfo, name str
 // orphan files.
 func (c *Cache) reload(ctx context.Context) error {
 	for _, dir := range []string{c.root, c.metaRoot} {
-		err := c.walk(dir, func(osPath string, fi os.FileInfo, name string) error {
-			if fi.IsDir() {
+		err := c.walk(dir, func(osPath string, entry os.DirEntry, name string) error {
+			if entry.IsDir() {
 				return nil
 			}
 			item, found := c.get(name)
