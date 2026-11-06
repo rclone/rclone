@@ -2488,10 +2488,19 @@ func FormatForLSFPrecision(precision time.Duration) string {
 	return "2006-01-02 15:04:05"
 }
 
-// DirMove renames srcRemote to dstRemote
+// DirMove renames srcRemote to dstRemote using Fs.DirMove if
+// available, otherwise by moving the files individually.
 //
-// It does this by loading the directory tree into memory (using ListR
-// if available) and doing renames in parallel.
+// If Fs.DirMove is used it won't merge into an existing directory,
+// unlike sync.MoveDir. The file-by-file fallback (used without
+// Fs.DirMove or when it returns fs.ErrorCantDirMove) doesn't check, so
+// the caller must check that dstRemote doesn't exist first.
+//
+// If Fs.DirMove returns fs.ErrorDirExists on a case-insensitive
+// backend for a rename which only changes case or Unicode
+// normalization, and dstRemote isn't listed under its exact name (so
+// the existing directory is the source itself), it is done in two
+// steps with DirMoveCaseInsensitive.
 func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err error) {
 	ci := fs.GetConfig(ctx)
 
@@ -2506,7 +2515,14 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		if err == nil {
 			accounting.Stats(ctx).Renames(1)
 		}
-		if err != fs.ErrorCantDirMove && err != fs.ErrorDirExists {
+		// A case- or Unicode-only rename finds the source itself at the
+		// destination, so move through a temporary name instead.
+		if err == fs.ErrorDirExists && f.Features().CaseInsensitive && needsMoveCaseInsensitive(f, f, dstRemote, srcRemote, false) && !dirListedExactly(ctx, f, dstRemote) {
+			return DirMoveCaseInsensitive(ctx, f, srcRemote, dstRemote)
+		}
+		// Only ErrorCantDirMove falls back (combine across upstreams);
+		// ErrorDirExists must fail like POSIX rename-over-dir.
+		if err != fs.ErrorCantDirMove {
 			return err
 		}
 		fs.InfofCtx(ctx, f, "Can't DirMove - falling back to file moves: %v", err)
@@ -2586,15 +2602,54 @@ sending:
 	return nil
 }
 
+// dirListedExactly returns true if the parent of remote lists a
+// directory with exactly that name, or if the parent can't be listed.
+func dirListedExactly(ctx context.Context, f fs.Fs, remote string) bool {
+	parent := path.Dir(remote)
+	if parent == "." {
+		parent = ""
+	}
+	entries, err := f.List(ctx, parent)
+	if err != nil {
+		return true
+	}
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Directory); ok && entry.Remote() == remote {
+			return true
+		}
+	}
+	return false
+}
+
 // DirMoveCaseInsensitive does DirMove in two steps (to temp name, then real name)
 // which is necessary for some case-insensitive backends
+//
+// The temporary name is a short sibling of dstRemote so long names
+// still fit. If the second step fails, moving the directory back to
+// srcRemote is attempted with Fs.DirMove, which won't merge if
+// srcRemote has been recreated meanwhile. If that fails, or there is
+// no Fs.DirMove, an error naming the paths is logged. The contents may
+// then be split between them if a file-by-file move failed part way.
 func DirMoveCaseInsensitive(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err error) {
-	tmpDstRemote := dstRemote + "-rclone-move-" + random.String(8)
+	tmpDstRemote := path.Join(path.Dir(dstRemote), "rclone-move-"+random.String(8))
 	err = DirMove(ctx, f, srcRemote, tmpDstRemote)
 	if err != nil {
 		return err
 	}
-	return DirMove(ctx, f, tmpDstRemote, dstRemote)
+	err = DirMove(ctx, f, tmpDstRemote, dstRemote)
+	if err != nil {
+		undoErr := errors.New("backend can't DirMove")
+		if doDirMove := f.Features().DirMove; doDirMove != nil {
+			// Still try to undo if ctx was cancelled during the move
+			undoCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
+			undoErr = doDirMove(undoCtx, f, tmpDstRemote, srcRemote)
+			cancel()
+		}
+		if undoErr != nil {
+			fs.Errorf(tmpDstRemote, "Failed to move directory to %q or back to %q, contents may be split between them: %v", dstRemote, srcRemote, undoErr)
+		}
+	}
+	return err
 }
 
 // FsInfo provides information about a remote
