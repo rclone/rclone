@@ -139,12 +139,13 @@ var (
 		"application/vnd.google-apps.presentation": "x-office-presentation",
 		"application/vnd.google-apps.spreadsheet":  "x-office-spreadsheet",
 	}
-	fetchFormatsOnce sync.Once                     // make sure we fetch the export/import formats only once
-	_exportFormats   map[string][]string           // allowed export MIME type conversions
-	_importFormats   map[string][]string           // allowed import MIME type conversions
-	templatesOnce    sync.Once                     // parse link templates only once
-	_linkTemplates   map[string]*template.Template // available link types
-	gdocsWarnOnce    sync.Once                     // warn once about skipped non-exportable Google documents
+	fetchFormatsOnce         sync.Once                     // make sure we fetch the export/import formats only once
+	_exportFormats           map[string][]string           // allowed export MIME type conversions
+	_importFormats           map[string][]string           // allowed import MIME type conversions
+	templatesOnce            sync.Once                     // parse link templates only once
+	_linkTemplates           map[string]*template.Template // available link types
+	gdocsUnknownTypeWarnOnce sync.Once                     // warn once about skipped unrecognised Google document types
+	gdocsNoExportWarnOnce    sync.Once                     // warn once about skipped Google documents with no export format
 )
 
 // rwChoices type for fs.Bits
@@ -404,6 +405,12 @@ in this mode.
 
 Do **not** use this flag when trying to download Google Docs - rclone
 will fail to download them.
+
+Without this flag, a non-exportable Google Doc (such as a Google Form)
+is invisible to rclone's listings, so commands like rmdir and rmdirs
+can consider a directory containing only such a file to be empty and
+report that they would remove it under --dry-run, even though the real
+run will correctly refuse as the directory is not actually empty.
 `,
 			Advanced: true,
 		}, {
@@ -1710,13 +1717,16 @@ func (f *Fs) newObjectWithExportInfo(
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
 			fs.Debugf(remote, "Ignoring unknown document type %q", info.MimeType)
-			gdocsWarnOnce.Do(func() {
-				fs.Logf(remote, "Skipping unexportable google document %q. Use --drive-show-all-gdocs to include them in server side copy and move", info.MimeType)
+			gdocsUnknownTypeWarnOnce.Do(func() {
+				fs.Logf(remote, "Skipping unexportable google document %q. Use --drive-show-all-gdocs to include them in listings, so operations such as rmdir and rmdirs don't mistake a directory containing one for empty", info.MimeType)
 			})
 			return nil, fs.ErrorObjectNotFound
 		}
 		if extension == "" {
 			fs.Debugf(remote, "No export formats found for %q", info.MimeType)
+			gdocsNoExportWarnOnce.Do(func() {
+				fs.Logf(remote, "Skipping unexportable google document %q. Use --drive-show-all-gdocs to include them in listings, so operations such as rmdir and rmdirs don't mistake a directory containing one for empty", info.MimeType)
+			})
 			return nil, fs.ErrorObjectNotFound
 		}
 		if isLinkMimeType(exportMimeType) {
