@@ -275,7 +275,12 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		// Rename in the cache
 		if d.vfs.cache != nil && d.vfs.cache.Exists(oldPath) {
 			if err := d.vfs.cache.Rename(oldPath, newPath, newObject); err != nil {
-				fs.Infof(f.Path(), "File.Rename failed in Cache: %v", err)
+				// Don't carry on: the cache files still have their old names, so
+				// the pending write back would upload the destination's stale
+				// (or empty) data in place of the data the user just saved.
+				// Fail the rename so the caller (and the application) sees it.
+				fs.Errorf(f.Path(), "File.Rename failed in Cache: %v", err)
+				return err
 			}
 		}
 		// Update the node with the new details
@@ -294,6 +299,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	// rename the file object
 	dPath := destDir.Path()
 	f.mu.Lock()
+	oldD, oldDPath, oldLeaf := f.d, f.dPath, f.leaf
 	f.d = destDir
 	f.dPath = dPath
 	f.leaf = newName
@@ -313,7 +319,16 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		return nil
 	}
 
-	return renameCall(ctx)
+	if err := renameCall(ctx); err != nil {
+		// The rename failed so put the file back where it was: the directory
+		// entry is unchanged (Dir.Rename returns the error before moving the
+		// node between directories) and the node must agree with it.
+		f.mu.Lock()
+		f.d, f.dPath, f.leaf = oldD, oldDPath, oldLeaf
+		f.mu.Unlock()
+		return err
+	}
+	return nil
 }
 
 // addWriter adds a write handle to the file
