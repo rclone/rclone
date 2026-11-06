@@ -7,9 +7,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/internxt/rclone-adapter/config"
 	"github.com/internxt/rclone-adapter/endpoints"
+	"github.com/internxt/rclone-adapter/folders"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -188,4 +190,56 @@ func TestFindFileIgnoresStale(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, file, "moved here")
 	assert.Equal(t, "uuid-renamed", file.UUID)
+}
+
+func TestFindFileFindsRecentUpload(t *testing.T) {
+	ctx := context.Background()
+	// The service has not caught up with the upload so reports nothing
+	server := existenceServer(t, nil)
+	defer server.Close()
+	f := testFs(t, server)
+
+	upload := func(uuid, parentUUID, name string) {
+		recentUploads.add(parentUUID, name, &folders.File{UUID: uuid, PlainName: name})
+	}
+
+	upload("uuid-uploaded", "dir-uuid", "uploaded.bin")
+	file, err := f.findFile(ctx, "uploaded.bin", "dir-uuid")
+	require.NoError(t, err)
+	require.NotNil(t, file, "uploaded")
+	assert.Equal(t, "uuid-uploaded", file.UUID)
+
+	file, err = f.findFile(ctx, "uploaded.bin", "other-dir-uuid")
+	require.NoError(t, err)
+	assert.Nil(t, file, "uploaded to a different directory")
+
+	file, err = f.findFile(ctx, "other.bin", "dir-uuid")
+	require.NoError(t, err)
+	assert.Nil(t, file, "uploaded with a different name")
+
+	upload("uuid-deleted", "dir-uuid", "deleted.bin")
+	recent.deleted("uuid-deleted")
+	file, err = f.findFile(ctx, "deleted.bin", "dir-uuid")
+	require.NoError(t, err)
+	assert.Nil(t, file, "deleted after upload")
+
+	upload("uuid-moved", "dir-uuid", "moved.bin")
+	recent.moved("uuid-moved", "other-dir-uuid", "moved.bin")
+	file, err = f.findFile(ctx, "moved.bin", "dir-uuid")
+	require.NoError(t, err)
+	assert.Nil(t, file, "moved after upload")
+}
+
+func TestRecentUploadsExpire(t *testing.T) {
+	r := uploadTracker{items: map[uploadKey]uploadedFile{}}
+	r.add("dir-uuid", "foo.bin", &folders.File{UUID: "uuid-foo"})
+	require.NotNil(t, r.find("dir-uuid", "foo.bin"))
+
+	r.mu.Lock()
+	for k, v := range r.items {
+		v.expires = time.Now().Add(-time.Second)
+		r.items[k] = v
+	}
+	r.mu.Unlock()
+	assert.Nil(t, r.find("dir-uuid", "foo.bin"), "expired")
 }

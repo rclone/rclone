@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/internxt/rclone-adapter/buckets"
+	"github.com/internxt/rclone-adapter/folders"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/lib/multipart"
@@ -276,6 +277,20 @@ func (w *internxtChunkWriter) Close(ctx context.Context) error {
 		return fmt.Errorf("failed to create file metadata: %w", err)
 	}
 	w.meta = meta
+
+	// The lookup core makes after the upload can be served by a replica
+	// which doesn't have the file yet so remember it for findFile.
+	recentUploads.add(w.dirID, joinNameExt(name, ext), &folders.File{
+		UUID:             meta.UUID,
+		FileID:           meta.FileID,
+		PlainName:        name,
+		Type:             ext,
+		Size:             meta.Size,
+		Bucket:           meta.Bucket,
+		FolderUUID:       w.dirID,
+		EncryptVersion:   meta.EncryptVersion,
+		ModificationTime: w.src.ModTime(ctx),
+	})
 
 	return nil
 }
