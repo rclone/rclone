@@ -20,14 +20,10 @@ import (
 // FIXME implement max downloaders
 
 const (
-	// max time a downloader can be idle before closing itself
-	maxDownloaderIdleTime = 5 * time.Second
 	// max number of bytes a reader should skip over before closing it
 	maxSkipBytes = 1024 * 1024
 	// time between background kicks of waiters to pick up errors
 	backgroundKickerInterval = 5 * time.Second
-	// maximum number of errors before declaring dead
-	maxErrorCount = 10
 	// If a downloader is within this range or --buffer-size
 	// whichever is the larger, we will reuse the downloader
 	minWindow = 1024 * 1024
@@ -432,13 +428,13 @@ func (dls *Downloaders) kickWaiters() (err error) {
 		}
 	}
 	if fserrors.IsErrNoSpace(dls.lastErr) {
-		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, dls.opt.MaxDownloadErrors, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
 
-	if dls.errorCount > maxErrorCount {
-		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+	if dls.errorCount > dls.opt.MaxDownloadErrors {
+		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, dls.opt.MaxDownloadErrors, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
@@ -481,7 +477,7 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 	// - timeout happens
 loop:
 	for dl.offset >= dl.maxOffset {
-		var timeout = time.NewTimer(maxDownloaderIdleTime)
+		var timeout = time.NewTimer(time.Duration(dl.dls.opt.DownloaderIdleTime))
 		dl.mu.Unlock()
 		select {
 		case <-dl.quit:

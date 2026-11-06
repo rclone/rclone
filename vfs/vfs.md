@@ -192,6 +192,12 @@ whereas the `--vfs-read-ahead` is buffered on disk.
 When using this mode it is recommended that `--buffer-size` is not set
 too large and `--vfs-read-ahead` is set large if required.
 
+A downloader which is not read from for `--vfs-downloader-idle-time`
+(default 5s) stops, and starts again on the next read. Increase this
+if an application reads slowly, for example when streaming audio. A
+downloader gives up after `--vfs-downloader-max-errors` (default 10)
+errors.
+
 **IMPORTANT** not all file systems support sparse files. In particular
 FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
