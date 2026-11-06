@@ -19,7 +19,7 @@ func parseAuthorization(r *http.Request) (user, pass string, ok bool) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		s := strings.SplitN(authHeader, " ", 2)
-		if len(s) == 2 && s[0] == "Basic" {
+		if len(s) == 2 && strings.EqualFold(s[0], "Basic") {
 			b, err := base64.StdEncoding.DecodeString(s[1])
 			if err == nil {
 				parts := strings.SplitN(string(b), ":", 2)
