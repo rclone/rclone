@@ -2046,19 +2046,36 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 			startRank := idx * stride
 			query := album.buildPartitionQuery(startRank)
 
-			var response struct {
-				Records   []photoRecord `json:"records"`
-				SyncToken string        `json:"syncToken"`
-			}
-			if err := album.request(ctx, "records/query", query, &response); err != nil {
-				cancel() // stop remaining partitions
-				results[idx] = partitionResult{err: fmt.Errorf("partition %d (rank=%d): %w", idx, startRank, err)}
-				return
+			var records []photoRecord
+			var syncToken string
+			var continuationMarker string
+			for {
+				if continuationMarker != "" {
+					query["continuationMarker"] = continuationMarker
+				}
+				var response struct {
+					Records            []photoRecord `json:"records"`
+					SyncToken          string        `json:"syncToken"`
+					ContinuationMarker string        `json:"continuationMarker"`
+				}
+				if err := album.request(ctx, "records/query", query, &response); err != nil {
+					cancel() // stop remaining partitions
+					results[idx] = partitionResult{err: fmt.Errorf("partition %d (rank=%d): %w", idx, startRank, err)}
+					return
+				}
+				records = append(records, response.Records...)
+				if response.SyncToken != "" {
+					syncToken = response.SyncToken
+				}
+				continuationMarker = response.ContinuationMarker
+				if continuationMarker == "" {
+					break
+				}
 			}
 			results[idx] = partitionResult{
-				photos:      parsePhotoRecords(response.Records),
-				syncToken:   response.SyncToken,
-				recordCount: len(response.Records),
+				photos:      parsePhotoRecords(records),
+				syncToken:   syncToken,
+				recordCount: len(records),
 			}
 		}(i)
 	}
@@ -2087,18 +2104,31 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 	for needsTailCheck {
 		fs.Debugf(nil, "iclouddrive photos: fetching tail partition at rank=%d", nextRank)
 		query := album.buildPartitionQuery(nextRank)
-		var response struct {
-			Records   []photoRecord `json:"records"`
-			SyncToken string        `json:"syncToken"`
+		var records []photoRecord
+		var continuationMarker string
+		for {
+			if continuationMarker != "" {
+				query["continuationMarker"] = continuationMarker
+			}
+			var response struct {
+				Records            []photoRecord `json:"records"`
+				SyncToken          string        `json:"syncToken"`
+				ContinuationMarker string        `json:"continuationMarker"`
+			}
+			if err := album.request(ctx, "records/query", query, &response); err != nil {
+				return nil, "", fmt.Errorf("tail partition (rank=%d): %w", nextRank, err)
+			}
+			records = append(records, response.Records...)
+			if response.SyncToken != "" {
+				lastSyncToken = response.SyncToken
+			}
+			continuationMarker = response.ContinuationMarker
+			if continuationMarker == "" {
+				break
+			}
 		}
-		if err := album.request(ctx, "records/query", query, &response); err != nil {
-			return nil, "", fmt.Errorf("tail partition (rank=%d): %w", nextRank, err)
-		}
-		lastRecordCount = len(response.Records)
-		allPhotos = append(allPhotos, parsePhotoRecords(response.Records)...)
-		if response.SyncToken != "" {
-			lastSyncToken = response.SyncToken
-		}
+		lastRecordCount = len(records)
+		allPhotos = append(allPhotos, parsePhotoRecords(records)...)
 		nextRank += stride
 		needsTailCheck = lastRecordCount >= photosQueryLimit
 	}
