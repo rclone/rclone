@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"weak"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
@@ -39,10 +40,18 @@ type Dir struct {
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
 
+	forgotten map[string]forgottenNode // entries dropped by ForgetAll that may still be used - may be nil
+
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
 
 	_virtuals atomic.Int32 // number of virtual directory entries in this directory and children
+}
+
+// forgottenNode is a weak pointer to a forgotten directory entry. Either dir or file is set
+type forgottenNode struct {
+	dir  weak.Pointer[Dir]
+	file weak.Pointer[File]
 }
 
 //go:generate stringer -type=vState
@@ -238,6 +247,7 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	// directory or any children
 	hasVirtual = d.hasVirtual()
 	if !hasVirtual {
+		d._saveForgotten()
 		d.read = time.Time{}
 		d.items = make(map[string]Node)
 		d.cleanupTimer.Stop()
@@ -246,6 +256,100 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	}
 
 	return hasVirtual
+}
+
+// _saveForgotten keeps a weak pointer to each entry in d.items, which
+// is about to be dropped, so that the next listing can reuse an entry which
+// is still in use elsewhere instead of making a second one for it.
+//
+// Something outside the VFS can hold an entry across a forget, e.g. the
+// kernel holds a process's current directory and a Handle holds its File.
+// Without this, the next listing makes a new node, the holder carries on
+// with the old one, and the two diverge. Entries nobody holds are still
+// garbage collected.
+//
+// must be called with the Dir lock held
+func (d *Dir) _saveForgotten() {
+	for leaf, fn := range d.forgotten {
+		if fn.dir.Value() == nil && fn.file.Value() == nil {
+			delete(d.forgotten, leaf)
+		}
+	}
+	for leaf, node := range d.items {
+		if d.forgotten == nil {
+			d.forgotten = make(map[string]forgottenNode)
+		}
+		switch x := node.(type) {
+		case *Dir:
+			d.forgotten[leaf] = forgottenNode{dir: weak.Make(x)}
+		case *File:
+			d.forgotten[leaf] = forgottenNode{file: weak.Make(x)}
+		}
+	}
+}
+
+// _restoreForgotten returns the node that was called leaf before d forgot
+// its entries, for the listing to reuse instead of making a new one, or nil
+// if there is none to reuse.
+//
+// There is none if the node has been garbage collected, because nothing
+// held it any more, if it is a file where the listing has a directory or
+// the other way round, or if both it and the listed entry have IDs which
+// differ. The node returned has its parent and path set from the listing.
+//
+// must be called with the Dir lock held
+func (d *Dir) _restoreForgotten(leaf string, entry fs.DirEntry) Node {
+	fn, ok := d.forgotten[leaf]
+	if !ok {
+		return nil
+	}
+	delete(d.forgotten, leaf)
+	switch item := entry.(type) {
+	case fs.Directory:
+		dir := fn.dir.Value()
+		if dir == nil {
+			return nil
+		}
+		dir.mu.Lock()
+		same := sameID(dir.entry, item)
+		moved := dir.path != item.Remote()
+		if same {
+			dir.parent = d
+		}
+		dir.mu.Unlock()
+		if !same {
+			return nil
+		}
+		// Only when the directory, or one above it, was renamed while it
+		// was forgotten
+		if moved {
+			dir.renameTree(item.Remote())
+		}
+		return dir
+	case fs.Object:
+		file := fn.file.Value()
+		if file == nil || !sameID(file.getObject(), item) {
+			return nil
+		}
+		file.mu.Lock()
+		file.d = d
+		file.dPath = d.path
+		file.mu.Unlock()
+		return file
+	}
+	return nil
+}
+
+// sameID reports whether a and b can be the same entry, which they can't if
+// both have an ID and the IDs differ.
+func sameID(a, b fs.DirEntry) bool {
+	ida, okA := a.(fs.IDer)
+	idb, okB := b.(fs.IDer)
+	if !okA || !okB {
+		return true
+	}
+	x, y := ida.ID(), idb.ID()
+	return x == "" || y == "" || x == y
 }
 
 // forgetDirPath clears the cache for itself and all subdirectories if
@@ -741,6 +845,9 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		if mv.add(d, name) {
 			continue
 		}
+		if node == nil {
+			node = d._restoreForgotten(name, entry)
+		}
 		switch item := entry.(type) {
 		case fs.Object:
 			obj := item
@@ -780,6 +887,8 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		d.items[name] = node
 	}
 	mv.end(d)
+	// Entries still forgotten are no longer in the listing
+	d.forgotten = nil
 	return nil
 }
 
