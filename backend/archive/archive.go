@@ -321,12 +321,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if do == nil {
 		return nil, fs.ErrorCantCopy
 	}
-	// FIXME
-	// o, ok := src.(*Object)
-	// if !ok {
-	// 	return nil, fs.ErrorCantCopy
-	// }
-	return do(ctx, src, remote)
+	o, err := do(ctx, fs.UnWrapObject(src), remote)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrapObject(o), nil
 }
 
 // Move src to this remote using server-side move operations.
@@ -343,12 +342,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if do == nil {
 		return nil, fs.ErrorCantMove
 	}
-	// FIXME
-	// o, ok := src.(*Object)
-	// if !ok {
-	// 	return nil, fs.ErrorCantMove
-	// }
-	return do(ctx, src, remote)
+	o, err := do(ctx, fs.UnWrapObject(src), remote)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrapObject(o), nil
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -413,7 +411,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 	if err != nil {
 		return nil, err
 	}
-	return o, nil
+	return f.wrapObject(o), nil
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -521,6 +519,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if archive != nil {
 				// Overwrite entry with directory
 				entry = fs.NewDir(remote, o.ModTime(ctx))
+			} else if subFs == f.f {
+				// Objects outside an archive come from the
+				// wrapped remote, so wrap them to report
+				// this Fs, otherwise moves onto the same
+				// path are not recognised as such.
+				entry = f.wrapObject(o)
 			}
 		}
 		entries = append(entries, entry)
@@ -566,6 +570,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs.Debugf(f, "Ignoring object %q returned for %q", o.Remote(), remote)
 		return nil, fs.ErrorObjectNotFound
 	}
+	if subFs == f.f {
+		return f.wrapObject(o), nil
+	}
 	return o, nil
 }
 
@@ -609,7 +616,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if err != nil {
 		return nil, err
 	}
-	return o, nil
+	return f.wrapObject(o), nil
 }
 
 // MergeDirs merges the contents of all the directories passed
@@ -695,6 +702,145 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 	return do(ctx)
 }
 
+// Object wraps an object from the wrapped remote, reporting this Fs
+// instead of the wrapped remote. Objects inside an archive are not
+// wrapped: they already belong to an archive Fs.
+type Object struct {
+	f *Fs
+	o fs.Object
+}
+
+// wrapObject wraps o to report f, leaving already wrapped objects
+// and nil objects unchanged.
+func (f *Fs) wrapObject(o fs.Object) fs.Object {
+	if o == nil {
+		return nil
+	}
+	if _, ok := o.(*Object); ok {
+		return o
+	}
+	return &Object{f: f, o: o}
+}
+
+// Fs returns read only access to the Fs that this object is part of
+func (o *Object) Fs() fs.Info {
+	return o.f
+}
+
+// String returns a description of the Object
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.o.String()
+}
+
+// Remote returns the remote path
+func (o *Object) Remote() string {
+	return o.o.Remote()
+}
+
+// Size returns the size of the file
+func (o *Object) Size() int64 {
+	return o.o.Size()
+}
+
+// ModTime returns the modification time of the object
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	return o.o.ModTime(ctx)
+}
+
+// Hash returns the selected checksum of the file
+func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
+	return o.o.Hash(ctx, ht)
+}
+
+// Storable returns a boolean indicating if this object is storable
+func (o *Object) Storable() bool {
+	return o.o.Storable()
+}
+
+// SetModTime sets the modification time of the object
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	return o.o.SetModTime(ctx, modTime)
+}
+
+// Open opens the file for read
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	return o.o.Open(ctx, options...)
+}
+
+// Update updates the object with the contents of in
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	return o.o.Update(ctx, in, src, options...)
+}
+
+// Remove removes the object
+func (o *Object) Remove(ctx context.Context) error {
+	return o.o.Remove(ctx)
+}
+
+// MimeType returns the content type of the Object if known, or "" if not
+func (o *Object) MimeType(ctx context.Context) string {
+	if do, ok := o.o.(fs.MimeTyper); ok {
+		return do.MimeType(ctx)
+	}
+	return ""
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	if do, ok := o.o.(fs.IDer); ok {
+		return do.ID()
+	}
+	return ""
+}
+
+// ParentID returns the ID of the parent directory if known, or "" if not
+func (o *Object) ParentID() string {
+	if do, ok := o.o.(fs.ParentIDer); ok {
+		return do.ParentID()
+	}
+	return ""
+}
+
+// UnWrap returns the Object that this Object is wrapping
+func (o *Object) UnWrap() fs.Object {
+	return o.o
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	if do, ok := o.o.(fs.GetTierer); ok {
+		return do.GetTier()
+	}
+	return ""
+}
+
+// SetTier performs changing storage tier or class of the Object
+func (o *Object) SetTier(tier string) error {
+	if do, ok := o.o.(fs.SetTierer); ok {
+		return do.SetTier(tier)
+	}
+	return fs.ErrorNotImplemented
+}
+
+// Metadata returns metadata for an object, or nil if there is none
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	if do, ok := o.o.(fs.Metadataer); ok {
+		return do.Metadata(ctx)
+	}
+	return nil, nil
+}
+
+// SetMetadata sets metadata for an object
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	if do, ok := o.o.(fs.SetMetadataer); ok {
+		return do.SetMetadata(ctx, metadata)
+	}
+	return fs.ErrorNotImplemented
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -715,5 +861,5 @@ var (
 	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
-	// FIXME _ fs.FullObject      = (*Object)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )
