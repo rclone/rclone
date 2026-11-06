@@ -35,7 +35,7 @@ type Driver struct {
 	dummy     bool // disables real mounting
 	mntOpt    mountlib.Options
 	vfsOpt    vfscommon.Options
-	mu        sync.Mutex
+	mu        sync.Mutex // guards volumes, never held across a mount
 	exitOnce  sync.Once
 	hupChan   chan os.Signal
 	monChan   chan bool // exit if true for exit, refresh if false
@@ -96,18 +96,21 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 // Exit will unmount all currently mounted volumes
 func (drv *Driver) Exit() {
 	fs.Debugf(nil, "Unmount all volumes")
-	drv.mu.Lock()
-	defer drv.mu.Unlock()
+	volumes := drv.snapshotVolumes()
 
 	reportErr(func() error {
 		_, err := daemon.SdNotify(false, daemon.SdNotifyStopping)
 		return err
 	}())
 	drv.monChan <- true // ask monitor to exit
-	for _, vol := range drv.volumes {
+	for _, vol := range volumes {
 		reportErr(vol.unmountAll())
+		vol.mu.Lock()
 		vol.Mounts = []string{} // never persist mounts at exit
+		vol.mu.Unlock()
 	}
+	drv.mu.Lock()
+	defer drv.mu.Unlock()
 	reportErr(drv.saveState())
 	drv.dummy = true // no more mounts
 }
@@ -127,18 +130,16 @@ func (drv *Driver) monitor() {
 		sources := []reflect.SelectCase{monChan, hupChan}
 		volumes := []*Volume{nil, nil}
 
-		drv.mu.Lock()
-		for _, vol := range drv.volumes {
-			if vol.mnt.ErrChan != nil {
+		for _, vol := range drv.snapshotVolumes() {
+			if errChan := vol.getErrChan(); errChan != nil {
 				errSource := reflect.SelectCase{
 					Dir:  reflect.SelectRecv,
-					Chan: reflect.ValueOf(vol.mnt.ErrChan),
+					Chan: reflect.ValueOf(errChan),
 				}
 				sources = append(sources, errSource)
 				volumes = append(volumes, vol)
 			}
 		}
-		drv.mu.Unlock()
 
 		fs.Debugf(nil, "Monitoring %d volumes", len(sources)-2)
 		idx, val, _ := reflect.Select(sources)
@@ -158,9 +159,7 @@ func (drv *Driver) monitor() {
 			} else {
 				fs.Infof(nil, "Volume %q unmounted externally", vol.Name)
 			}
-			drv.mu.Lock()
 			reportErr(vol.unmountAll())
-			drv.mu.Unlock()
 		}
 	}
 }
@@ -168,10 +167,7 @@ func (drv *Driver) monitor() {
 // clearCache will clear cache of all volumes
 func (drv *Driver) clearCache() {
 	fs.Debugf(nil, "Clear all caches")
-	drv.mu.Lock()
-	defer drv.mu.Unlock()
-
-	for _, vol := range drv.volumes {
+	for _, vol := range drv.snapshotVolumes() {
 		reportErr(vol.clearCache())
 	}
 }
@@ -212,15 +208,15 @@ func (drv *Driver) Create(req *CreateRequest) error {
 // Remove volume
 func (drv *Driver) Remove(req *RemoveRequest) error {
 	ctx := context.Background()
-	drv.mu.Lock()
-	defer drv.mu.Unlock()
-	vol, err := drv.getVolume(req.Name)
+	vol, err := drv.lookupVolume(req.Name)
 	if err != nil {
 		return err
 	}
 	if err = vol.remove(ctx); err != nil {
 		return err
 	}
+	drv.mu.Lock()
+	defer drv.mu.Unlock()
 	delete(drv.volumes, vol.Name)
 	return drv.saveState()
 }
@@ -228,16 +224,18 @@ func (drv *Driver) Remove(req *RemoveRequest) error {
 // List volumes handled by the driver
 func (drv *Driver) List() (*ListResponse, error) {
 	drv.mu.Lock()
-	defer drv.mu.Unlock()
-
-	volumeList := drv.listVolumes()
-	fs.Debugf(nil, "List: %v", volumeList)
+	names := drv.listVolumes()
+	volumes := make([]*Volume, 0, len(names))
+	for _, name := range names {
+		volumes = append(volumes, drv.volumes[name])
+	}
+	drv.mu.Unlock()
+	fs.Debugf(nil, "List: %v", names)
 
 	res := &ListResponse{
 		Volumes: []*VolInfo{},
 	}
-	for _, name := range volumeList {
-		vol := drv.volumes[name]
+	for _, vol := range volumes {
 		res.Volumes = append(res.Volumes, vol.getInfo())
 	}
 	return res, nil
@@ -267,14 +265,14 @@ func (drv *Driver) Path(req *PathRequest) (*PathResponse, error) {
 
 // Mount volume
 func (drv *Driver) Mount(req *MountRequest) (*MountResponse, error) {
-	drv.mu.Lock()
-	defer drv.mu.Unlock()
-	vol, err := drv.getVolume(req.Name)
+	vol, err := drv.lookupVolume(req.Name)
 	if err == nil {
 		err = vol.mount(req.ID)
 	}
 	if err == nil {
+		drv.mu.Lock()
 		err = drv.saveState()
+		drv.mu.Unlock()
 	}
 	if err != nil {
 		return nil, err
@@ -284,19 +282,21 @@ func (drv *Driver) Mount(req *MountRequest) (*MountResponse, error) {
 
 // Unmount volume
 func (drv *Driver) Unmount(req *UnmountRequest) error {
-	drv.mu.Lock()
-	defer drv.mu.Unlock()
-	vol, err := drv.getVolume(req.Name)
+	vol, err := drv.lookupVolume(req.Name)
 	if err == nil {
 		err = vol.unmount(req.ID)
 	}
 	if err == nil {
+		drv.mu.Lock()
 		err = drv.saveState()
+		drv.mu.Unlock()
 	}
 	return err
 }
 
 // getVolume returns volume by name
+//
+// drv.mu must be held.
 func (drv *Driver) getVolume(name string) (*Volume, error) {
 	vol := drv.volumes[name]
 	if vol == nil {
@@ -305,7 +305,41 @@ func (drv *Driver) getVolume(name string) (*Volume, error) {
 	return vol, nil
 }
 
+// lookupVolume returns volume by name, holding the driver lock only for
+// the map lookup.
+func (drv *Driver) lookupVolume(name string) (*Volume, error) {
+	drv.mu.Lock()
+	defer drv.mu.Unlock()
+	return drv.getVolume(name)
+}
+
+// snapshotVolumes returns the volumes known to the driver so that callers
+// can use them without holding the driver lock.
+func (drv *Driver) snapshotVolumes() []*Volume {
+	drv.mu.Lock()
+	defer drv.mu.Unlock()
+	volumes := make([]*Volume, 0, len(drv.volumes))
+	for _, vol := range drv.volumes {
+		volumes = append(volumes, vol)
+	}
+	return volumes
+}
+
+// notifyMonitor asks the mount monitor to refresh the channels it watches.
+//
+// The send is best effort: a pending notification already causes a
+// refresh, so dropping it is harmless. Not blocking lets callers hold a
+// volume lock, which the monitor may be waiting for.
+func (drv *Driver) notifyMonitor() {
+	select {
+	case drv.monChan <- false:
+	default:
+	}
+}
+
 // listVolumes returns list volume listVolumes
+//
+// drv.mu must be held.
 func (drv *Driver) listVolumes() []string {
 	names := []string{}
 	for key := range drv.volumes {
@@ -316,6 +350,8 @@ func (drv *Driver) listVolumes() []string {
 }
 
 // saveState saves volumes handled by driver to persistent store
+//
+// drv.mu must be held.
 func (drv *Driver) saveState() error {
 	volumeList := drv.listVolumes()
 	fs.Debugf(nil, "Save state %v to %s", volumeList, drv.statePath)
@@ -388,11 +424,20 @@ func (drv *Driver) restoreState(ctx context.Context) error {
 	wg.Wait()
 
 	for _, r := range results {
-		if r.err != nil {
+		if r.err != nil && !isRetryable(r.err) {
 			fs.Logf(nil, "Failed to restore volume %q: %v", r.vol.Name, r.err)
 			continue
 		}
+		if r.err != nil {
+			// The definition is valid but its filesystem could not be
+			// set up, e.g. the mountpoint is on a dead FUSE mount. Keep
+			// it so Get and List still report it and it survives the
+			// next saveState; mount retries the setup.
+			fs.Logf(nil, "Volume %q restored with setup deferred: %v", r.vol.Name, r.err)
+		}
+		drv.mu.Lock()
 		drv.volumes[r.vol.Name] = r.vol
+		drv.mu.Unlock()
 	}
 	return nil
 }
@@ -425,9 +470,7 @@ func (drv *Driver) RestoreMounts() {
 		go func(vol *Volume, mounts []string) {
 			defer wg.Done()
 			for _, id := range mounts {
-				drv.mu.Lock()
 				err := vol.mount(id)
-				drv.mu.Unlock()
 				if err != nil {
 					fs.Logf(nil, "Failed to restore mount %q for volume %q: %v", id, vol.Name, err)
 				}
