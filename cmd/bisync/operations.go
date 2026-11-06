@@ -77,6 +77,13 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	if err = opt.applyContext(ctx); err != nil {
 		return err
 	}
+	// Before the defaults are set, as editing may make this a resync
+	if opt.EditFilters || opt.EditFiltersPath2 {
+		run, err := opt.editFilters(ctx, fs1, fs2)
+		if err != nil || !run {
+			return err
+		}
+	}
 	b := &bisyncRun{
 		fs1:       fs1,
 		fs2:       fs2,

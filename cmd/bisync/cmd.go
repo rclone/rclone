@@ -63,6 +63,8 @@ type Options struct {
 	ConflictSuffixFlag    string
 	ConflictSuffix1       string
 	ConflictSuffix2       string
+	EditFilters           bool // edit FiltersFile with genfilters on Path1 first (command line only)
+	EditFiltersPath2      bool // edit FiltersFile with genfilters on Path2 first (command line only)
 }
 
 // Default values
@@ -154,6 +156,8 @@ func init() {
 	flags.FVarP(cmdFlags, &Opt.ConflictResolve, "conflict-resolve", "", "Automatically resolve conflicts by preferring the version that is: "+ConflictResolveList+" (default: none)", "")
 	flags.FVarP(cmdFlags, &Opt.ConflictLoser, "conflict-loser", "", "Action to take on the loser of a sync conflict (when there is a winner) or on both files (when there is no winner): "+ConflictLoserList+" (default: num)", "")
 	flags.StringVarP(cmdFlags, &Opt.ConflictSuffixFlag, "conflict-suffix", "", Opt.ConflictSuffixFlag, "Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')", "")
+	flags.BoolVarP(cmdFlags, &Opt.EditFilters, "edit-filters", "", Opt.EditFilters, "Edit --filters-file with the interactive genfilters user interface, showing Path1, before the run (command line only)", "")
+	flags.BoolVarP(cmdFlags, &Opt.EditFiltersPath2, "edit-filters-path2", "", Opt.EditFiltersPath2, "Like --edit-filters, but showing Path2 (command line only)", "")
 	_ = cmdFlags.MarkHidden("debugname")
 	_ = cmdFlags.MarkHidden("localtime")
 	addRC()
