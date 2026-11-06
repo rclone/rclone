@@ -597,6 +597,12 @@ func TestMkdirMetadataThroughPlantedSymlinkBlocked(t *testing.T) {
 // TestRemoveThroughPlantedSymlinkBlocked checks Remove and Rmdir can't
 // delete anything outside the root through a planted symlink.
 func TestRemoveThroughPlantedSymlinkBlocked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// os.Root.Symlink makes a file symlink to a directory outside
+		// the root, which Windows can't traverse, so the planted link
+		// can't reach the outside files.
+		t.Skip("planted directory symlinks can't be traversed on Windows")
+	}
 	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
