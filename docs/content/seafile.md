@@ -245,6 +245,30 @@ transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 Please note this is not supported on seafile server version 6.x
 
+### Modification times and hashes
+
+Seafile doesn't support hashes.
+
+From Seafile server version 12.0.4, rclone sends the modification time of
+a file when uploading it, and Seafile keeps it with an accuracy of 1 second.
+The modification time can't be changed without uploading the file again, so
+when only the modification time differs rclone uploads the file again.
+Server-side copy and move keep the modification time.
+
+With older servers the modification time is the time of the upload, and
+rclone compares files by size only.
+
+Files uploaded by older rclone versions, or to a server older than 12.0.4,
+have the time of the upload as their modification time. On a server from
+12.0.4, the first `rclone sync` or `rclone copy` with this version uploads
+them once more, as their modification time differs from the source. To
+avoid that, keep comparing by size with `--size-only`.
+
+The first `rclone bisync` run with this version on a server from 12.0.4
+stops with "all files were changed", as the listings written by older
+versions hold the modification times of the source for the remote. Run it
+once with `--resync`, which uploads the files again.
+
 ### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
