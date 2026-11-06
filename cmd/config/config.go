@@ -33,6 +33,7 @@ func init() {
 	configCommand.AddCommand(configUpdateCommand)
 	configCommand.AddCommand(configDeleteCommand)
 	configCommand.AddCommand(configUnsetCommand)
+	configCommand.AddCommand(configRenameCommand)
 	configCommand.AddCommand(configPasswordCommand)
 	configCommand.AddCommand(configReconnectCommand)
 	configCommand.AddCommand(configDisconnectCommand)
@@ -420,6 +421,28 @@ the whole remote instead.`, "|", "`"),
 		}
 		config.ShowRemote(args[0])
 		return nil
+	},
+}
+
+var configRenameCommand = &cobra.Command{
+	Use:   "rename name new_name",
+	Short: `Rename an existing remote.`,
+	Long: strings.ReplaceAll(`Rename an existing remote, keeping all of its options unchanged.
+
+For example, to rename a remote of name myremote to newremote you
+would do:
+
+|||sh
+rclone config rename myremote newremote
+|||
+
+This fails if a remote called new_name already exists.`, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.76",
+	},
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(2, 2, command, args)
+		return config.RenameRemoteTo(args[0], args[1])
 	},
 }
 

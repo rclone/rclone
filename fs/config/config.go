@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/driveletter"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/file"
@@ -694,6 +695,39 @@ func UnsetRemote(name string, keys ...string) (removed []string, err error) {
 	SaveConfig()
 	cache.ClearConfig(name) // remove any remotes based on this config from the cache
 	return removed, nil
+}
+
+// RenameRemoteTo renames the remote name to newName, keeping all its
+// keys unchanged.
+//
+// It returns an error if name doesn't exist, if newName is not a valid
+// remote name or if a remote called newName already exists.
+func RenameRemoteTo(name, newName string) error {
+	err := fspath.CheckConfigName(name)
+	if err != nil {
+		return err
+	}
+	if GetValue(name, "type") == "" {
+		return fmt.Errorf("remote %q doesn't exist", name)
+	}
+	err = fspath.CheckConfigName(newName)
+	if err != nil {
+		return err
+	}
+	if driveletter.IsDriveLetter(newName) {
+		return fmt.Errorf("can't use %q as it can be confused with a drive letter", newName)
+	}
+	if LoadedData().HasSection(newName) {
+		return fmt.Errorf("remote %q already exists", newName)
+	}
+	for _, key := range LoadedData().GetKeyList(name) {
+		value, _ := FileGetValue(name, key)
+		LoadedData().SetValue(newName, key, value)
+	}
+	LoadedData().DeleteSection(name)
+	SaveConfig()
+	cache.ClearConfig(name) // remove any remotes based on this config from the cache
+	return nil
 }
 
 // JSONListProviders prints all the providers and options in JSON format
