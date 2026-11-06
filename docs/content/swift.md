@@ -328,6 +328,14 @@ Properties:
     - OVH
   - "https://authenticate.ain.net"
     - Blomp Cloud Storage
+  - "https://swiss-backup01.infomaniak.com/identity/v3"
+    - Infomaniak Swiss Backup Location 01
+  - "https://swiss-backup02.infomaniak.com/identity/v3"
+    - Infomaniak Swiss Backup Location 02
+  - "https://swiss-backup03.infomaniak.com/identity/v3"
+    - Infomaniak Swiss Backup Location 03
+  - "https://swiss-backup04.infomaniak.com/identity/v3"
+    - Infomaniak Swiss Backup Location 04
 
 #### --swift-user-id
 

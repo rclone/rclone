@@ -10,9 +10,11 @@ Remove a single file from remote.
 
 ## Synopsis
 
-Remove a single file from remote.  Unlike `delete` it cannot be used to
+Remove a single file from remote. Unlike `delete` it cannot be used to
 remove a directory and it doesn't obey include/exclude filters - if the
-specified file exists, it will always be removed.
+specified file exists, it will always be removed from its original location.
+
+The `--backup-dir` and `--suffix` flags are honored when set.
 
 ```
 rclone deletefile remote:path [flags]
@@ -26,6 +28,26 @@ rclone deletefile remote:path [flags]
 
 Options shared with other commands are described next.
 See the [global flags page](/flags/) for global options not listed here.
+
+### Sync Options
+
+Flags used for sync commands
+
+```text
+      --backup-dir string               Make backups into hierarchy based in DIR
+      --delete-after                    When synchronizing, delete files on destination after transferring (default)
+      --delete-before                   When synchronizing, delete files on destination before transferring
+      --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
+      --ignore-errors                   Delete even if there are I/O errors
+      --list-cutoff int                 To save memory, sort directory listings on disk above this threshold (default 1000000)
+      --max-delete int                  When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
+      --suffix string                   Suffix to add to changed files
+      --suffix-keep-extension           Preserve the extension when using --suffix
+      --track-renames                   When synchronizing, track file renames and do a server-side move if possible
+      --track-renames-strategy string   Strategies to use when synchronizing using track-renames hash|modtime|leaf (default "hash")
+```
 
 ### Important Options
 

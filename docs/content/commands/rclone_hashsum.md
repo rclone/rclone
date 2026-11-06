@@ -41,6 +41,7 @@ Supported hashes are:
 - blake3
 - xxh3
 - xxh128
+- crc32c
 ```
 
 Then
