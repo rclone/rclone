@@ -160,19 +160,9 @@ For more help see [the GUI docs](/gui/).
 			opt.NoAuth = noAuth
 		}
 
-		if !opt.NoAuth {
-			if opt.Auth.BasicUser == "" {
-				opt.Auth.BasicUser = "gui"
-				fs.Infof(nil, "No username specified. Using default username: %s", opt.Auth.BasicUser)
-			}
-			if opt.Auth.BasicPass == "" {
-				randomPass, err := random.Password(128)
-				if err != nil {
-					return fmt.Errorf("failed to make password: %w", err)
-				}
-				opt.Auth.BasicPass = randomPass
-				fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
-			}
+		passwordGenerated, err := ensureCredentials(&opt.Auth, opt.NoAuth)
+		if err != nil {
+			return err
 		}
 
 		addr, _ := guiServer.Addr().(*net.TCPAddr)
@@ -206,7 +196,8 @@ For more help see [the GUI docs](/gui/).
 		fs.Logf(nil, "Serving GUI %s on %s", guiSource, guiURL)
 
 		// Open browser
-		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
+		loginUser, loginPass := credentialsForLoginURL(opt.Auth, passwordGenerated)
+		loginURL := buildLoginURL(guiURL, rcURL, loginUser, loginPass, opt.NoAuth)
 
 		fs.Logf(nil, "GUI available at %s", loginURL)
 		if !noOpenBrowser {
@@ -320,10 +311,38 @@ func guiHandler(srcFS iofs.FS) (http.Handler, error) {
 	}), nil
 }
 
-// guiBaseURL is the GUI server's URL. rcURL is the RC API server's URL.
-// When auth is enabled it appends url, user, and pass as query
-// parameters so the React app can discover the API endpoint and
-// log in automatically.
+func ensureCredentials(auth *libhttp.AuthConfig, noAuth bool) (bool, error) {
+	if noAuth || auth.HtPasswd != "" {
+		return false, nil
+	}
+	if auth.BasicUser == "" {
+		auth.BasicUser = "gui"
+		fs.Infof(nil, "No username specified. Using default username: %s", auth.BasicUser)
+	}
+	if auth.BasicPass == "" {
+		randomPass, err := random.Password(128)
+		if err != nil {
+			return false, fmt.Errorf("failed to make password: %w", err)
+		}
+		auth.BasicPass = randomPass
+		fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
+		return true, nil
+	}
+	return false, nil
+}
+
+func credentialsForLoginURL(auth libhttp.AuthConfig, passwordGenerated bool) (string, string) {
+	if auth.HtPasswd != "" {
+		return "", ""
+	}
+	if passwordGenerated {
+		return auth.BasicUser, auth.BasicPass
+	}
+	return auth.BasicUser, ""
+}
+
+// buildLoginURL returns a GUI URL configured to connect to rcURL. Non-empty
+// credentials enable automatic login.
 func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth bool) string {
 	u, err := url.Parse(guiBaseURL)
 	if err != nil {
@@ -335,8 +354,12 @@ func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth bool) string {
 	u.Path = "/login"
 	q := u.Query()
 	q.Set("url", rcURL)
-	q.Set("user", user)
-	q.Set("pass", pass)
+	if user != "" {
+		q.Set("user", user)
+	}
+	if pass != "" {
+		q.Set("pass", pass)
+	}
 	u.RawQuery = q.Encode()
 	return u.String()
 }
