@@ -670,7 +670,6 @@ func fillInMissingSizes(total, used, free, unknownFree int64) (newTotal, newUsed
 		if free >= 0 {
 			total = free
 		} else {
-			if free < 0 {
 			total = unknownFree
 		}
 		if used >= 0 {
