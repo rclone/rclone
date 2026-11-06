@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/klauspost/compress/zstd"
@@ -16,12 +17,39 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
+const (
+	// defaultZstdLevel is used when the level option is left at its
+	// default of -1, which only has a meaning for gzip.
+	defaultZstdLevel = int(zstd.SpeedDefault)
+	minZstdLevel     = 0
+	maxZstdLevel     = int(zstd.SpeedBestCompression)
+)
+
+// resolveZstdLevel converts the compression level from the shared level
+// option into a zstd level. The option defaults to -1 which means the
+// default level for the selected compression mode. Level 0 disables
+// compression entirely.
+func resolveZstdLevel(level int) (int, error) {
+	if level == defaultCompressionLevel {
+		return defaultZstdLevel, nil
+	}
+	if level < minZstdLevel || level > maxZstdLevel {
+		return 0, fmt.Errorf("invalid zstd compression level %d: must be between %d and %d", level, minZstdLevel, maxZstdLevel)
+	}
+	return level, nil
+}
+
 // zstdModeHandler implements compressionModeHandler for zstd
-type zstdModeHandler struct{}
+type zstdModeHandler struct {
+	level int
+}
 
 // isCompressible checks the compression ratio of the provided data and returns true if the ratio exceeds
 // the configured threshold
 func (z *zstdModeHandler) isCompressible(r io.Reader, compressionMode int) (bool, error) {
+	if z.level == 0 {
+		return false, nil
+	}
 	var b countingDiscard
 	var n int64
 	w, err := NewWriterSzstd(&b, zstd.WithEncoderLevel(zstd.SpeedDefault))
@@ -107,10 +135,11 @@ func (z *zstdModeHandler) putCompress(
 	// Compress the file
 	pipeReader, pipeWriter := io.Pipe()
 
-	resultsZstd := make(chan compressionResult[SzstdMetadata])
+	resultsZstd := make(chan compressionResult[SzstdMetadata], 1)
 	go func() {
-		writer, err := NewWriterSzstd(pipeWriter, zstd.WithEncoderLevel(zstd.EncoderLevel(f.opt.CompressionLevel)))
+		writer, err := NewWriterSzstd(pipeWriter, zstd.WithEncoderLevel(zstd.EncoderLevel(z.level)))
 		if err != nil {
+			_ = pipeWriter.CloseWithError(err)
 			resultsZstd <- compressionResult[SzstdMetadata]{err: err}
 			close(resultsZstd)
 			return
@@ -144,6 +173,12 @@ func (z *zstdModeHandler) putCompress(
 
 	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
 	if err != nil {
+		// Close the pipe reader so the compression goroutine doesn't
+		// block writing to it.
+		_ = pipeReader.CloseWithError(err)
+		if o != nil {
+			_ = o.Remove(ctx)
+		}
 		return nil, nil, err
 	}
 
