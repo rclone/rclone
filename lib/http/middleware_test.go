@@ -245,23 +245,28 @@ func TestMiddlewareAuth(t *testing.T) {
 	}
 }
 
-// minAuthTime returns the shortest time handler took to reject user
-// with a wrong password over a few attempts.
-func minAuthTime(t *testing.T, handler http.Handler, user string) time.Duration {
-	var best time.Duration
-	for i := range 10 {
+// authTime returns the average time handler takes to reject user with
+// a wrong password.
+//
+// It times many attempts with testing.Benchmark rather than timing them
+// one at a time as a single rejection can take less than the resolution
+// of the clock on Windows.
+func authTime(t *testing.T, handler http.Handler, user string) time.Duration {
+	t.Helper()
+	reject := func() int {
 		req := httptest.NewRequest("GET", "/", nil)
 		req.SetBasicAuth(user, "definitely-wrong-password")
 		rec := httptest.NewRecorder()
-		start := time.Now()
 		handler.ServeHTTP(rec, req)
-		elapsed := time.Since(start)
-		require.Equal(t, http.StatusUnauthorized, rec.Code)
-		if i == 0 || elapsed < best {
-			best = elapsed
-		}
+		return rec.Code
 	}
-	return best
+	require.Equal(t, http.StatusUnauthorized, reject())
+	result := testing.Benchmark(func(b *testing.B) {
+		for b.Loop() {
+			reject()
+		}
+	})
+	return time.Duration(result.NsPerOp())
 }
 
 // Rejecting an unknown user must take about as long as rejecting a
@@ -269,16 +274,16 @@ func minAuthTime(t *testing.T, handler http.Handler, user string) time.Duration 
 // users exist.
 func TestMiddlewareAuthHtpasswdUnknownUserTiming(t *testing.T) {
 	handler := MiddlewareAuthHtpasswd("./testdata/.htpasswd", "test")(testEchoHandler([]byte("ok")))
-	known := minAuthTime(t, handler, "bcrypt")
-	unknown := minAuthTime(t, handler, "nosuchuser")
+	known := authTime(t, handler, "bcrypt")
+	unknown := authTime(t, handler, "nosuchuser")
 	assert.Greater(t, unknown, known/4, "unknown user rejected in %v but known user in %v", unknown, known)
 }
 
 // As TestMiddlewareAuthHtpasswdUnknownUserTiming but for --user/--pass
 func TestMiddlewareAuthBasicUnknownUserTiming(t *testing.T) {
 	handler := MiddlewareAuthBasic("user", "pass", "test", "dlPL2MqE")(testEchoHandler([]byte("ok")))
-	known := minAuthTime(t, handler, "user")
-	unknown := minAuthTime(t, handler, "nosuchuser")
+	known := authTime(t, handler, "user")
+	unknown := authTime(t, handler, "nosuchuser")
 	assert.Greater(t, unknown, known/4, "unknown user rejected in %v but known user in %v", unknown, known)
 
 	req := httptest.NewRequest("GET", "/", nil)
