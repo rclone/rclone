@@ -295,7 +295,7 @@ func (s *syncCopyMove) processError(err error) {
 	}
 	if err == context.DeadlineExceeded {
 		err = fserrors.NoRetryError(err)
-	} else if err == accounting.ErrorMaxTransferLimitReachedGraceful {
+	} else if err == accounting.ErrorMaxTransferLimitReachedGraceful || err == accounting.ErrorMaxErrorsReachedGraceful {
 		if s.inCtx.Err() == nil {
 			fs.LogfCtx(s.ctx, nil, "%v - stopping transfers", err)
 			// Cancel the march and stop the pipes
