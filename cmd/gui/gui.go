@@ -18,6 +18,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	libhttp "github.com/rclone/rclone/lib/http"
@@ -41,6 +42,7 @@ var (
 	noAuth        bool
 	noOpenBrowser bool
 	enableMetrics bool
+	noCheckUsage  bool
 )
 
 func init() {
@@ -53,6 +55,7 @@ func init() {
 	f.BoolVar(&noAuth, "no-auth", false, "Don't require auth for the RC API")
 	f.BoolVar(&noOpenBrowser, "no-open-browser", false, "Skip opening the browser automatically")
 	f.BoolVar(&enableMetrics, "enable-metrics", false, "Enable OpenMetrics/Prometheus compatible endpoint at /metrics")
+	flags.BoolVarP(f, &noCheckUsage, "no-check-usage", "", false, "Turn off the GUI's automatic remote usage checks", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -94,6 +97,12 @@ Use --user and --pass to set specific credentials:
 Use --no-auth to disable authentication entirely:
 
     rclone gui --no-auth
+
+Use --no-check-usage to turn off the GUI's automatic remote usage
+checks, which connect to every remote that supports them. This needs
+GUI version 1.2.1 or later and has no effect with --no-auth:
+
+    rclone gui --no-check-usage
 
 For more help see [the GUI docs](/gui/).
 `,
@@ -174,6 +183,9 @@ For more help see [the GUI docs](/gui/).
 				fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
 			}
 		}
+		if noCheckUsage && opt.NoAuth {
+			fs.Logf(nil, "--no-check-usage has no effect without auth")
+		}
 
 		addr, _ := guiServer.Addr().(*net.TCPAddr)
 		opt.HTTP.AllowOrigin = resolveAllowOrigin(command.Flags().Changed("rc-allow-origin"), opt.HTTP.AllowOrigin, guiOrigin, addr, opt.NoAuth)
@@ -206,7 +218,7 @@ For more help see [the GUI docs](/gui/).
 		fs.Logf(nil, "Serving GUI %s on %s", guiSource, guiURL)
 
 		// Open browser
-		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
+		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth, noCheckUsage)
 
 		fs.Logf(nil, "GUI available at %s", loginURL)
 		if !noOpenBrowser {
@@ -323,8 +335,8 @@ func guiHandler(srcFS iofs.FS) (http.Handler, error) {
 // guiBaseURL is the GUI server's URL. rcURL is the RC API server's URL.
 // When auth is enabled it appends url, user, and pass as query
 // parameters so the React app can discover the API endpoint and
-// log in automatically.
-func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth bool) string {
+// log in automatically, plus checkUsage=false if noCheckUsage is set.
+func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth, noCheckUsage bool) string {
 	u, err := url.Parse(guiBaseURL)
 	if err != nil {
 		return guiBaseURL
@@ -337,6 +349,9 @@ func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth bool) string {
 	q.Set("url", rcURL)
 	q.Set("user", user)
 	q.Set("pass", pass)
+	if noCheckUsage {
+		q.Set("checkUsage", "false")
+	}
 	u.RawQuery = q.Encode()
 	return u.String()
 }
