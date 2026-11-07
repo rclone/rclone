@@ -406,7 +406,11 @@ func ToNormal(s string, normUnicode, normCase bool) string {
 }
 
 // CheckSum checks filesystem hashes against a SUM file
-func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType hash.Type, opt *CheckOpt, download bool) error {
+func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType hash.Type, opt *CheckOpt, download bool, downloadIfMissingOpt ...bool) error {
+	downloadIfMissing := false
+	if len(downloadIfMissingOpt) > 0 {
+		downloadIfMissing = downloadIfMissingOpt[0]
+	}
 	var options CheckOpt
 	if opt != nil {
 		options = *opt
@@ -419,7 +423,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 	options.Fdst = fsrc // denotes the file system to check
 	opt = &options      // override supplied argument
 
-	if !download && (hashType == hash.None || !opt.Fdst.Hashes().Contains(hashType)) {
+	if hashType == hash.None || (!download && !downloadIfMissing && !opt.Fdst.Hashes().Contains(hashType)) {
 		return fmt.Errorf("%s: hash type is not supported by file system: %s", hashType, opt.Fdst)
 	}
 
@@ -442,7 +446,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 		opt:    *opt,
 	}
 	lastErr := ListFn(ctx, opt.Fdst, func(obj fs.Object) {
-		c.checkSum(ctx, obj, download, hashes, hashType)
+		c.checkSum(ctx, obj, download, downloadIfMissing, hashes, hashType)
 	})
 	c.wg.Wait() // wait for background go-routines
 
@@ -470,7 +474,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 }
 
 // checkSum checks single object against golden hashes
-func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool, hashes HashSums, hashType hash.Type) {
+func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download, downloadIfMissing bool, hashes HashSums, hashType hash.Type) {
 	normalizedRemote := ApplyTransforms(ctx, obj.Remote())
 	c.ioMu.Lock()
 	sumHash, sumFound := hashes[normalizedRemote]
@@ -510,7 +514,13 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 		}()
 		if !download {
 			objHash, err = obj.Hash(ctx, hashType)
-			return
+			if !downloadIfMissing || (err == nil && objHash != "") {
+				return
+			}
+			if err != nil && err != hash.ErrUnsupported {
+				return
+			}
+			err = nil
 		}
 		if in, err = Open(ctx, obj); err != nil {
 			return
