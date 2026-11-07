@@ -62,6 +62,7 @@ directories to and from different cloud storage providers.
 - Hetzner Object Storage [:page_facing_up:](https://rclone.org/s3/#hetzner)
 - Hetzner Storage Box [:page_facing_up:](https://rclone.org/sftp/#hetzner-storage-box)
 - HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
+- Hippius [:page_facing_up:](https://rclone.org/s3/#hippius)
 - Hitachi Content Platform (HCP) [:page_facing_up:](https://rclone.org/s3/#hcp)
 - HTTP [:page_facing_up:](https://rclone.org/http/)
 - Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)

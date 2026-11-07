@@ -152,6 +152,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Hetzner Object Storage" home="https://www.hetzner.com/storage/object-storage/" config="/s3/#hetzner" >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
+{{< provider name="Hippius" home="https://hippius.com/s3-compatible" config="/s3/#hippius" >}}
 {{< provider name="Hitachi Content Platform (HCP)" home="https://www.hitachivantara.com/en-us/products/storage/content-platform.html" config="/s3/#hcp" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
 {{< provider name="Huawei Drive" home="https://cloud.huawei.com/" config="/huaweidrive/" >}}
