@@ -659,6 +659,68 @@ func TestCheckSumDownloadConcurrency(t *testing.T) {
 	testCheckSumConcurrency(t, true)
 }
 
+type hashOverrideObject struct {
+	*mockobject.ContentMockObject
+	emptyHash bool
+}
+
+func (o *hashOverrideObject) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	if o.emptyHash {
+		return "", nil
+	}
+	return o.ContentMockObject.Hash(ctx, ty)
+}
+
+func newEqualTestObject(ctx context.Context, t *testing.T, name string, hashes hash.Set, content []byte, emptyHash bool) fs.Object {
+	f, err := mockfs.NewFs(ctx, name, "", nil)
+	require.NoError(t, err)
+	f.(*mockfs.Fs).SetHashes(hashes)
+	o := &hashOverrideObject{
+		ContentMockObject: mockobject.New(name).WithContent(content, mockobject.SeekModeNone),
+		emptyHash:         emptyHash,
+	}
+	o.SetFs(f)
+	require.NoError(t, o.SetModTime(ctx, time.Now()))
+	return o
+}
+
+func TestEqualChecksumEmptyDstHashWarning(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.CheckSum = true
+	src := newEqualTestObject(ctx, t, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	dst := newEqualTestObject(ctx, t, "dstFs", hash.NewHashSet(hash.MD5), []byte("data"), true)
+
+	output := bilib.CaptureOutput(func() {
+		assert.True(t, operations.Equal(ctx, src, dst))
+	})
+	assert.Contains(t, string(output), "--checksum is in use but the source or destination has no stored hash")
+}
+
+func TestEqualChecksumNoCommonHashWarningUnchanged(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.CheckSum = true
+	src := newEqualTestObject(ctx, t, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	dst := newEqualTestObject(ctx, t, "dstFs", hash.NewHashSet(hash.SHA1), []byte("data"), false)
+
+	output := bilib.CaptureOutput(func() {
+		assert.True(t, operations.Equal(ctx, src, dst))
+	})
+	assert.Contains(t, string(output), "no hashes in common")
+}
+
+func TestEqualChecksumHashPresentNoWarning(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.CheckSum = true
+	src := newEqualTestObject(ctx, t, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	dst := newEqualTestObject(ctx, t, "dstFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+
+	output := bilib.CaptureOutput(func() {
+		assert.True(t, operations.Equal(ctx, src, dst))
+	})
+	assert.NotContains(t, string(output), "falling back to --size-only")
+	assert.NotContains(t, string(output), "no stored hash")
+}
+
 func TestApplyTransforms(t *testing.T) {
 	var (
 		hashType        = hash.MD5
