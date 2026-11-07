@@ -1644,6 +1644,116 @@ func (s *flakySink) Write(p []byte) (int, error) {
 	return n, errBoom
 }
 
+// gatedSink is a sink which blocks writes past its first gateAt bytes until
+// release is closed, signalling blocked when the first such write starts.
+type gatedSink struct {
+	bufferSink
+	gateAt  int
+	once    sync.Once
+	blocked chan struct{}
+	release chan struct{}
+}
+
+func newGatedSink(gateAt int) *gatedSink {
+	return &gatedSink{gateAt: gateAt, blocked: make(chan struct{}), release: make(chan struct{})}
+}
+
+func (s *gatedSink) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	written := s.buf.Len()
+	s.mu.Unlock()
+	if written+len(p) > s.gateAt {
+		s.once.Do(func() { close(s.blocked) })
+		<-s.release
+	}
+	return s.bufferSink.Write(p)
+}
+
+// startPumpBehindRetry recreates a client retrying part 1 because its
+// request was slow to answer: part 2 arrives first and is buffered, then
+// the request for part 1 streams it and blocks pumping part 2 into sink,
+// and the retry of part 1 is acknowledged. It returns the result of the
+// original part 1 request.
+func startPumpBehindRetry(t *testing.T, b *s3Backend, bucket, object string, uploadID gofakes3.UploadID, sink *gatedSink, part1, part2 []byte) <-chan error {
+	ctx := context.Background()
+	_, err := b.UploadPart(ctx, bucket, object, uploadID, 2, int64(len(part2)), bytes.NewReader(part2))
+	require.NoError(t, err)
+	part1Done := make(chan error, 1)
+	go func() {
+		_, err := b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
+		part1Done <- err
+	}()
+	<-sink.blocked
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
+	require.NoError(t, err)
+	return part1Done
+}
+
+// TestMultipartCloseWaitsForPump checks that completing an upload whose
+// parts have all been acknowledged waits for parts still being written to
+// the sink, rather than rejecting the completion.
+func TestMultipartCloseWaitsForPump(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	const object = "close-while-pumping.bin"
+	uploadID, _ := newBufferSinkUpload(t, b, bucket, object)
+	up, err := b.loadUpload(context.Background(), uploadID)
+	require.NoError(t, err)
+	part1 := []byte(random.String(1024))
+	part2 := []byte(random.String(1024))
+	sink := newGatedSink(len(part1))
+	up.fh = sink
+	part1Done := startPumpBehindRetry(t, b, bucket, object, uploadID, sink, part1, part2)
+
+	closed := make(chan error, 1)
+	go func() { closed <- up.close() }()
+	select {
+	case err := <-closed:
+		t.Fatalf("close returned %v while part 2 was still being written", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	close(sink.release)
+	require.NoError(t, <-closed)
+	require.NoError(t, <-part1Done)
+	assert.Equal(t, append(part1, part2...), sink.Bytes())
+}
+
+// TestMultipartCompleteWaitingForPumpGivesUp checks that a completion which
+// waits too long for acknowledged parts to be written tells the client to
+// slow down and keeps the upload, so the client can retry it.
+func TestMultipartCompleteWaitingForPumpGivesUp(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	oldTimeout := multipartWaitTimeout
+	multipartWaitTimeout = 100 * time.Millisecond
+	t.Cleanup(func() { multipartWaitTimeout = oldTimeout })
+	ctx := context.Background()
+	const object = "complete-gives-up.bin"
+	uploadID, _ := newBufferSinkUpload(t, b, bucket, object)
+	up, err := b.loadUpload(ctx, uploadID)
+	require.NoError(t, err)
+	part1 := []byte(random.String(1024))
+	part2 := []byte(random.String(1024))
+	sink := newGatedSink(len(part1))
+	up.fh = sink
+	part1Done := startPumpBehindRetry(t, b, bucket, object, uploadID, sink, part1, part2)
+	md5s := [][16]byte{md5.Sum(part1), md5.Sum(part2)}
+
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, object, uploadID, &gofakes3.CompleteMultipartUploadRequest{
+		Parts: []gofakes3.CompletedPart{
+			{PartNumber: 1, ETag: hex.EncodeToString(md5s[0][:])},
+			{PartNumber: 2, ETag: hex.EncodeToString(md5s[1][:])},
+		},
+	})
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrSlowDown), "want SlowDown, got %v", err)
+
+	close(sink.release)
+	require.NoError(t, <-part1Done)
+	_, err = b.loadUpload(ctx, uploadID)
+	require.NoError(t, err, "the upload was torn down instead of being kept for a retry")
+	require.NoError(t, up.close())
+	assert.Equal(t, append(part1, part2...), sink.Bytes())
+}
+
 // TestMultipartPumpFailure checks that an upload is failed when a part
 // which was buffered, and so already acknowledged to the client, can't be
 // written to the sink, rather than a resend of it being appended to what
