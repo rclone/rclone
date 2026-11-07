@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
@@ -32,6 +31,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
+	lshelp.AddOutputFileFlag(cmdFlags)
 	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details", "")
 	flags.StringVarP(cmdFlags, &timeFormat, "time-format", "t", "", "Specify a custom time format - see docs for details (default: 2006-01-02 15:04:05)", "")
 	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format", "")
@@ -198,7 +198,12 @@ to the maximum precision supported by the remote.
 			if csv && !separatorFlagSupplied {
 				separator = ","
 			}
-			return Lsf(context.Background(), fsrc, os.Stdout)
+			out, closeOut, err := lshelp.Output()
+			if err != nil {
+				return err
+			}
+			defer closeOut()
+			return Lsf(context.Background(), fsrc, out)
 		})
 	},
 }

@@ -3,7 +3,6 @@ package lsl
 
 import (
 	"context"
-	"os"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
@@ -13,6 +12,7 @@ import (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
+	lshelp.AddOutputFileFlag(commandDefinition.Flags())
 }
 
 var commandDefinition = &cobra.Command{
@@ -40,7 +40,12 @@ $ rclone lsl swift:bucket
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.ListLong(context.Background(), fsrc, os.Stdout)
+			out, closeOut, err := lshelp.Output()
+			if err != nil {
+				return err
+			}
+			defer closeOut()
+			return operations.ListLong(context.Background(), fsrc, out)
 		})
 	},
 }
