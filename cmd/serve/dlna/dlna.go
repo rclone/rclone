@@ -482,7 +482,9 @@ func (s *server) ssdpInterface(intf net.Interface) {
 	// Note that the devices and services advertised here via SSDP should be
 	// in agreement with the rootDesc XML descriptor that is defined above.
 	ssdpServer := ssdp.Server{
-		Interface: intf,
+		Interface:  intf,
+		AddrString: ssdp.AddrString,
+		NetAddr:    ssdp.NetAddr,
 		Devices: []string{
 			"urn:schemas-upnp-org:device:MediaServer:1"},
 		Services: []string{
