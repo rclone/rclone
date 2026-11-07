@@ -98,7 +98,7 @@ rclone copy /home/source remote:backup
 
 ### Modification times and hashes
 
-Mega does not support modification times or hashes yet.
+Mega supports modification times, while hashes are not supported.
 
 ### Restricted filename characters
 
