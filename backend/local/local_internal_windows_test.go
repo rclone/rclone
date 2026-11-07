@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
@@ -37,4 +38,37 @@ func TestRmdirWindows(t *testing.T) {
 
 	err = operations.Rmdir(context.Background(), r.Flocal, "testdir")
 	assert.NoError(t, err)
+}
+
+// TestLocalPathUNCShareRoot checks localPath works when the root is a
+// bare UNC share, where filepath.Rel would never return.
+func TestLocalPathUNCShareRoot(t *testing.T) {
+	for _, root := range []string{`\\server\share`, `\\?\UNC\server\share`} {
+		f := &Fs{root: root}
+		for _, test := range []struct {
+			name string
+			want string
+		}{
+			{name: "", want: root + `\`},
+			{name: "file.txt", want: root + `\file.txt`},
+			{name: "sub/file.txt", want: root + `\sub\file.txt`},
+		} {
+			type result struct {
+				path string
+				err  error
+			}
+			done := make(chan result, 1)
+			go func() {
+				path, err := f.localPath(test.name)
+				done <- result{path, err}
+			}()
+			select {
+			case res := <-done:
+				require.NoError(t, res.err, root, test.name)
+				assert.Equal(t, test.want, res.path, root, test.name)
+			case <-time.After(10 * time.Second):
+				t.Fatalf("localPath(%q) with root %q did not return", test.name, root)
+			}
+		}
+	}
 }

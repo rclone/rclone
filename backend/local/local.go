@@ -887,11 +887,23 @@ func (f *Fs) nativePath(name string) string {
 // happen depending on the encoding.
 func (f *Fs) localPath(name string) (string, error) {
 	localPath := filepath.Join(f.root, f.nativePath(name))
-	rel, err := filepath.Rel(f.root, localPath)
+	rel, err := f.relToRoot(localPath)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", fserrors.NoRetryError(fmt.Errorf("%q: %w", name, errPathEscapes))
 	}
 	return localPath, nil
+}
+
+// relToRoot returns localPath relative to f.root.
+func (f *Fs) relToRoot(localPath string) (string, error) {
+	// On Windows filepath.Rel loops forever if the base is a bare UNC
+	// share and the target is the same share with a trailing
+	// separator, eg `\\server\share` and `\\server\share\`, which is
+	// what filepath.Join makes of f.root and "".
+	if localPath == f.root || localPath == f.root+string(filepath.Separator) {
+		return ".", nil
+	}
+	return filepath.Rel(f.root, localPath)
 }
 
 // Put the Object to the local filesystem
@@ -1594,7 +1606,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // f.root is the trusted destination the user chose, so it is created (and
 // followed if it is itself a symlink) before being opened.
 func (f *Fs) osRoot(localPath string) (root *os.Root, rel string, err error) {
-	rel, err = filepath.Rel(f.root, localPath)
+	rel, err = f.relToRoot(localPath)
 	if err != nil {
 		return nil, "", err
 	}
