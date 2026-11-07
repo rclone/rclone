@@ -14,6 +14,8 @@ Output completion script for a given shell.
 
 Generates a shell completion script for rclone.
 Run with `--help` to list the supported shells.
+Enum-valued flags such as `--log-level` and `--vfs-cache-mode`
+also complete their supported values.
 
 ## Options
 

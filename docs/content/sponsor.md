@@ -18,6 +18,7 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/filescom-enterprise-grade-workflows.png" width="300" height="200" title="Start Your Free Trial Today" link="https://files.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_term=rclone">}}
 {{< sponsor src="/img/logos/dropbox.svg" width="300" height="200" title="Visit our sponsor Dropbox" link="https://dropbox.com">}}
+{{< sponsor src="/img/logos/cesnet.svg" width="300" height="200" title="Visit our sponsor CESNET" link="https://www.cesnet.cz/en">}}
 {{< sponsor src="/img/logos/mega-s4.svg" width="300" height="200" title="MEGA S4: New S3 compatible object storage. High scale. Low cost. Free egress." link="https://mega.io/objectstorage?utm_source=rclone&utm_medium=referral&utm_campaign=rclone-mega-s4&mct=rclonepromo">}}
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
 {{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}
@@ -32,6 +33,8 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/exchangerate-api.png" width="300" height="200" title="Visit our sponsor ExchangeRate-API" link="https://www.exchangerate-api.com/">}}
 {{< sponsor src="/img/logos/impossible-cloud.svg" width="300" height="200" title="Visit our sponsor Impossible Cloud" link="https://www.impossiblecloud.com/">}}
 {{< sponsor src="/img/logos/flyingcircus.svg" width="300" height="200" title="Visit our sponsor Flying Circus" link="https://flyingcircus.io/">}}
+{{< sponsor src="/img/logos/dosya.svg" width="300" height="200" title="dosya.dev: cloud storage in 46 regions. S3, WebDAV,rclone and SFTP. No egress fees." link="https://dosya.dev/developer/rclone/?utm_source=rclone.org&utm_medium=referral&utm_campaign=sponsor">}}
+{{< sponsor src="/img/logos/infomaniak-kdrive.svg" width="300" height="200" title="Visit our sponsor Infomaniak Kdrive" link="https://www.infomaniak.com/">}}
 
 <!-- markdownlint-restore -->
 

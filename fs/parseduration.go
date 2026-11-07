@@ -61,6 +61,9 @@ func parseDurationSuffixes(age string) (time.Duration, error) {
 			if err != nil {
 				return time.Duration(0), err
 			}
+			if math.IsNaN(period) {
+				return time.Duration(0), fmt.Errorf("duration %q is not a number", age)
+			}
 			period *= float64(ageSuffix.Multiplier)
 			if math.Abs(period) >= math.MaxInt64 {
 				return time.Duration(0), fmt.Errorf("duration %q is too long", age)

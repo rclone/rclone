@@ -19,6 +19,7 @@ func init() {
 		{"audio/mpeg", ".mpga,.mpega,.mp2,.mp3,.m4a"},
 		{"audio/ogg", ".oga,.ogg,.opus,.spx"},
 		{"audio/x-wav", ".wav"},
+		{"image/jxl", ".jxl"},
 		{"image/tiff", ".tiff,.tif"},
 		{"video/dv", ".dif,.dv"},
 		{"video/fli", ".fli"},

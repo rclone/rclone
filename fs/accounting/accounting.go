@@ -307,9 +307,10 @@ func (acc *Account) ServerSideTransferEnd(n int64) {
 
 // serverSideEnd accounts for non specific server-side data
 func (acc *Account) serverSideEnd(n int64) {
-	// Account for bytes unless we are checking
+	// Account for bytes unless we are checking. The transfer needs
+	// them as well as the stats or totalBytes counts them twice.
 	if !acc.checking {
-		acc.stats.BytesNoNetwork(n)
+		acc.accountReadNoNetwork(n)
 	}
 }
 

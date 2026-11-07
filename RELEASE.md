@@ -32,10 +32,14 @@ This file describes how to make the various kinds of releases
 - git commit -a -v -m "Version v1.XX.0"
 - make check # if this fails, fix, git commit --amend and run it again
 - make retag # moves the tag onto the Version commit
-- git push origin # without --follow-tags so it doesn't push the tag if it fails
+- git push origin # without --follow-tags so it doesn't push the tag yet
+- Wait for the GitHub actions build of master to complete and check it is
+  green - this is the first time CI sees any commits which were only local,
+  such as security fixes, so it must pass before the tag is pushed
+  - if it fails: fix, git commit, make retag, git push origin and wait again
 - git push --follow-tags origin
-- \# Wait for the GitHub builds to complete then...
-- \# Don't commit anything until after make upload_github as these steps
+- \# Wait for the GitHub builds of the tag to complete then...
+- \# Don't commit or push anything until after make upload_github as these steps
   use the tag on HEAD to find the version
 - make fetch_binaries
 - make tarball

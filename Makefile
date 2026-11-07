@@ -285,7 +285,7 @@ endif
 
 # Fetch the binary builds from GitHub actions
 fetch_binaries:
-	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
+	rclone -P sync --exclude "/testbuilds/**" --exclude "/index.{html,json}" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
 	cd docs && hugo server --logLevel info -w --disableFastRender --ignoreCache

@@ -45,6 +45,11 @@ func Start(ctx context.Context, opt *rc.Options) (*Server, error) {
 	return nil, nil
 }
 
+// maxUnauthenticatedBodySize is the largest POST body accepted when
+// the rc server has no authentication. It is kept small as decoding
+// JSON can use many times the size of its input in memory.
+const maxUnauthenticatedBodySize = 64 << 10
+
 // Server contains everything to run the rc server
 type Server struct {
 	ctx            context.Context // for global config
@@ -180,9 +185,35 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// bodyErrorStatus returns the HTTP status for an error reading the request body
+func bodyErrorStatus(err error) int {
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+		return http.StatusRequestEntityTooLarge
+	}
+	return http.StatusBadRequest
+}
+
 func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string) {
 	ctx := r.Context()
 	contentType := r.Header.Get("Content-Type")
+
+	// Find the call and check authorisation before reading the
+	// body so rejected requests can't make the server use memory
+	call := rc.Calls.Get(path)
+	if call == nil {
+		writeError(path, rc.Params{}, w, fmt.Errorf("couldn't find method %q", path), http.StatusNotFound)
+		return
+	}
+	if !s.noAuth && !call.NoAuth && !s.server.UsingAuth() {
+		writeError(path, rc.Params{}, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
+		return
+	}
+
+	// Without auth anyone who can connect may POST, so bound the
+	// memory a request can make the server use
+	if !s.noAuth && !s.server.UsingAuth() {
+		r.Body = http.MaxBytesReader(w, r.Body, maxUnauthenticatedBodySize)
+	}
 
 	var (
 		contentTypeMediaType string
@@ -202,7 +233,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		// Parse the POST and URL parameters into r.Form, for others r.Form will be empty value
 		err := r.ParseForm()
 		if err != nil {
-			writeError(path, nil, w, fmt.Errorf("failed to parse form/URL parameters: %w", err), http.StatusBadRequest)
+			writeError(path, nil, w, fmt.Errorf("failed to parse form/URL parameters: %w", err), bodyErrorStatus(err))
 			return
 		}
 		values = r.Form
@@ -226,7 +257,11 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 		err := json.NewDecoder(r.Body).Decode(&in)
 		if err != nil {
-			writeError(path, in, w, fmt.Errorf("failed to read input JSON: %w", err), http.StatusBadRequest)
+			status := bodyErrorStatus(err)
+			if status == http.StatusRequestEntityTooLarge {
+				in = nil // don't echo back the partial input
+			}
+			writeError(path, in, w, fmt.Errorf("failed to read input JSON: %w", err), status)
 			return
 		}
 	}
@@ -239,19 +274,6 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 			in["_async"] = true
 			break
 		}
-	}
-
-	// Find the call
-	call := rc.Calls.Get(path)
-	if call == nil {
-		writeError(path, in, w, fmt.Errorf("couldn't find method %q", path), http.StatusNotFound)
-		return
-	}
-
-	// Check to see if it requires authorisation
-	if !s.noAuth && !call.NoAuth && !s.server.UsingAuth() {
-		writeError(path, in, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
-		return
 	}
 
 	inOrig := in.Copy()

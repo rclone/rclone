@@ -101,11 +101,6 @@ Flags to control the Remote Control API
       --rc-template string                 User-specified template
       --rc-user string                     User name for authentication
       --rc-user-from-header string         User name from a defined HTTP header
-      --rc-web-fetch-url string            URL to fetch the releases for webgui (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
-      --rc-web-gui                         Launch WebGUI on localhost
-      --rc-web-gui-force-update            Force update to latest version of web gui
-      --rc-web-gui-no-open-browser         Don't open the browser automatically
-      --rc-web-gui-update                  Check and update to latest version of web gui
 ```
 
 ## See Also

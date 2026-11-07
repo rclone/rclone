@@ -126,6 +126,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
 
+`--allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
+
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -195,6 +202,13 @@ to be used within the template to server pages:
 | .Sort       |              | The current sort used. This is changeable via '?sort=' parameter. Possible values: namedirfirst, name, size, time (default namedirfirst). |
 | .Order      |              | The current ordering used. This is changeable via '?order=' parameter. Possible values: asc, desc (default asc). |
 | .Query      |              | Currently unused. |
+| .Path       |              | The path of the directory from the root with leading and trailing slashes, e.g. '/dir/'. |
+| .IsRoot     |              | Boolean for if this is the root directory. |
+| .UpLink     |              | The link to the parent directory. |
+| .Static     |              | Boolean for if the listing is being written as a static page by rclone index. |
+| .NumDirs    |              | The number of directories in the listing. |
+| .NumFiles   |              | The number of files in the listing. |
+| .TotalSize  |              | The total size in bytes of the files in the listing. |
 | .Breadcrumb |              | Allows for creating a relative navigation. |
 |             | .Link        | The link of the Text relative to the root. |
 |             | .Text        | The Name of the directory. |
@@ -204,6 +218,7 @@ to be used within the template to server pages:
 |             | .IsDir       | Boolean for if an entry is a directory or not. |
 |             | .Size        | Size in bytes of the entry. |
 |             | .ModTime     | The UTC timestamp of an entry. |
+|             | .MimeType    | The MIME type of an entry guessed from its name, or 'inode/directory'. |
 
 The server also makes the following functions available so that they can be used
 within the template. These functions help extend the options for dynamic
@@ -244,7 +259,19 @@ htpasswd -B htpasswd user
 htpasswd -B htpasswd anotherUser
 ```
 
+Use the same hash format and cost for every entry in the file. If the
+entries differ, the time taken to reject a wrong password can reveal
+which usernames exist.
+
 The password file can be updated while rclone is running.
+
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
 
 Use `--realm` to set the authentication realm.
 
@@ -313,7 +340,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -368,7 +395,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -522,7 +550,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -765,9 +793,10 @@ This config generated must have this extra parameter
 
 - `_root` - root to use for the backend
 
-And it may have this parameter
+And it may have these parameters
 
 - `_obscure` - comma separated strings for parameters to obscure
+- `_secret_access_key` - the secret for S3 access key auth (see below)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -775,7 +804,8 @@ process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 ```
 
@@ -785,9 +815,43 @@ proxy process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 ```
+
+If the client authenticated with an S3 access key (`rclone serve s3`),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the `user` with no `pass`
+or `public_key`:
+
+```json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+```
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the `_secret_access_key` field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+`_secret_access_key` or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
+
+The `client_ip` key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -814,11 +878,20 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
-An internal cache of backends is keyed on the `user` and a hash of the
-`pass` or `public_key`.  This means that if a user's password or
-public-key changes, or the proxy returns different config parameters
-(eg a rotated `api_key`), a fresh backend will be created on the next
-request rather than the cached one being reused.
+An internal cache of backends is keyed on the `user`, the kind of
+credential presented, a hash of the `pass` or `public_key`, and the
+`client_ip`.  This means that if a user's password or public-key
+changes, the client connects from a new IP address, or the proxy
+returns different config parameters (eg a rotated `api_key`), a fresh
+backend will be created on the next request rather than the cached one
+being reused.  A backend created for a public key login is never
+reused for a password login, so a public key cannot be sent as a
+password to skip the program.
+
+A cached answer is checked with the program again after 5 minutes even
+if the user is in constant use, so revoking a user in the program
+takes effect within 5 minutes. For `serve sftp` this applies to new
+logins - an existing connection is not closed.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
