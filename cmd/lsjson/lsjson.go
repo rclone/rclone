@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
@@ -23,6 +23,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
+	lshelp.AddOutputFileFlag(cmdFlags)
 	flags.BoolVarP(cmdFlags, &opt.Recurse, "recursive", "R", false, "Recurse into the listing", "")
 	flags.BoolVarP(cmdFlags, &opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer)", "")
 	flags.BoolVarP(cmdFlags, &opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up)", "")
@@ -142,49 +143,65 @@ can be processed line by line as each item is written on individual lines
 			fsrc = cmd.NewFsSrc(args)
 		}
 		cmd.Run(false, false, command, func() error {
-			if statOnly {
-				item, err := operations.StatJSON(context.Background(), fsrc, remote, &opt)
-				if err != nil {
-					return err
-				}
-				out, err := json.MarshalIndent(item, "", "\t")
-				if err != nil {
-					return fmt.Errorf("failed to marshal list object: %w", err)
-				}
-				_, err = os.Stdout.Write(out)
-				if err != nil {
-					return fmt.Errorf("failed to write to output: %w", err)
-				}
-				fmt.Println()
-			} else {
-				fmt.Println("[")
-				first := true
-				err := operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
-					out, err := json.Marshal(item)
-					if err != nil {
-						return fmt.Errorf("failed to marshal list object: %w", err)
-					}
-					if first {
-						first = false
-					} else {
-						fmt.Print(",\n")
-					}
-					_, err = os.Stdout.Write(out)
-					if err != nil {
-						return fmt.Errorf("failed to write to output: %w", err)
-					}
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-				if !first {
-					fmt.Println()
-				}
-				fmt.Println("]")
+			out, closeOut, err := lshelp.Output()
+			if err != nil {
+				return err
 			}
-			return nil
+			defer closeOut()
+			return lsJSON(context.Background(), fsrc, remote, out)
 		})
 		return nil
 	},
+}
+
+// lsJSON writes the listing of fsrc (or of the single file remote with
+// --stat) to w as JSON.
+func lsJSON(ctx context.Context, fsrc fs.Fs, remote string, w io.Writer) error {
+	write := func(b []byte) error {
+		if _, err := w.Write(b); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+		return nil
+	}
+	if statOnly {
+		item, err := operations.StatJSON(ctx, fsrc, remote, &opt)
+		if err != nil {
+			return err
+		}
+		out, err := json.MarshalIndent(item, "", "\t")
+		if err != nil {
+			return fmt.Errorf("failed to marshal list object: %w", err)
+		}
+		if err := write(out); err != nil {
+			return err
+		}
+		return write([]byte("\n"))
+	}
+	if err := write([]byte("[\n")); err != nil {
+		return err
+	}
+	first := true
+	err := operations.ListJSON(ctx, fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
+		out, err := json.Marshal(item)
+		if err != nil {
+			return fmt.Errorf("failed to marshal list object: %w", err)
+		}
+		if first {
+			first = false
+		} else {
+			if err := write([]byte(",\n")); err != nil {
+				return err
+			}
+		}
+		return write(out)
+	})
+	if err != nil {
+		return err
+	}
+	if !first {
+		if err := write([]byte("\n")); err != nil {
+			return err
+		}
+	}
+	return write([]byte("]\n"))
 }

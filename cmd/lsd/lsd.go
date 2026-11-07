@@ -3,7 +3,6 @@ package lsd
 
 import (
 	"context"
-	"os"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
@@ -20,6 +19,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
+	lshelp.AddOutputFileFlag(cmdFlags)
 	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing", "")
 }
 
@@ -63,7 +63,12 @@ If you just want the directory names use ` + "`rclone lsf --dirs-only`" + `.
 		}
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.ListDir(context.Background(), fsrc, os.Stdout)
+			out, closeOut, err := lshelp.Output()
+			if err != nil {
+				return err
+			}
+			defer closeOut()
+			return operations.ListDir(context.Background(), fsrc, out)
 		})
 	},
 }
