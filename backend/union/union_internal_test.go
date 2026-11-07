@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -78,6 +79,94 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// Check the lno and lus policies work with upstreams which don't
+// report their usage when usage_by_listing is set
+func TestUsageByListing(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	ctx := context.Background()
+
+	// :memory: doesn't support About so the usage must be found by listing
+	buckets := []string{"usagebylisting1", "usagebylisting2", "usagebylisting3"}
+	existing := []int{3, 1, 2}
+	for i, bucket := range buckets {
+		f, err := fs.NewFs(ctx, ":memory:"+bucket)
+		require.NoError(t, err)
+		for j := range existing[i] {
+			contents := random.String(100)
+			item := fstest.NewItem(fmt.Sprintf("existing/%d.txt", j), contents, time.Now())
+			_ = fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		}
+		t.Cleanup(func() {
+			_ = operations.Purge(ctx, f, "")
+		})
+	}
+	upstreams := ":memory:" + buckets[0] + " :memory:" + buckets[1] + " :memory:" + buckets[2]
+
+	newUnion := func(t *testing.T, policy string) *Fs {
+		fsString := fmt.Sprintf(":union,upstreams='%s',create_policy=%s,usage_by_listing=true:", upstreams, policy)
+		f, err := fs.NewFs(ctx, fsString)
+		require.NoError(t, err)
+		return f.(*Fs)
+	}
+	numObjects := func(t *testing.T, f *Fs) (n []int64) {
+		for _, u := range f.upstreams {
+			numObj, err := u.GetNumObjects()
+			require.NoError(t, err)
+			n = append(n, numObj)
+		}
+		return n
+	}
+
+	t.Run("lno", func(t *testing.T) {
+		f := newUnion(t, "lno")
+		assert.Equal(t, []int64{3, 1, 2}, numObjects(t, f))
+
+		// Putting 3 objects should even up the upstreams
+		var objs []fs.Object
+		for i := range 3 {
+			contents := random.String(10)
+			item := fstest.NewItem(fmt.Sprintf("new/%d.txt", i), contents, time.Now())
+			objs = append(objs, fstests.PutTestContents(ctx, t, f, &item, contents, true))
+		}
+		assert.Equal(t, []int64{3, 3, 3}, numObjects(t, f))
+
+		// Removing objects should be accounted
+		for _, o := range objs {
+			require.NoError(t, o.Remove(ctx))
+		}
+		assert.Equal(t, []int64{3, 1, 2}, numObjects(t, f))
+	})
+
+	t.Run("lus", func(t *testing.T) {
+		f := newUnion(t, "lus")
+		for i, u := range f.upstreams {
+			used, err := u.GetUsedSpace()
+			require.NoError(t, err)
+			assert.Equal(t, int64(existing[i]*100), used)
+		}
+
+		// The new object should go to the upstream with least used space
+		contents := random.String(1000)
+		item := fstest.NewItem("new/big.txt", contents, time.Now())
+		o := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		assert.Equal(t, f.upstreams[1], o.(*Object).UnWrapUpstream().UpstreamFs())
+		used, err := f.upstreams[1].GetUsedSpace()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1100), used)
+		require.NoError(t, o.Remove(ctx))
+	})
+
+	t.Run("Disabled", func(t *testing.T) {
+		fsString := fmt.Sprintf(":union,upstreams='%s',create_policy=lno:", upstreams)
+		f, err := fs.NewFs(ctx, fsString)
+		require.NoError(t, err)
+		_, err = f.(*Fs).upstreams[0].GetNumObjects()
+		assert.ErrorIs(t, err, upstream.ErrUsageFieldNotSupported)
+	})
+}
 
 // This specifically tests a union of local which can Move but not
 // Copy and :memory: which can Copy but not Move to makes sure that
