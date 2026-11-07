@@ -98,10 +98,11 @@ func init() {
 			Default:  maxUploadParts,
 			Advanced: true,
 		}, {
-			Name:     "token",
-			Help:     "JWT Token for performing Shade FS operations. Don't set this value - rclone will set it automatically",
-			Default:  "",
-			Advanced: true,
+			Name:      "token",
+			Help:      "JWT Token for performing Shade FS operations. Don't set this value - rclone will set it automatically",
+			Default:   "",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "token_expiry",
 			Help:     "JWT Token Expiration time. Don't set this value - rclone will set it automatically",
@@ -352,7 +353,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		resp, err := f.srv.Call(ctx, &opts)
 
 		if err != nil && resp != nil && resp.StatusCode == http.StatusBadRequest {
-			fs.Debugf(f, "Bad token from server: %v", token)
+			fs.Debugf(f, "Bad token from server: %s", fs.RedactValue(fs.GetConfig(ctx), token))
 		}
 
 		return shouldRetry(ctx, resp, err)
