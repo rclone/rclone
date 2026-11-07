@@ -72,6 +72,8 @@ const (
 	minSleep         = 100 * time.Millisecond
 	maxSleep         = 2 * time.Second
 	taskWaitTime     = 500 * time.Millisecond
+	taskMaxSleep     = 5 * time.Second
+	taskTimeout      = 5 * time.Minute
 	decayConstant    = 2 // bigger for slower decay, exponential
 	rootURL          = "https://api-drive.mypikpak.com"
 

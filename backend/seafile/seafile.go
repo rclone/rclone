@@ -215,7 +215,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:           *opt,
 		endpoint:      u,
 		endpointURL:   u.String(),
-		srv:           rest.NewClient(fshttp.NewClient(ctx)).SetRoot(u.String()),
+		srv:           rest.NewClient(newClient(ctx)).SetRoot(u.String()),
 		pacer:         getPacer(ctx, opt.URL),
 	}
 	f.features = (&fs.Features{
@@ -380,10 +380,10 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 		// Create rest client for getAuthorizationToken
 		url := u.String()
-		if !strings.HasPrefix(url, "/") {
+		if !strings.HasSuffix(url, "/") {
 			url += "/"
 		}
-		srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
+		srv := rest.NewClient(newClient(ctx)).SetRoot(url)
 
 		// We loop asking for a 2FA code
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -409,6 +409,17 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return nil, errors.New("2fa authentication failed")
 	}
 	return nil, fmt.Errorf("unknown state %q", config.State)
+}
+
+// newClient returns the HTTP client used to talk to the Seafile API.
+//
+// It refuses redirects which downgrade HTTPS to plaintext HTTP as
+// following one would send the authorization token, or the password
+// during configuration, in cleartext.
+func newClient(ctx context.Context) *http.Client {
+	client := fshttp.NewClient(ctx)
+	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
+	return client
 }
 
 // Shutdown the Fs

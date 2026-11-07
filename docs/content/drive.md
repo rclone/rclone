@@ -1131,7 +1131,7 @@ recommended usage is using the flag form --drive-size-as-quota when
 doing rclone ls/lsl/lsf/lsjson/etc only.
 
 If you do use this flag for syncing (not recommended) then you will
-need to use --ignore size also.
+need to use --ignore-size also.
 
 Properties:
 
@@ -1838,7 +1838,7 @@ The result is a JSON array of matches, for example:
         "webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
     }
 ]
-```
+```console
 
 ### rescue
 

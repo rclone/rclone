@@ -197,6 +197,45 @@ func TestContentDirectoryBrowseResponseOrder(t *testing.T) {
 	assert.Less(t, totalMatchesIdx, updateIDIdx, "TotalMatches should come before UpdateID")
 }
 
+// Check that a Browse with a negative StartingIndex or RequestedCount is
+// rejected with a UPnP error rather than crashing the handler.
+func TestContentDirectoryBrowseNegativeIndex(t *testing.T) {
+	for _, test := range []struct {
+		startingIndex  string
+		requestedCount string
+	}{
+		{"-1", "0"},
+		{"0", "-1"},
+	} {
+		t.Run(test.startingIndex+","+test.requestedCount, func(t *testing.T) {
+			req, err := http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+            s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <s:Body>
+        <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">
+            <ObjectID>0</ObjectID>
+            <BrowseFlag>BrowseDirectChildren</BrowseFlag>
+            <Filter>*</Filter>
+            <StartingIndex>`+test.startingIndex+`</StartingIndex>
+            <RequestedCount>`+test.requestedCount+`</RequestedCount>
+            <SortCriteria></SortCriteria>
+        </u:Browse>
+    </s:Body>
+</s:Envelope>`))
+			require.NoError(t, err)
+			req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+			assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			assert.Contains(t, string(body), "<errorCode>600</errorCode>")
+		})
+	}
+}
+
 // Check that the X_MS_MediaReceiverRegistrar is faked out properly.
 func TestMediaReceiverRegistrarService(t *testing.T) {
 	env := soap.Envelope{
