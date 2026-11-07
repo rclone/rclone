@@ -316,6 +316,25 @@ func TestConfigFileSave(t *testing.T) {
 	})
 }
 
+func TestConfigFileSaveDirectoryAtConfigPath(t *testing.T) {
+	// Save fails when a directory sits at the config path, leaving
+	// the directory untouched.
+	testDir := t.TempDir()
+	configPath := filepath.Join(testDir, "configfile")
+	require.NoError(t, os.Mkdir(configPath, 0o755))
+
+	assert.NoError(t, config.SetConfigPath(configPath))
+	data := &Storage{}
+	require.Error(t, data.Load()) // initializes the in-memory config
+
+	err := data.Save()
+	require.Error(t, err)
+
+	info, err := os.Stat(configPath)
+	require.NoError(t, err)
+	assert.True(t, info.IsDir(), "Save must not move or replace a directory at the config path")
+}
+
 func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		// Symlinks may require admin privileges on Windows and os.Symlink will then
