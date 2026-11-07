@@ -91,6 +91,25 @@ func (s *stream) eof() bool {
 	return s.readBytes >= s.size
 }
 
+// checkErr returns an error if the background stream has failed or finished
+// prematurely before providing the expected bytes.
+func (s *stream) checkErr() error {
+	select {
+	case err := <-s.err:
+		if err == nil || err == io.EOF {
+			if s.rw.Size() >= s.size {
+				s.err <- err
+				return nil
+			}
+			err = io.ErrUnexpectedEOF
+		}
+		s.err <- err // restore error for stream.close()
+		return err
+	default:
+		return nil
+	}
+}
+
 // read reads up to len(p) bytes into p. It returns the number of
 // bytes read (0 <= n <= len(p)) and any error encountered. If some
 // data is available but not len(p) bytes, read returns what is
@@ -115,6 +134,14 @@ func (s *stream) read(p []byte) (n int, err error) {
 		// Received a faux io.EOF because we haven't read all the data yet
 		if n >= len(p) {
 			break
+		}
+		// If more data has arrived in the buffer, loop to read it
+		if s.rw.Size() > s.readBytes {
+			continue
+		}
+		// Check if the background stream has errored or finished prematurely
+		if streamErr := s.checkErr(); streamErr != nil {
+			return n, streamErr
 		}
 		// Wait for a write to happen to read more
 		s.rw.WaitWrite(s.ctx)
@@ -265,7 +292,8 @@ func (cr *parallel) Read(p []byte) (n int, err error) {
 
 		// Read from the stream
 		stream := cr.streams[0]
-		nn, err := stream.read(p[n:])
+		var nn int
+		nn, err = stream.read(p[n:])
 		n += nn
 		cr.offset += int64(nn)
 		if err == io.EOF {
@@ -363,6 +391,9 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	fs.Debugf(cr.o, "parallel chunked reader: seek the current stream to %d", streamOffset)
 	// Wait for the read to the correct part of the data
 	for stream.rw.Size() < streamOffset {
+		if streamErr := stream.checkErr(); streamErr != nil {
+			return cr.offset, fmt.Errorf("parallel chunked reader: failed to seek stream: %w", streamErr)
+		}
 		stream.rw.WaitWrite(cr.ctx)
 	}
 	_, err := stream.rw.Seek(streamOffset, io.SeekStart)
