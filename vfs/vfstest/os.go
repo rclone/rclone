@@ -1,6 +1,8 @@
 package vfstest
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"time"
 
@@ -101,9 +103,21 @@ func (r realOs) ReadDir(dirname string) ([]os.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	return entriesInfo(entries)
+}
+
+// entriesInfo returns the FileInfo for each entry, skipping entries
+// which were removed between reading the directory and calling Info.
+//
+// libfuse removes .fuse_hidden files asynchronously, so a listing of a
+// FUSE mount can contain an entry which is gone by the time it is stat-ed.
+func entriesInfo(entries []os.DirEntry) ([]os.FileInfo, error) {
 	infos := make([]os.FileInfo, 0, len(entries))
 	for _, entry := range entries {
 		info, err := entry.Info()
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
