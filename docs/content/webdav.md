@@ -395,6 +395,38 @@ ownCloud did, but [this](https://github.com/nextcloud-snap/nextcloud-snap/issues
 seems to be fixed as of 2020-11-27 (tested with rclone v1.53.1 and Nextcloud
 Server v19).
 
+### Leviia Next and Siimply
+
+[Leviia Next](https://www.leviia.com/) and [Siimply by Leviia](https://www.siimply.cloud/)
+are French cloud storage services based on Nextcloud, so choose the
+`nextcloud` vendor.
+
+Use one of these URLs, replacing `USERNAME` with your Leviia username:
+
+- Leviia Next: `https://cloud.leviia.com/remote.php/dav/files/USERNAME/`
+- Siimply: `https://drive.siimply.cloud/remote.php/dav/files/USERNAME/`
+
+The exact URL is shown in the web interface under **Files settings**,
+in the **WebDAV** section.
+
+Sign-in to the web interface goes through single sign-on, so your account
+password can't be used by rclone. Create an app password under
+**Settings > Security** and use it as the password.
+
+The resulting configuration looks like this:
+
+```ini
+[leviia]
+type = webdav
+url = https://cloud.leviia.com/remote.php/dav/files/USERNAME/
+vendor = nextcloud
+user = USERNAME
+pass = *** ENCRYPTED ***
+```
+
+Leviia also offers S3 compatible object storage, see the
+[S3 documentation](/s3/#leviia).
+
 ### ownCloud Infinite Scale
 
 The WebDAV URL for Infinite Scale can be found in the details panel of
