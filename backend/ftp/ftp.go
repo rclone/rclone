@@ -134,6 +134,11 @@ So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "trust_pasv_ip",
+			Help:     "Trust the IP address in the server's PASV reply for the data connection. Only enable this for servers you trust, as the PASV IP is server-supplied; it is needed for servers whose PASV reply legitimately points at a different host than the control connection.",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -268,6 +273,7 @@ type Options struct {
 	DisableUTF8             bool                 `config:"disable_utf8"`
 	WritingMDTM             bool                 `config:"writing_mdtm"`
 	ForceListHidden         bool                 `config:"force_list_hidden"`
+	TrustPasvIP             bool                 `config:"trust_pasv_ip"`
 	IdleTimeout             fs.Duration          `config:"idle_timeout"`
 	CloseTimeout            fs.Duration          `config:"close_timeout"`
 	ShutTimeout             fs.Duration          `config:"shut_timeout"`
@@ -521,6 +527,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
+	}
+	if f.opt.TrustPasvIP {
+		ftpConfig = append(ftpConfig, ftp.DialWithTrustPasvIP(true))
 	}
 	if f.opt.DisableMLSD {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
