@@ -2,9 +2,9 @@ name: Leviia
 description: Leviia Object Storage
 region: {}
 endpoint:
-  s3.leviia.com: |-
-    The default endpoint
-    Leviia
+  s3.eu-west.leviia.com: Lyon, France
+  s3.eu-south.leviia.com: Marseille, France
+  s3.leviia.com: Legacy endpoint
 acl: {}
 bucket_acl: true
 quirks:
