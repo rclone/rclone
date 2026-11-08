@@ -912,12 +912,13 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 
 	// close commits the upload, failing with ErrInvalidPart and the
 	// upload left open if the streamed parts don't form the complete
-	// object, or with ErrSlowDown if acknowledged parts are still being
-	// written. Any other failure is of the commit, so the upload can't be
-	// retried and forgetUpload tears it down. (After a failed commit the
-	// abort it does is a no-op.)
-	if err := up.close(); err != nil {
-		if !errors.Is(err, gofakes3.ErrInvalidPart) && !errors.Is(err, gofakes3.ErrSlowDown) {
+	// object, with ErrSlowDown if acknowledged parts are still being
+	// written, or with the context's error if the request is cancelled
+	// while waiting for them. Any other failure is of the commit, so the
+	// upload can't be retried and forgetUpload tears it down. (After a
+	// failed commit the abort it does is a no-op.)
+	if err := up.close(ctx); err != nil {
+		if !errors.Is(err, gofakes3.ErrInvalidPart) && !errors.Is(err, gofakes3.ErrSlowDown) && err != ctx.Err() {
 			b.forgetUpload(uploadID, up)
 		}
 		return "", "", err
@@ -1141,12 +1142,13 @@ func (up *multipartUpload) validate(input *gofakes3.CompleteMultipartUploadReque
 //
 // Parts which were acknowledged but are still being written to the sink
 // are waited for. If that takes longer than multipartWaitTimeout,
-// gofakes3.ErrSlowDown is returned and the upload is left open.
+// gofakes3.ErrSlowDown is returned and the upload is left open. If ctx is
+// done first, ctx.Err() is returned and the upload is left open.
 //
 // Returns ErrNoSuchUpload if the upload was aborted by a concurrent
 // AbortMultipartUpload, in which case nothing has been committed - the
 // upload must not be reported as complete.
-func (up *multipartUpload) close() error {
+func (up *multipartUpload) close(ctx context.Context) error {
 	timer := time.NewTimer(multipartWaitTimeout)
 	defer timer.Stop()
 	up.mu.Lock()
@@ -1155,6 +1157,8 @@ func (up *multipartUpload) close() error {
 		up.mu.Unlock()
 		select {
 		case <-changed:
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-timer.C:
 			return gofakes3.ErrSlowDown
 		}

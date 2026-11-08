@@ -565,13 +565,13 @@ func TestMultipartCloseAfterAbort(t *testing.T) {
 	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 0)
 	up.fh = &stubSink{}
 	require.NoError(t, up.abort())
-	require.ErrorIs(t, up.close(), gofakes3.ErrNoSuchUpload)
+	require.ErrorIs(t, up.close(context.Background()), gofakes3.ErrNoSuchUpload)
 
 	// close stays idempotent after a successful close.
 	up = newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 0)
 	up.fh = &stubSink{}
-	require.NoError(t, up.close())
-	require.NoError(t, up.close())
+	require.NoError(t, up.close(context.Background()))
+	require.NoError(t, up.close(context.Background()))
 }
 
 // TestMultipartCloseIncomplete checks that close refuses to commit while a
@@ -593,7 +593,7 @@ func TestMultipartCloseIncomplete(t *testing.T) {
 	require.Equal(t, turnBuffer, turn)
 	require.NoError(t, up.bufferPart(context.Background(), 2, int64(len(contents)), md5Sum[:], rw))
 
-	require.ErrorIs(t, up.close(), gofakes3.ErrInvalidPart)
+	require.ErrorIs(t, up.close(context.Background()), gofakes3.ErrInvalidPart)
 	assert.False(t, sink.closed)
 
 	// The upload is still open so abort tears it down.
@@ -1705,7 +1705,7 @@ func TestMultipartCloseWaitsForPump(t *testing.T) {
 	part1Done := startPumpBehindRetry(t, b, bucket, object, uploadID, sink, part1, part2)
 
 	closed := make(chan error, 1)
-	go func() { closed <- up.close() }()
+	go func() { closed <- up.close(context.Background()) }()
 	select {
 	case err := <-closed:
 		t.Fatalf("close returned %v while part 2 was still being written", err)
@@ -1750,7 +1750,53 @@ func TestMultipartCompleteWaitingForPumpGivesUp(t *testing.T) {
 	require.NoError(t, <-part1Done)
 	_, err = b.loadUpload(ctx, uploadID)
 	require.NoError(t, err, "the upload was torn down instead of being kept for a retry")
-	require.NoError(t, up.close())
+	require.NoError(t, up.close(context.Background()))
+	assert.Equal(t, append(part1, part2...), sink.Bytes())
+}
+
+// TestMultipartCompleteWaitingForPumpCancelled checks that a completion
+// whose request is cancelled while acknowledged parts are being written
+// returns at once, rather than after multipartWaitTimeout, and keeps the
+// upload so the client can retry it.
+func TestMultipartCompleteWaitingForPumpCancelled(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "complete-cancelled.bin"
+	uploadID, _ := newBufferSinkUpload(t, b, bucket, object)
+	up, err := b.loadUpload(ctx, uploadID)
+	require.NoError(t, err)
+	part1 := []byte(random.String(1024))
+	part2 := []byte(random.String(1024))
+	sink := newGatedSink(len(part1))
+	up.fh = sink
+	part1Done := startPumpBehindRetry(t, b, bucket, object, uploadID, sink, part1, part2)
+	md5s := [][16]byte{md5.Sum(part1), md5.Sum(part2)}
+
+	completeCtx, cancel := context.WithCancel(ctx)
+	completed := make(chan error, 1)
+	go func() {
+		_, _, err := b.CompleteMultipartUpload(completeCtx, bucket, object, uploadID, &gofakes3.CompleteMultipartUploadRequest{
+			Parts: []gofakes3.CompletedPart{
+				{PartNumber: 1, ETag: hex.EncodeToString(md5s[0][:])},
+				{PartNumber: 2, ETag: hex.EncodeToString(md5s[1][:])},
+			},
+		})
+		completed <- err
+	}()
+	time.Sleep(50 * time.Millisecond)
+	cancel()
+	select {
+	case err := <-completed:
+		assert.ErrorIs(t, err, context.Canceled)
+	case <-time.After(5 * time.Second):
+		t.Fatal("the cancelled completion kept waiting for the pump")
+	}
+
+	close(sink.release)
+	require.NoError(t, <-part1Done)
+	_, err = b.loadUpload(ctx, uploadID)
+	require.NoError(t, err, "the upload was torn down instead of being kept for a retry")
+	require.NoError(t, up.close(ctx))
 	assert.Equal(t, append(part1, part2...), sink.Bytes())
 }
 
