@@ -55,6 +55,7 @@ type PhotosObject struct {
 	addedDate   int64
 	isFavorite  bool
 	isHidden    bool
+	sourcePhoto *api.Photo
 }
 
 // NewFsPhotos constructs an Fs for Photos from the path, container:path
@@ -337,6 +338,7 @@ func (f *PhotosFs) newPhotosObject(remote string, photo *api.Photo, zone string)
 		addedDate:   photo.AddedDate,
 		isFavorite:  photo.IsFavorite,
 		isHidden:    photo.IsHidden,
+		sourcePhoto: photo,
 	}
 }
 
@@ -485,6 +487,12 @@ func (o *PhotosObject) Metadata(ctx context.Context) (fs.Metadata, error) {
 	}
 	metadata["favorite"] = strconv.FormatBool(o.isFavorite)
 	metadata["hidden"] = strconv.FormatBool(o.isHidden)
+	if o.sourcePhoto != nil && o.sourcePhoto.AssetID != "" {
+		metadata["icloud-asset-id"] = o.sourcePhoto.AssetID
+		metadata["icloud-resource-key"] = o.sourcePhoto.ResourceKey
+		metadata["icloud-resource-id"] = o.sourcePhoto.ID
+		metadata["icloud-source-zone"] = o.sourcePhoto.SourceZone
+	}
 	return metadata, nil
 }
 
@@ -495,7 +503,12 @@ func (o *PhotosObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 		return nil, fmt.Errorf("failed to get photos service: %w", err)
 	}
 
-	downloadURL, err := photosService.LookupDownloadURL(ctx, o.masterID, o.zone, o.resourceKey)
+	var downloadURL string
+	if o.sourcePhoto != nil && o.sourcePhoto.SourceZone != "" {
+		downloadURL, err = photosService.LookupPhotoDownloadURL(ctx, o.sourcePhoto)
+	} else {
+		downloadURL, err = photosService.LookupDownloadURL(ctx, o.masterID, o.zone, o.resourceKey)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get download URL for %q: %w", o.remote, err)
 	}
