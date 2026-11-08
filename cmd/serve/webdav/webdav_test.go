@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/memory"
@@ -513,6 +514,35 @@ func TestMoveOverwriteFalseStillRejects(t *testing.T) {
 
 // TestNewWebDAVError checks that a server initialisation failure is
 // returned as an error rather than panicking in the cleanup.
+// TestPutModTimeETag checks that the ETag returned by a PUT with
+// X-OC-Mtime matches the one reported for the file afterwards.
+func TestPutModTimeETag(t *testing.T) {
+	testURL := startWritableServer(t)
+
+	req, err := http.NewRequest("PUT", testURL+"etag.txt", strings.NewReader("etag test body"))
+	require.NoError(t, err)
+	req.Header.Set("X-OC-Mtime", "1793436277")
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	putETag := resp.Header.Get("ETag")
+	require.NotEmpty(t, putETag)
+
+	req, err = http.NewRequest("PROPFIND", testURL+"etag.txt", nil)
+	require.NoError(t, err)
+	req.Header.Set("Depth", "0")
+	resp, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	body, err := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.NoError(t, err)
+	require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+
+	assert.Contains(t, string(body), "<D:getetag>"+putETag+"</D:getetag>")
+	assert.Contains(t, string(body), time.Unix(1793436277, 0).UTC().Format(http.TimeFormat))
+}
+
 func TestNewWebDAVError(t *testing.T) {
 	f, err := fs.NewFs(context.Background(), t.TempDir())
 	require.NoError(t, err)

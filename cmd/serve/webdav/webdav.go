@@ -354,10 +354,16 @@ func (w *WebDAV) auth(r *http.Request, user, pass string) (value any, err error)
 type webdavRW struct {
 	http.ResponseWriter
 	status int
+	// called once just before the status is written
+	beforeWriteHeader func(statusCode int)
 }
 
 func (rw *webdavRW) WriteHeader(statusCode int) {
 	rw.status = statusCode
+	if rw.beforeWriteHeader != nil {
+		rw.beforeWriteHeader(statusCode)
+		rw.beforeWriteHeader = nil
+	}
 	rw.ResponseWriter.WriteHeader(statusCode)
 }
 
@@ -366,7 +372,7 @@ func (rw *webdavRW) isSuccessfull() bool {
 }
 
 func (w *WebDAV) postprocess(r *http.Request, remote string) {
-	// set modtime from requests, don't write to client because status is already written
+	// set modtime from requests, don't write to client because the status may already be written
 	switch r.Method {
 	case "COPY", "MOVE", "PUT":
 		VFS, err := w.getVFS(r.Context())
@@ -433,11 +439,43 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// return absolute references.
 	r.URL.Path = w.opt.HTTP.BaseURL + r.URL.Path
 	wrw := &webdavRW{ResponseWriter: rw}
+	postprocessed := false
+	wrw.beforeWriteHeader = func(statusCode int) {
+		if statusCode < 200 || statusCode > 299 {
+			return
+		}
+		postprocessed = true
+		w.postprocess(r, remote)
+		// The ETag of a PUT response was computed before the
+		// modtime from X-OC-Mtime was applied, so recompute it.
+		if r.Method == "PUT" && r.Header.Get("X-OC-Mtime") != "" && rw.Header().Get("ETag") != "" {
+			w.updateETag(r.Context(), rw.Header(), remote)
+		}
+	}
 	w.webdavhandler.ServeHTTP(wrw, r)
 
-	if wrw.isSuccessfull() {
+	if !postprocessed && wrw.isSuccessfull() {
 		w.postprocess(r, remote)
 	}
+}
+
+// updateETag sets the ETag header from the current state of remote
+func (w *WebDAV) updateETag(ctx context.Context, header http.Header, remote string) {
+	fi, err := w.Stat(ctx, remote)
+	if err != nil {
+		fs.Errorf(remote, "Failed to stat for ETag: %v", err)
+		return
+	}
+	etag, err := fi.(FileInfo).ETag(ctx)
+	if err == webdav.ErrNotImplemented {
+		// Same as the default ETag of golang.org/x/net/webdav
+		etag, err = fmt.Sprintf(`"%x%x"`, fi.ModTime().UnixNano(), fi.Size()), nil
+	}
+	if err != nil {
+		fs.Errorf(remote, "Failed to read ETag: %v", err)
+		return
+	}
+	header.Set("ETag", etag)
 }
 
 // serveDir serves a directory index at dirRemote
