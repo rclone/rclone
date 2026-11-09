@@ -724,7 +724,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second
 }
 
 // Purge deletes all the files in the directory
@@ -1036,9 +1036,13 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ModTime returns the modification time of the object
 //
-// It attempts to read the objects mtime and if that isn't present the
-// LastModified returned in the http headers
+// It reads the modification time stored in MEGA's fingerprint node
+// attribute (the same attribute official MEGA clients use), if present;
+// otherwise it falls back to the node's creation/upload timestamp.
 func (o *Object) ModTime(ctx context.Context) time.Time {
+	if mt := o.info.GetModificationTime(); !mt.IsZero() {
+		return mt
+	}
 	return o.info.GetTimeStamp()
 }
 
@@ -1179,7 +1183,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if size < 0 {
 		return errors.New("mega backend can't upload a file of unknown length")
 	}
-	//modTime := src.ModTime(ctx)
+	modTime := src.ModTime(ctx)
 	remote := o.Remote()
 
 	// Create the parent directory
@@ -1196,6 +1200,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("upload file failed to create session: %w", err)
 	}
+	// Record the modification time to store alongside the file's
+	// fingerprint once the upload completes. The corresponding CRC32
+	// fingerprint words are computed incrementally from the chunk data
+	// as it is uploaded below (see Upload.UploadChunk in go-mega), so
+	// this works regardless of what kind of io.Reader src actually is.
+	u.SetModTime(modTime)
 
 	// Upload the chunks
 	// FIXME do this in parallel
