@@ -1974,6 +1974,9 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
 			headerFilename := path.Base(strings.ReplaceAll(params["filename"], "\\", "/"))
+			if headerFilename == "." || headerFilename == ".." || headerFilename == "/" {
+				return fmt.Errorf("CopyURL failed: invalid filename in the Content-Disposition header")
+			}
 			fs.DebugfCtx(ctx, headerFilename, "filename found in Content-Disposition header.")
 			return fn(ctx, headerFilename, resp.Body, resp.ContentLength, modTime)
 		}

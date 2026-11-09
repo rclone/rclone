@@ -992,6 +992,12 @@ func TestCopyURLHeaderFilename(t *testing.T) {
 		{"bareAdditionalParameter", `filename="extra.txt"; size=12`, "extra.txt"},
 		{"bareUnixPath", `filename="../../outside.txt"`, "outside.txt"},
 		{"bareWindowsPath", `filename="..\folder\outside.txt"`, "outside.txt"},
+		{"bareDot", `filename="."`, ""},
+		{"bareDotDot", `filename=".."`, ""},
+		{"bareRoot", `filename="/"`, ""},
+		{"bareParent", `filename="../"`, ""},
+		{"attachmentDot", `attachment; filename="."`, ""},
+		{"attachmentRoot", `attachment; filename="/"`, ""},
 		{"emptyHeader", "", ""},
 		{"emptyFilename", `filename=""`, ""},
 		{"missingFilename", `attachment`, ""},
@@ -1003,6 +1009,7 @@ func TestCopyURLHeaderFilename(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
 			r := fstest.NewRun(t)
+			r.Mkdir(ctx, r.Fremote)
 			contents := "synthetic download contents\n"
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				if test.header != "" {
@@ -1025,6 +1032,7 @@ func TestCopyURLHeaderFilename(t *testing.T) {
 			assert.Equal(t, test.want, obj.Remote())
 			in, err := obj.Open(ctx)
 			require.NoError(t, err)
+			defer in.Close()
 			actual, err := io.ReadAll(in)
 			require.NoError(t, err)
 			require.NoError(t, in.Close())
