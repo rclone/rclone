@@ -10,6 +10,14 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
+## Quota reporting
+
+Quota information is requested for the selected remote path. If a shared or
+external folder has a different quota from the account root, mount that folder
+directly, for example `rclone mount remote:shared-folder /path/to/mount`.
+A mount reports one filesystem-wide quota; it does not report separate quotas
+for folders within the mount.
+
 ## Configuration
 
 To configure the WebDAV remote you will need to have a URL for it, and
