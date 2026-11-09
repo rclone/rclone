@@ -9,7 +9,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/rclone/rclone/fs"
 	"io"
 	"maps"
 	"net/http"
@@ -20,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/stretchr/testify/assert"
