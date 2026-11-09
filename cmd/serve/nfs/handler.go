@@ -5,10 +5,13 @@ package nfs
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"path"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
@@ -141,14 +144,49 @@ func (o *Options) Limit() int {
 	return o.HandleLimit
 }
 
-// OnUnmountFunc registers a function to call when externally unmounted
-var OnUnmountFunc func()
+var (
+	unmountMu    sync.Mutex
+	unmountFuncs = map[*Server]func() bool{}
+)
 
+// OnUnmount registers fn to be called on every unmount request, as go-nfs
+// doesn't say which mount it is for. fn returns true once s's mount has gone.
+func (s *Server) OnUnmount(fn func() bool) {
+	unmountMu.Lock()
+	defer unmountMu.Unlock()
+	unmountFuncs[s] = fn
+}
+
+// onUnmount unregisters the servers whose mount has gone after an unmount request
 func onUnmount() {
 	fs.Infof(nil, "unmount detected")
-	if OnUnmountFunc != nil {
-		OnUnmountFunc()
+	// Stat on the mount hangs while go-nfs is still handling this request, so
+	// check in the background and retry as the client may still be unmounting
+	go func() {
+		for range 30 {
+			time.Sleep(100 * time.Millisecond)
+			if checkUnmounted() {
+				return
+			}
+		}
+	}()
+}
+
+// checkUnmounted unregisters the servers whose mount has gone and returns
+// whether there were any
+func checkUnmounted() (found bool) {
+	unmountMu.Lock()
+	funcs := maps.Clone(unmountFuncs)
+	unmountMu.Unlock()
+	for s, fn := range funcs {
+		if fn() {
+			unmountMu.Lock()
+			delete(unmountFuncs, s)
+			unmountMu.Unlock()
+			found = true
+		}
 	}
+	return found
 }
 
 // logger handles go-nfs logs and reroutes them to rclone's logging system
