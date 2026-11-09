@@ -216,6 +216,17 @@ Apple may require approval on a trusted device before those cookies are issued.
 
 ## Troubleshooting
 
+### iCloud terms and conditions need to be accepted
+
+If Apple has updated the iCloud terms and they have not been accepted yet,
+Apple issues only a partial web session. rclone then reports
+`iCloud terms and conditions need to be accepted`. Older versions failed later
+with `requestPCS(iclouddrive): HTTP error 500` and
+`Missing X-APPLE-WEBAUTH-TOKEN cookie`.
+
+Sign in at [icloud.com](https://www.icloud.com), accept the terms when
+prompted, then run `rclone reconnect remote:`.
+
 ### PCS cookie errors with ADP
 
 If you see `Missing PCS cookies from the request` or a `requestPCS:` error,
