@@ -342,43 +342,43 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 // checkServeRemote returns an error if fsName must not be instantiated on the
-// file-serving (--rc-serve) path given the current authentication state.
+// file-serving (--rc-serve) path.
 //
 // Instantiating a backend from request-supplied configuration can execute
-// commands during initialisation (e.g. webdav bearer_token_command, sftp ssh),
-// read arbitrary local files, or mutate process-wide config via global.*
-// options so shouldn't be done without authentication.
+// commands during initialisation (e.g. webdav bearer_token_command, sftp ssh)
+// or mutate process-wide config via global.* options. A web page can make a
+// browser send a GET, with any credentials the browser holds, without the
+// server being able to tell, so inline remotes and connection string
+// parameters are never allowed here.
+//
+// The exception is :local: without parameters which is the same as a bare
+// local path.
 //
 // authenticated must be true if the request has been authenticated (HTTP auth
 // is configured on the server) or --rc-no-auth was passed to explicitly opt in
-// to running without authentication.
+// to running without authentication. Local paths are only allowed if it is
+// set.
 func checkServeRemote(fsName string, authenticated bool) error {
 	parsed, err := fspath.Parse(fsName)
 	if err != nil {
 		return fmt.Errorf("invalid remote %q: %w", fsName, err)
 	}
 
-	// global.* connection string options mutate process-wide rclone config. Never honour these
-	// from a request-derived remote, even when the request is authenticated
+	// global.* connection string options mutate process-wide rclone config
 	for k := range parsed.Config {
 		if strings.HasPrefix(k, "global.") {
 			return fmt.Errorf("setting %q on a served remote is not allowed", k)
 		}
 	}
 
-	if authenticated {
-		return nil
-	}
-
-	// On an unauthenticated server only allow access to pre-configured named remotes. Reject
-	// inline backend definitions, connection string option overrides and bare local paths
+	isLocal := parsed.Name == "" || parsed.Name == ":local"
 	switch {
-	case parsed.Name == "":
-		return errors.New("serving local paths requires authentication to be set up on the rc server or the --rc-no-auth flag")
-	case strings.HasPrefix(parsed.Name, ":"):
-		return errors.New("serving inline remotes requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case strings.HasPrefix(parsed.Name, ":") && !isLocal:
+		return errors.New("serving inline remotes is not allowed - use a remote from the config file")
 	case len(parsed.Config) > 0:
-		return errors.New("serving remotes with connection string parameters requires authentication to be set up on the rc server or the --rc-no-auth flag")
+		return errors.New("serving remotes with connection string parameters is not allowed - use a remote from the config file")
+	case isLocal && !authenticated:
+		return errors.New("serving local paths requires authentication to be set up on the rc server or the --rc-no-auth flag")
 	}
 	return nil
 }
