@@ -428,6 +428,11 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 	// Move the item in the cache
 	c.mu.Lock()
 	if item, ok := c.item[name]; ok {
+		// The renamed item takes over newName's cache paths so
+		// mark any displaced item as stolen
+		if displaced := c.item[newName]; displaced != nil && displaced != item {
+			displaced.steal()
+		}
 		c.item[newName] = item
 		delete(c.item, name)
 	}
