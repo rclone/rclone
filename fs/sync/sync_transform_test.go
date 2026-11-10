@@ -252,6 +252,41 @@ func TestTransformCopy(t *testing.T) {
 	r.CheckRemoteItems(t, fstest.NewItem("sub dir_somesuffix/hello world_somesuffix.txt", "hello world", t1))
 }
 
+// --no-traverse must look up the transformed name in the destination,
+// otherwise --ignore-existing and the usual checks see no destination
+// file and overwrite it.
+func TestTransformCopyNoTraverse(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.NoTraverse = true
+	ci.IgnoreExisting = true
+
+	for _, test := range []struct {
+		opt     string
+		srcPath string
+		dstPath string
+	}{
+		{"prefix=mapped-", "sub dir/input.txt", "sub dir/mapped-input.txt"},
+		{"all,prefix=mapped-", "dir/input.txt", "mapped-dir/mapped-input.txt"},
+	} {
+		t.Run(test.opt, func(t *testing.T) {
+			r := newTransformRun(t)
+			err := transform.SetOptions(ctx, test.opt)
+			require.NoError(t, err)
+
+			file1 := r.WriteFile(test.srcPath, "NEW_CONTENT", t2)
+			file2 := r.WriteObject(ctx, test.dstPath, "ORIGINAL_CONTENT", t1)
+			r.CheckRemoteItems(t, file2)
+
+			err = CopyDir(ctx, r.Fremote, r.Flocal, false)
+			require.NoError(t, err)
+
+			r.CheckLocalItems(t, file1)
+			r.CheckRemoteItems(t, file2)
+		})
+	}
+}
+
 func TestDoubleTransform(t *testing.T) {
 	ctx := context.Background()
 	r := newTransformRun(t)
