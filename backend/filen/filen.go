@@ -34,6 +34,7 @@ func init() {
 		Name:        "filen",
 		Description: "Filen",
 		NewFs:       NewFs,
+		Config:      Config,
 		Options: []fs.Option{
 			{
 				Name:     "email",
@@ -51,11 +52,14 @@ func init() {
 				Name: "api_key",
 				Help: `API Key for your Filen account
 
-Get this using the Filen CLI export-api-key command
+Leave blank normally. Rclone fetches this when it logs in to your
+account and saves it in the config file.
+
+If you need to set it yourself, get it using the Filen CLI export-api-key command
 You can download the Filen CLI from https://github.com/FilenCloudDienste/filen-cli`,
-				Required:   true,
 				IsPassword: true,
 				Sensitive:  true,
+				Advanced:   true,
 			},
 			{
 				Name: "upload_concurrency",
@@ -105,6 +109,75 @@ this may help to speed up the transfers.`,
 	})
 }
 
+// internalPassword is the password which marks a config as holding
+// the account keys directly rather than deriving them from a password
+const internalPassword = "INTERNAL"
+
+// noTwoFactorCode is the code the Filen API expects from accounts
+// which don't have two-factor authentication enabled
+const noTwoFactorCode = "XXXXXX"
+
+// Config logs in to Filen and saves the API key in the config
+//
+// It does nothing if the config already has an API key or has no
+// email and password to log in with.
+func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
+	email, _ := m.Get("email")
+	password, err := revealOption(m, "password")
+	if err != nil {
+		return nil, err
+	}
+
+	switch configIn.State {
+	case "":
+		apiKey, err := revealOption(m, "api_key")
+		if err != nil {
+			return nil, err
+		}
+		if apiKey != "" || email == "" || password == "" || password == internalPassword {
+			return nil, nil
+		}
+		return fs.ConfigInputOptional("login", "config_2fa", `Two-factor authentication code
+
+Leave blank if two-factor authentication is not enabled on your account.`)
+	case "login":
+		_, err := login(ctx, email, password, configIn.Result, m)
+		return nil, err
+	}
+	return nil, fmt.Errorf("unknown state %q", configIn.State)
+}
+
+// revealOption returns the unobscured value of the config option key
+//
+// It returns "" if the option is unset.
+func revealOption(m configmap.Getter, key string) (string, error) {
+	value, _ := m.Get(key)
+	if value == "" {
+		return "", nil
+	}
+	value, err := obscure.Reveal(value)
+	if err != nil {
+		return "", fmt.Errorf("failed to reveal %s: %w", key, err)
+	}
+	return value, nil
+}
+
+// login logs in to Filen and saves the API key in m
+//
+// twoFactorCode should be empty for accounts which don't have
+// two-factor authentication enabled.
+func login(ctx context.Context, email, password, twoFactorCode string, m configmap.Mapper) (*sdk.Filen, error) {
+	if twoFactorCode == "" {
+		twoFactorCode = noTwoFactorCode
+	}
+	filen, err := sdk.New(ctx, email, password, twoFactorCode)
+	if err != nil {
+		return nil, fmt.Errorf("login failed: %w", err)
+	}
+	m.Set("api_key", obscure.MustObscure(filen.Client.APIKey))
+	return filen, nil
+}
+
 // NewFs constructs a Fs at the path root
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
@@ -118,13 +191,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to reveal password: %w", err)
 	}
-	apiKey, err := obscure.Reveal(opt.APIKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to reveal api key: %w", err)
+	apiKey := opt.APIKey
+	if apiKey != "" {
+		apiKey, err = obscure.Reveal(apiKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reveal api key: %w", err)
+		}
 	}
 
 	var filen *sdk.Filen
-	if password == "INTERNAL" {
+	if password == internalPassword {
 		tsconfig := sdk.TSConfig{
 			Email:          opt.Email,
 			MasterKeys:     strings.Split(opt.MasterKeys, "|"),
@@ -137,6 +213,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		filen, err = sdk.NewFromTSConfig(tsconfig)
 		if err != nil {
 			return nil, err
+		}
+	} else if apiKey == "" {
+		// Logins are rate limited so save the API key to avoid
+		// logging in again on the next run.
+		filen, err = login(ctx, opt.Email, password, "", m)
+		if err != nil {
+			return nil, fmt.Errorf("%w - if two-factor authentication is enabled run \"rclone config reconnect %s:\"", err, name)
 		}
 	} else {
 		filen, err = sdk.NewWithAPIKey(ctx, opt.Email, password, apiKey)

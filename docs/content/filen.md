@@ -6,11 +6,19 @@ versionIntroduced: "1.73"
 
 # Filen
 ## Configuration
-The initial setup for Filen requires that you get an API key for your account,
-currently this is only possible using the [Filen CLI](https://github.com/FilenCloudDienste/filen-cli).
-This means you must first download the CLI, login, and then run the `export-api-key` command.
+The initial setup for Filen logs in to your account with your email, password
+and, if enabled, a two-factor authentication code. Rclone saves the API key
+it receives in the config file so it only needs to log in once.
 
-**Note:** If you change your Filen account password, you will need to update your rclone configuration with the new password and a re-exported API key (via `export-api-key`).
+If two-factor authentication is not enabled on your account, rclone can also
+log in by itself the first time a remote without an `api_key` is used. This
+needs a config file to save the API key in, so if you configure the remote
+only with environment variables or a connection string, set `api_key` too
+(you can get it with the `export-api-key` command of the
+[Filen CLI](https://github.com/FilenCloudDienste/filen-cli)), otherwise rclone
+will log in on every run and may be rate limited.
+
+**Note:** If you change your Filen account password, you will need to update your rclone configuration with the new password, then remove the saved API key with `rclone config unset remote api_key` and log in again with `rclone config reconnect remote:`.
 
 Here is an example of how to make a remote called `FilenRemote`.  First run:
 
@@ -51,23 +59,16 @@ password:
 Confirm the password:
 password:
 
-Option API Key.
-An API Key for your Filen account
-Get this using the Filen CLI export-api-key command
-You can download the Filen CLI from https://github.com/FilenCloudDienste/filen-cli
-Choose an alternative below.
-y) Yes, type in my own password
-g) Generate random password
-y/g> y
-Enter the password:
-password:
-Confirm the password:
-password:
-
 Edit advanced config?
 y) Yes
 n) No (default)
 y/n> n
+
+Option config_2fa.
+Two-factor authentication code
+Leave blank if two-factor authentication is not enabled on your account.
+Enter a value. Press Enter to leave empty.
+config_2fa> 123456
 
 Configuration complete.
 Options:
