@@ -46,6 +46,41 @@ func TestAccountLoginDomainRedirect(t *testing.T) {
 	assert.Empty(t, s.AccountInfo.Webservices)
 }
 
+func TestValidateCodeCanChangeDomain(t *testing.T) {
+	for _, tc := range []struct {
+		name, validationPath string
+		validate             func(*Session) error
+	}{
+		{"trusted device", "/appleauth/auth/verify/trusteddevice/securitycode", func(s *Session) error {
+			return s.Validate2FACode(context.Background(), "000000")
+		}},
+		{"SMS", "/appleauth/auth/verify/phone/securitycode", func(s *Session) error {
+			return s.ValidateSMSCode(context.Background(), "000000", 1, "sms")
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var paths []string
+			s := NewSession()
+			s.srv = rest.NewClient(&http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				paths = append(paths, req.URL.Path)
+				status, body := http.StatusOK, ""
+				if req.URL.Path == "/setup/ws/1/accountLogin" {
+					status, body = http.StatusFound, `{"domainToUse":"iCloud.com.cn"}`
+				}
+				return &http.Response{
+					StatusCode: status,
+					Header:     http.Header{"Content-Type": {"application/json"}},
+					Body:       io.NopCloser(strings.NewReader(body)),
+					Request:    req,
+				}, nil
+			})})
+			require.ErrorIs(t, tc.validate(s), ErrDomainChanged)
+			assert.Equal(t, []string{tc.validationPath, "/appleauth/auth/2sv/trust", "/setup/ws/1/accountLogin"}, paths)
+			assert.Equal(t, "iCloud.com.cn", s.DomainToUse)
+		})
+	}
+}
+
 func TestSessionEndpoints(t *testing.T) {
 	s := NewSession()
 	assert.Equal(t, endpoints{baseEndpoint, setupEndpoint, authEndpoint}, s.endpoints())

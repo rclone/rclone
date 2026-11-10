@@ -182,11 +182,17 @@ func finishConfigAuthentication(ctx context.Context, name string, m configmap.Ma
 		if err == nil && authState.NoTrustedDevices && len(authState.TrustedPhoneNumbers) > 0 {
 			return triggerSMSFlow(ctx, icloud, authState.TrustedPhoneNumbers, m)
 		}
+		// Explicitly request push to trusted devices - required for iOS 26.4+
+		// where the SRP 409 no longer auto-pushes. GET /appleauth/auth above
+		// may also trigger a push (cosmetic double on pre-26.4, harmless)
 		if err := icloud.Session.RequestPushNotification(ctx); err != nil {
 			fs.Debugf(nil, "iclouddrive: push notification request failed (SMS fallback available): %v", err)
 		} else {
 			fs.Debugf(nil, "iclouddrive: push notification requested to trusted devices")
 		}
+		// Save session state so 2fa_do can validate without re-authenticating
+		// Push codes are account-scoped so session reuse is not strictly required,
+		// but it avoids a redundant SRP roundtrip and a second push on pre-26.4
 		saveAuthSession(m, icloud.Session, nil)
 		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
 	}
