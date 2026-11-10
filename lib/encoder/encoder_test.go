@@ -469,3 +469,21 @@ func restoreReservedChars(in string) string {
 		return c
 	}, in)
 }
+
+func TestFromStandardPathDot(t *testing.T) {
+	for _, tc := range []struct {
+		in, out string
+	}{
+		{".", "."},
+		{"..", ".."},
+		{"./dir", "./dir"},
+		{"dir/..", "dir/.."},
+		{"a/./b/../c", "a/./b/../c"},
+		{"./a\x00b/..", "./a␀b/.."},
+	} {
+		got := FromStandardPath(Base, tc.in)
+		if got != tc.out {
+			t.Errorf("FromStandardPath(%q) want %q got %q", tc.in, tc.out, got)
+		}
+	}
+}

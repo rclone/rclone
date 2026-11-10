@@ -1234,6 +1234,12 @@ func FromStandardPath(e Encoder, s string) string {
 	encoded := make([]string, len(parts))
 	changed := false
 	for i, p := range parts {
+		// "." and ".." are path navigation, not names, so
+		// leave them untouched rather than encoding them
+		if p == "." || p == ".." {
+			encoded[i] = p
+			continue
+		}
 		enc := FromStandardName(e, p)
 		changed = changed || enc != p
 		encoded[i] = enc
