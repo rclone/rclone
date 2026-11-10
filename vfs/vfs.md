@@ -85,6 +85,7 @@ find that you need one or the other or both.
     --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
     --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
     --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-max-files int              Max total number of objects in the cache
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
@@ -105,15 +106,23 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
-that the cache may exceed these quotas for two reasons. Firstly
-because it is only checked every `--vfs-cache-poll-interval`. Secondly
-because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
+If using `--vfs-cache-max-size`, `--vfs-cache-max-files` or
+`--vfs-cache-min-free-space` note that the cache may exceed these
+quotas for two reasons. Firstly because it is only checked every
+`--vfs-cache-poll-interval`. Secondly because open files cannot be
+evicted from the cache. When `--vfs-cache-max-size`,
+`--vfs-cache-max-files` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
+
+Use `--vfs-cache-max-files` when the cache holds a very large number
+of files. rclone reads the metadata of every file in the cache when it
+starts and checks all of them every `--vfs-cache-poll-interval`, so
+with millions of files rclone is slow to start and can pause while the
+cache is cleaned. The limit is applied once the cache has been read,
+so the first start with a cache over the limit is still slow.
 
 The `--vfs-cache-max-age` will evict files from the cache
 after the set time since last access has passed; it is based on access time,

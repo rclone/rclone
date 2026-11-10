@@ -451,6 +451,28 @@ func TestCachePurgeMinFreeSpace(t *testing.T) {
 	assert.False(t, c.quotasOK())
 }
 
+func TestCachePurgeMaxFiles(t *testing.T) {
+	_, c := newTestCache(t)
+
+	potato := c.Item("potato")
+	itemWrite(t, potato, "hello")
+	require.NoError(t, potato.Close(nil))
+	potato2 := c.Item("potato2")
+	itemWrite(t, potato2, "hello2")
+	require.NoError(t, potato2.Close(nil))
+
+	c.opt.CacheMaxFiles = 2
+	assert.True(t, c.quotasOK())
+	c.opt.CacheMaxFiles = 1
+	assert.False(t, c.quotasOK())
+
+	// make potato2 definitely after potato so potato is evicted
+	potato2.info.ATime = time.Now().Add(10 * time.Second)
+	c.purgeOverQuota()
+
+	assert.Equal(t, []string{`name="potato2" opens=0 size=6`}, itemAsString(c))
+}
+
 // test reset clean files
 func TestCachePurgeClean(t *testing.T) {
 	r, c := newItemTestCache(t)
