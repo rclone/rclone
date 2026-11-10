@@ -96,9 +96,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return false, fmt.Errorf("failed to create download request: %w", err)
 		}
 
+		if count > 0 && (offset > 0 || count < o.size) {
+			end := offset + count - 1
+			if end > o.size-1 {
+				end = o.size - 1
+			}
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, end))
+		}
+
 		resp, err := o.fs.client.Do(req)
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to download file: %w", err)
+		}
+
+		// A 206 body is already the requested range; a 200 is handled below by skipping
+		if resp.StatusCode == http.StatusPartialContent {
+			reader = resp.Body
+			return false, nil
 		}
 
 		if resp.StatusCode != http.StatusOK {
