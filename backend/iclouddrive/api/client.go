@@ -65,6 +65,7 @@ func New(appleID, password, trustToken string, clientID string, cookies []*http.
 	icloud.Session.TrustToken = trustToken
 	icloud.Session.Cookies = cookies
 	icloud.Session.ClientID = clientID
+	icloud.Session.password = password
 	return icloud, nil
 }
 
