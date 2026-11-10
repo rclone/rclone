@@ -664,6 +664,53 @@ func TestRWFileTruncateShrinkUncached(t *testing.T) {
 	}
 }
 
+// Truncating a file by path (what a mount does for truncate(2) with
+// no open handle) must work while the file is in the cache waiting to
+// be uploaded.
+func TestRWFileTruncatePendingUpload(t *testing.T) {
+	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
+		for _, test := range []struct {
+			name     string
+			size     int64
+			contents string
+		}{
+			{"truncate to zero", 0, ""},
+			{"truncate shorter", 3, "hel"},
+		} {
+			t.Run(cacheMode.String()+"/"+test.name, func(t *testing.T) {
+				opt := vfscommon.Opt
+				opt.CacheMode = cacheMode
+				opt.WriteBack = fs.Duration(time.Second)
+				r, vfs := newTestVFSOpt(t, &opt)
+
+				fh, err := vfs.Create("file1")
+				require.NoError(t, err)
+				_, err = fh.WriteString("hello")
+				require.NoError(t, err)
+				require.NoError(t, fh.Close())
+
+				node, err := vfs.Stat("file1")
+				require.NoError(t, err)
+				file := node.(*File)
+				require.Nil(t, file.getObject(), "file uploaded too quickly to test")
+
+				require.NoError(t, file.Truncate(test.size))
+
+				vfs.WaitForWriters(waitForWritersDelay)
+
+				obj, err := r.Fremote.NewObject(context.Background(), "file1")
+				require.NoError(t, err)
+				rc, err := obj.Open(context.Background())
+				require.NoError(t, err)
+				contents, err := io.ReadAll(rc)
+				require.NoError(t, err)
+				require.NoError(t, rc.Close())
+				assert.Equal(t, test.contents, string(contents))
+			})
+		}
+	}
+}
+
 func TestRWFileHandleOpenTests(t *testing.T) {
 	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
 		t.Run(cacheMode.String(), func(t *testing.T) {

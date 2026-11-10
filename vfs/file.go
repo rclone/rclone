@@ -951,14 +951,34 @@ func (f *File) Truncate(size int64) (err error) {
 		}
 	}
 
-	// if o is nil it isn't valid yet
-	o, err := f.waitForValidObject()
-	if err != nil {
-		return err
+	// Find the current size of the file.
+	//
+	// If the file has a dirty entry in the cache then use the size
+	// from that as it may not have been uploaded yet. Otherwise if
+	// o is nil it isn't valid yet so wait for it.
+	var currentSize int64
+	sizeOK := false
+	f.mu.RLock()
+	cache := f.d.vfs.cache
+	f.mu.RUnlock()
+	if cache != nil {
+		if item := cache.DirtyItem(f.CachePath()); item != nil {
+			var err error
+			currentSize, err = item.GetSize()
+			sizeOK = err == nil
+		}
+	}
+	if !sizeOK {
+		// if o is nil it isn't valid yet
+		o, err := f.waitForValidObject()
+		if err != nil {
+			return err
+		}
+		currentSize = o.Size()
 	}
 
 	// If no writers, and size is already correct then all done
-	if o.Size() == size {
+	if currentSize == size {
 		return nil
 	}
 
