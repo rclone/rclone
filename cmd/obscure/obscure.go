@@ -40,6 +40,9 @@ echo 'secretpassword' | rclone obscure -
 If there is no data on STDIN to read, rclone obscure will default to
 obfuscating the hyphen itself.
 
+If |--plaintext-passwords| flag is set, no obscuring will be done,
+and your password will be outputted in plaintext.
+
 If you want to encrypt the config file then please use config file
 encryption - see [rclone config](/commands/rclone_config/) for more
 info.`,
