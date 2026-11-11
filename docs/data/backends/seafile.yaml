@@ -25,4 +25,4 @@ features:
 - Shutdown
 - UserInfo
 hashes: []
-precision: 3153600000000000000
+precision: 1000000000
