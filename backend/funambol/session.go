@@ -1,6 +1,7 @@
 package funambol
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -19,7 +20,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -127,7 +127,28 @@ func replyError(resp *http.Response, body []byte) error {
 	if len(body) > maxErrorBody {
 		body = append(body[:maxErrorBody:maxErrorBody], "..."...)
 	}
+	if looksLikeHTML(body) {
+		fs.Debugf(nil, "HTTP error %v returned HTML page: %q", resp.Status, body)
+		return &htmlPageError{resp.StatusCode, fmt.Sprintf("HTTP error %v (%v) returned an HTML page from %q (use -vv to see it)",
+			resp.StatusCode, resp.Status, resp.Header.Get("Server"))}
+	}
 	return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
+}
+
+// htmlPageError is a failed reply that was an HTML page rather than a SAPI
+// envelope, as the CDN in front of the service sends when it refuses a request.
+type htmlPageError struct {
+	status int
+	msg    string
+}
+
+// Error implements error
+func (e *htmlPageError) Error() string { return e.msg }
+
+// looksLikeHTML reports whether body starts like an HTML document.
+func looksLikeHTML(body []byte) bool {
+	head := strings.ToLower(string(bytes.TrimSpace(body[:min(len(body), 64)])))
+	return strings.HasPrefix(head, "<!doctype html") || strings.HasPrefix(head, "<html")
 }
 
 // loginHeaders are the extra headers the web client sends on the login/OTP
@@ -423,7 +444,10 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = browserUA
 
-	client := fshttp.NewClient(ctx)
+	client, err := newSAPIClient(ctx, opt.Endpoint)
+	if err != nil {
+		return nil, err
+	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
@@ -462,6 +486,9 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 		// Without a password, log in by SMS via Telefónica (O2 Spain),
 		// with OAuth when application credentials are available.
 		if f.opt.Pass == "" {
+			if f.opt.usesOAuth() && f.opt.isMovistar() {
+				return f.configBrowser()
+			}
 			p, err := f.smsSend(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("login failed: %w", err)
@@ -528,6 +555,22 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 		m.Set(configTmpSMS, "")
 		if err != nil {
 			return fs.ConfigError("", fmt.Sprintf("login failed: %v - sending a new code", err))
+		}
+		f.persistSession()
+		return nil, nil
+	case "browser":
+		raw, _ := m.Get(configTmpSMS)
+		m.Set(configTmpSMS, "")
+		var p smsPending
+		if err := json.Unmarshal([]byte(raw), &p); err != nil || p.Verifier == "" {
+			return fs.ConfigError("", "login state lost - starting again")
+		}
+		u, err := url.Parse(strings.TrimSpace(configIn.Result))
+		if err != nil || !f.isOAuthCallback(u) {
+			return fs.ConfigError("", fmt.Sprintf("that is not the address of %s - starting again", clientOAuthPath))
+		}
+		if err := f.oauthFinish(ctx, &p, u.String()); err != nil {
+			return fs.ConfigError("", fmt.Sprintf("login failed: %v - starting again", err))
 		}
 		f.persistSession()
 		return nil, nil

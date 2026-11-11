@@ -148,14 +148,18 @@ func newFileOpsFixture(t *testing.T) *fileOpsFixture {
 			s.items[item.ID.String()] = item
 			reply(w, map[string]any{"data": map[string]any{"id": item.ID, "name": item.Name, "success": "Media copied successfully"}})
 		},
-		"/sapi/upload/file": func(w http.ResponseWriter, r *http.Request) {
+		"/sapi/upload/": func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "save-metadata", r.URL.Query().Get("action"))
 			assert.Contains(t, r.Header.Get("Content-Type"), "application/x-www-form-urlencoded")
 			d := decode(r)
 			assert.IsType(t, "", d["id"])
 			assert.IsType(t, float64(0), d["folderid"])
 			assert.Equal(t, "20261018T123456Z", d["modificationdate"])
-			s.requests = append(s.requests, "move")
+			request := "move"
+			if mediaType := strings.TrimPrefix(r.URL.Path, "/sapi/upload/"); mediaType != "file" {
+				request += ":" + mediaType
+			}
+			s.requests = append(s.requests, request)
 			if fail(w) {
 				return
 			}
@@ -251,6 +255,40 @@ func TestFileMoveExtensionFallback(t *testing.T) {
 	assert.Equal(t, "30", dst.(*Object).id)
 	assert.Equal(t, []string{"copy"}, s.requests)
 	assert.Equal(t, []string{"10"}, s.deleted)
+}
+
+// Pictures, videos and audio are moved through their own metadata endpoint,
+// but only generic files can be copied.
+func TestFileMoveMediaTypes(t *testing.T) {
+	for _, mediaType := range []string{"picture", "video", "audio"} {
+		t.Run(mediaType, func(t *testing.T) {
+			s := newFileOpsFixture(t)
+			item := s.items["10"]
+			item.MediaType, item.Status = mediaType, ""
+			s.items["10"] = item
+			dst, err := s.f.Move(context.Background(), s.source(t), "dest/moved.bin")
+			require.NoError(t, err)
+			assert.Equal(t, "10", dst.(*Object).id)
+			assert.Equal(t, []string{"move:" + mediaType}, s.requests)
+			assert.Empty(t, s.deleted)
+
+			// The moved item, not the source, is listed straight away.
+			entries, err := s.f.List(context.Background(), "dest")
+			require.NoError(t, err)
+			require.Len(t, entries, 1)
+			assert.Equal(t, "dest/moved.bin", entries[0].Remote())
+
+			_, err = s.f.Copy(context.Background(), s.source(t), "dest/copy.bin")
+			assert.ErrorIs(t, err, fs.ErrorCantCopy)
+		})
+	}
+	s := newFileOpsFixture(t)
+	item := s.items["10"]
+	item.MediaType = "unknown"
+	s.items["10"] = item
+	_, err := s.f.Move(context.Background(), s.source(t), "dest/moved.bin")
+	assert.ErrorIs(t, err, fs.ErrorCantMove)
+	assert.Empty(t, s.requests)
 }
 
 func TestFileMoveExtensionFreeChunk(t *testing.T) {

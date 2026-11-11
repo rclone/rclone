@@ -234,6 +234,59 @@ func TestConfigOAuthWithBundledCredentials(t *testing.T) {
 	assert.Equal(t, "rt-renewed", refresh)
 }
 
+// Movistar's login runs in a browser: config shows the authorization URL and
+// takes the callback URL the browser ends on.
+func TestConfigOAuthBrowser(t *testing.T) {
+	s := newOAuthServer(t)
+	oldEndpoint, oldAuth, oldToken := movistarEndpoint, movistarAuthURL, movistarTokenURL
+	movistarEndpoint, movistarAuthURL, movistarTokenURL = s.srv.URL, s.srv.URL+"/authorize", s.srv.URL+"/token"
+	o2AuthURL, o2TokenURL = s.srv.URL+"/o2-unused", s.srv.URL+"/o2-unused"
+	t.Cleanup(func() { movistarEndpoint, movistarAuthURL, movistarTokenURL = oldEndpoint, oldAuth, oldToken })
+	m := s.config(t, "")
+	ctx := context.Background()
+
+	// login asks for the callback URL and returns the authorization URL it showed.
+	login := func() string {
+		out, err := Config(ctx, "test", m, fs.ConfigIn{})
+		require.NoError(t, err)
+		require.NotNil(t, out)
+		require.Equal(t, "browser", out.State)
+		for _, line := range strings.Split(out.Option.Help, "\n") {
+			if strings.HasPrefix(line, movistarAuthURL+"?") {
+				return line
+			}
+		}
+		t.Fatalf("no authorization URL in %q", out.Option.Help)
+		return ""
+	}
+	// browse logs in at authURL like a browser and returns the callback URL.
+	browse := func(authURL string) string {
+		client := http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+		resp, err := client.Get(authURL)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		return s.srv.URL + clientOAuthPath + "?code=" + oauthCode + "&state=" + s.state
+	}
+
+	// Anything but the callback URL starts again.
+	browse(login())
+	out, err := Config(ctx, "test", m, fs.ConfigIn{State: "browser", Result: "https://example.com" + clientOAuthPath + "?code=x"})
+	require.NoError(t, err)
+	assert.Equal(t, "", out.State)
+	assert.NotEmpty(t, out.Error)
+	assert.Empty(t, m[configTmpSMS])
+
+	callback := browse(login())
+	out, err = Config(ctx, "test", m, fs.ConfigIn{State: "browser", Result: " " + callback + " "})
+	require.NoError(t, err)
+	require.Nil(t, out)
+	access, refresh := savedToken(t, m)
+	assert.Equal(t, "at1r", access)
+	assert.Equal(t, "rt-renewed", refresh)
+	assert.Empty(t, m[configTmpSMS])
+	assert.Equal(t, int32(1), s.logins.Load())
+}
+
 // An expired session is created again from the token, without a new code.
 func TestOAuthReloginOnExpiredSession(t *testing.T) {
 	s := newOAuthServer(t)

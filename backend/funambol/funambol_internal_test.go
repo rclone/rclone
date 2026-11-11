@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -369,4 +371,216 @@ func TestRedactKey(t *testing.T) {
 	assert.Contains(t, err.Error(), "action=save")
 	assert.Contains(t, err.Error(), "validationkey=REDACTED")
 	assert.ErrorIs(t, err, context.Canceled)
+}
+
+// A SAPI call is retried while the CDN answers 403 with an HTML page.
+func TestCallJSONRetriesHTMLForbidden(t *testing.T) {
+	var calls atomic.Int32
+	f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+		"/sapi/media/folder": func(w http.ResponseWriter, r *http.Request) {
+			if calls.Add(1) == 1 {
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = io.WriteString(w, `<!DOCTYPE html><html></html>`)
+				return
+			}
+			_, _ = io.WriteString(w, `{"data":{"folders":[]}}`)
+		},
+	})
+	_, err := f.listFolders(context.Background(), "1")
+	require.NoError(t, err)
+	assert.Equal(t, int32(2), calls.Load())
+}
+
+// A file the server is still validating is deleted once it is ready, and one
+// already in the trash counts as deleted, also within a batch.
+func TestDeleteMedia(t *testing.T) {
+	for name, tc := range map[string]struct {
+		ids     []string
+		replies []string // error code of each delete call, "" for success
+		want    [][]string
+		err     bool
+	}{
+		"validating":      {ids: []string{"1"}, replies: []string{"MED-1017"}, want: [][]string{{"1"}, {"1"}}},
+		"already deleted": {ids: []string{"1"}, replies: []string{"MED-1022"}, want: [][]string{{"1"}}},
+		"batch with an already deleted item": {ids: []string{"1", "2"}, replies: []string{"MED-1022", "MED-1022"},
+			want: [][]string{{"1", "2"}, {"1"}, {"2"}}},
+		"other error": {ids: []string{"1"}, replies: []string{"MED-1001"}, want: [][]string{{"1"}}, err: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var calls [][]string
+			replies := tc.replies
+			f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+				"/sapi/media": func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "delete", r.URL.Query().Get("action"))
+					var req api.IDsRequest
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+					var ids []string
+					for _, id := range req.Data.IDs {
+						ids = append(ids, id.String())
+					}
+					calls = append(calls, ids)
+					if len(replies) > 0 {
+						code := replies[0]
+						replies = replies[1:]
+						if code != "" {
+							_, _ = fmt.Fprintf(w, `{"error":{"code":%q,"message":"refused"}}`, code)
+							return
+						}
+					}
+					_, _ = io.WriteString(w, `{"success":"Media deleted"}`)
+				},
+			})
+			err := f.deleteMedia(context.Background(), tc.ids...)
+			if tc.err {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.want, calls)
+		})
+	}
+}
+
+// The live files are the new and updated generic files that are not deleted.
+func TestListFileIDs(t *testing.T) {
+	f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+		"/sapi/profile/changes": func(w http.ResponseWriter, r *http.Request) {
+			_, _ = io.WriteString(w, `{"data":{"file":{"N":[1,2],"U":[2,3,4],"D":[4]},"picture":{"U":[5]}}}`)
+		},
+	})
+	ids, err := f.listFileIDs(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, []string{"1", "2", "3"}, ids)
+}
+
+func TestUploadTMPNames(t *testing.T) {
+	for _, name := range []string{"probe.tmp", "probe.TMP", "dir/probe.TmP", "probe.tmp.bin", "probe.tmpx"} {
+		t.Run(name, func(t *testing.T) {
+			var writes atomic.Int32
+			f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+				"/sapi/media": func(w http.ResponseWriter, r *http.Request) {
+					writes.Add(1)
+					_, _ = io.WriteString(w, `{"data":{"media":[]}}`)
+				},
+				"/sapi/system/information": func(w http.ResponseWriter, r *http.Request) {
+					writes.Add(1)
+					_, _ = io.WriteString(w, `{}`)
+				},
+				"/sapi/upload/file": func(w http.ResponseWriter, r *http.Request) {
+					writes.Add(1)
+					if r.URL.Query().Get("action") == "save-metadata" {
+						_, _ = io.WriteString(w, `{"id":"guid"}`)
+					} else {
+						_, _ = io.WriteString(w, `{"id":42}`)
+					}
+				},
+			})
+			src := object.NewStaticObjectInfo(name, time.Now(), 4, true, nil, nil)
+			_, err := f.Put(context.Background(), bytes.NewReader([]byte("data")), src)
+			if strings.EqualFold(path.Ext(name), ".tmp") {
+				require.Error(t, err)
+				assert.True(t, fserrors.IsNoRetryError(err), err)
+				assert.Zero(t, writes.Load(), "refuse before any API calls or deletions")
+			} else {
+				require.NoError(t, err)
+				assert.Positive(t, writes.Load())
+			}
+		})
+	}
+}
+
+func TestUploadOverwritesInPlace(t *testing.T) {
+	for _, mode := range []string{"listed", "object", "cached", "duplicates", "validating", "metadata failure", "stream failure", "picture"} {
+		t.Run(mode, func(t *testing.T) {
+			var deleted []string
+			var metadataIDs []string
+			target := api.Item{ID: "42", Name: "target.bin", MediaType: "file", Size: 3}
+			if mode == "picture" {
+				target.MediaType = "picture"
+			}
+			f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+				"/sapi/media": func(w http.ResponseWriter, r *http.Request) {
+					var req api.IDsRequest
+					if r.URL.Query().Get("action") == "delete" {
+						require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+						for _, id := range req.Data.IDs {
+							deleted = append(deleted, id.String())
+						}
+						_, _ = io.WriteString(w, `{}`)
+						return
+					}
+					var items []api.Item
+					byID := r.URL.Query().Get("folderid") == ""
+					if byID || mode != "object" && mode != "cached" {
+						items = append(items, target)
+					}
+					if mode == "duplicates" && !byID {
+						items = append(items, api.Item{ID: "43", Name: "TARGET.bin", MediaType: "file"})
+					}
+					require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"media": items}}))
+				},
+				"/sapi/upload/file": func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Query().Get("action") == "save-metadata" {
+						var req struct {
+							Data struct{ ID string } `json:"data"`
+						}
+						require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+						metadataIDs = append(metadataIDs, req.Data.ID)
+						if mode == "metadata failure" {
+							_, _ = io.WriteString(w, `{"error":{"code":"MED-1001"}}`)
+						} else if mode == "validating" && len(metadataIDs) == 1 {
+							_, _ = io.WriteString(w, `{"error":{"code":"MED-1017"}}`)
+						} else {
+							_, _ = io.WriteString(w, `{"id":"guid"}`)
+						}
+						return
+					}
+					data, err := io.ReadAll(r.Body)
+					require.NoError(t, err)
+					assert.Equal(t, "replacement", string(data))
+					if mode == "stream failure" {
+						_, _ = io.WriteString(w, `{"error":{"code":"MED-1001"}}`)
+					} else if metadataIDs[len(metadataIDs)-1] == "42" {
+						_, _ = io.WriteString(w, `{"id":42}`)
+					} else {
+						_, _ = io.WriteString(w, `{"id":99}`)
+					}
+				},
+			})
+			o := &Object{fs: f, remote: "target.bin"}
+			if mode == "object" || mode == "metadata failure" || mode == "stream failure" {
+				o.id = target.ID.String()
+			}
+			if mode == "cached" || mode == "metadata failure" || mode == "stream failure" {
+				f.uploads.put(o.remote, target)
+			}
+			src := object.NewStaticObjectInfo(o.remote, time.Now(), 11, true, nil, nil)
+			err := o.Update(context.Background(), bytes.NewReader([]byte("replacement")), src)
+			if mode == "metadata failure" || mode == "stream failure" {
+				require.Error(t, err)
+				assert.Equal(t, "42", o.id)
+				cached, ok := f.uploads.get(o.remote)
+				assert.True(t, ok, "the previous version stays in the cache on failure")
+				assert.Equal(t, target, cached)
+			} else {
+				require.NoError(t, err)
+				if mode == "picture" {
+					assert.Equal(t, "99", o.id)
+					assert.Equal(t, []string{""}, metadataIDs)
+				} else {
+					assert.Equal(t, "42", o.id)
+					for _, id := range metadataIDs {
+						assert.Equal(t, "42", id)
+					}
+				}
+			}
+			if mode == "duplicates" {
+				assert.Equal(t, []string{"43"}, deleted)
+			} else if mode == "picture" {
+				assert.Equal(t, []string{"42"}, deleted)
+			} else {
+				assert.Empty(t, deleted, "the overwritten file must not be deleted")
+			}
+		})
+	}
 }

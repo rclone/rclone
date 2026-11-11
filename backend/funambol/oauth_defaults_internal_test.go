@@ -118,3 +118,30 @@ func TestO2OAuthPlatformDefault(t *testing.T) {
 	}
 	t.Fatal("missing oauth_platform option")
 }
+
+func TestMovistarOAuthDefaultCredentials(t *testing.T) {
+	for _, endpoint := range []string{movistarEndpoint, movistarEndpoint + "/"} {
+		t.Run(endpoint, func(t *testing.T) {
+			m := configmap.Simple{"user": smsPhone, "endpoint": endpoint}
+			f, err := newSessionFs(context.Background(), "test", m)
+			require.NoError(t, err)
+			require.True(t, f.opt.usesOAuth())
+			require.True(t, f.opt.isMovistar())
+			c, err := f.oauthConfig()
+			require.NoError(t, err)
+			assert.Equal(t, movistarOAuthClientID, c.ClientID)
+			assert.True(t, c.ClientSecret != "", "the bundled application needs its matching secret")
+			assert.Equal(t, movistarOAuthToken, c.Endpoint.TokenURL)
+			assert.Equal(t, "windows", f.opt.OAuthPlatform)
+			assert.Empty(t, m["client_id"])
+
+			var pending smsPending
+			authorize, err := f.oauthStart(&pending)
+			require.NoError(t, err)
+			assert.True(t, strings.HasPrefix(authorize, movistarOAuthAuthorize+"?"), authorize)
+			u, err := url.Parse(authorize)
+			require.NoError(t, err)
+			assert.Equal(t, movistarEndpoint+clientOAuthPath, u.Query().Get("redirect_uri"))
+		})
+	}
+}
