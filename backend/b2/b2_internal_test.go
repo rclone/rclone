@@ -3,6 +3,7 @@ package b2
 import (
 	"context"
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,10 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/rclone/rclone/lib/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -675,4 +679,135 @@ func TestClientStripsSecretHeadersOnCrossHostRedirect(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.NoError(t, resp.Body.Close())
+}
+
+func newMockB2Fs(t *testing.T, handler http.HandlerFunc, opt Options) *Fs {
+	t.Helper()
+	srv := httptest.NewServer(handler)
+	t.Cleanup(srv.Close)
+
+	if opt.Enc == 0 {
+		opt.Enc = encoder.Display
+	}
+	ctx := context.Background()
+	client := rest.NewClient(http.DefaultClient).SetRoot(srv.URL)
+	return &Fs{
+		name:       "TestB2",
+		root:       "my-bucket",
+		rootBucket: "my-bucket",
+		opt:        opt,
+		ci:         fs.GetConfig(ctx),
+		srv:        client,
+		cache:      bucket.NewCache(),
+		_bucketID:  map[string]string{"my-bucket": "bucket-id-1"},
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+}
+
+func TestHardDeleteRemovesAllVersionsOnlyForTargetFile(t *testing.T) {
+	ctx := context.Background()
+	var (
+		listRequests   []api.ListFileNamesRequest
+		deletedRecords []api.DeleteFileRequest
+	)
+
+	nextName := "dir/myfile.txt"
+	nextID := "v1"
+
+	f := newMockB2Fs(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/b2_list_file_versions":
+			var req api.ListFileNamesRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+			listRequests = append(listRequests, req)
+			w.Header().Set("Content-Type", "application/json")
+			if req.StartFileID == "" {
+				resp := api.ListFileNamesResponse{
+					Files: []api.File{
+						{ID: "v3", Name: "dir/myfile.txt", Action: "upload"},
+						{ID: "h2", Name: "dir/myfile.txt", Action: "hide"},
+						{ID: "v2", Name: "dir/myfile.txt", Action: "upload"},
+						{ID: "s_in_flight", Name: "dir/myfile.txt", Action: "start"},
+					},
+					NextFileName: &nextName,
+					NextFileID:   &nextID,
+				}
+				require.NoError(t, json.NewEncoder(w).Encode(&resp))
+				return
+			}
+			resp := api.ListFileNamesResponse{
+				Files: []api.File{
+					{ID: "v1", Name: "dir/myfile.txt", Action: "upload"},
+					{ID: "dir_marker", Name: "dir/myfile.txt/", Action: "folder"},
+					{ID: "child_v1", Name: "dir/myfile.txt/child.txt", Action: "upload"},
+					{ID: "sibling_v1", Name: "dir/myfile.txt.bak", Action: "upload"},
+				},
+			}
+			require.NoError(t, json.NewEncoder(w).Encode(&resp))
+		case "/b2_delete_file_version":
+			var req api.DeleteFileRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+			deletedRecords = append(deletedRecords, req)
+			w.Header().Set("Content-Type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(&api.File{ID: req.ID, Name: req.Name}))
+		default:
+			t.Fatalf("unexpected endpoint %s", r.URL.Path)
+		}
+	}, Options{HardDelete: true})
+
+	obj := &Object{
+		fs:     f,
+		remote: "dir/myfile.txt",
+		id:     "v3",
+	}
+	require.NoError(t, obj.Remove(ctx))
+
+	require.Len(t, listRequests, 2)
+	assert.Equal(t, "dir/myfile.txt", listRequests[0].Prefix)
+	assert.Equal(t, "dir/myfile.txt", listRequests[0].StartFileName)
+
+	assert.Equal(t, []api.DeleteFileRequest{
+		{ID: "v3", Name: "dir/myfile.txt"},
+		{ID: "h2", Name: "dir/myfile.txt"},
+		{ID: "v2", Name: "dir/myfile.txt"},
+		{ID: "v1", Name: "dir/myfile.txt"},
+	}, deletedRecords)
+}
+
+func TestHardDeletePreservesExplicitVersionDeleteAndFallback(t *testing.T) {
+	ctx := context.Background()
+	var deletedIDs []string
+
+	f := newMockB2Fs(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/b2_list_file_versions":
+			w.Header().Set("Content-Type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(&api.ListFileNamesResponse{}))
+		case "/b2_delete_file_version":
+			var req api.DeleteFileRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+			deletedIDs = append(deletedIDs, req.ID)
+			w.Header().Set("Content-Type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(&api.File{ID: req.ID, Name: req.Name}))
+		default:
+			t.Fatalf("unexpected endpoint %s", r.URL.Path)
+		}
+	}, Options{HardDelete: true, Versions: true})
+
+	versionedObj := &Object{
+		fs:     f,
+		remote: "myfile-v2026-10-29-183259-000.txt",
+		id:     "specific-v2",
+	}
+	require.NoError(t, versionedObj.Remove(ctx))
+	assert.Equal(t, []string{"specific-v2"}, deletedIDs)
+
+	deletedIDs = nil
+	unversionedObj := &Object{
+		fs:     f,
+		remote: "fresh.txt",
+		id:     "fresh-v1",
+	}
+	require.NoError(t, unversionedObj.Remove(ctx))
+	assert.Equal(t, []string{"fresh-v1"}, deletedIDs)
 }
