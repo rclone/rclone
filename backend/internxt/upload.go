@@ -3,13 +3,17 @@ package internxt
 import (
 	"context"
 	"crypto/cipher"
+	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"path"
 	"sort"
 	"sync"
 
 	"github.com/internxt/rclone-adapter/buckets"
+	sdkerrors "github.com/internxt/rclone-adapter/errors"
+	"github.com/internxt/rclone-adapter/files"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/lib/multipart"
@@ -272,12 +276,39 @@ func (w *internxtChunkWriter) Close(ctx context.Context) error {
 			w.dirID, name, ext, w.size, w.src.ModTime(ctx))
 		return w.f.shouldRetry(ctx, err)
 	})
+	if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok && httpErr.StatusCode() == http.StatusConflict {
+		// Multi-thread copy writes over an existing file without going
+		// through Update, so point that file at the new data instead
+		meta, err = w.replace(ctx, finishResp.ID, err)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to create file metadata: %w", err)
 	}
 	w.meta = meta
 
 	return nil
+}
+
+// replace points the file already at the remote at the data uploaded as
+// fileID, as the web app does when a file is replaced, so the file keeps
+// its UUID. If there is no such file it returns createErr.
+func (w *internxtChunkWriter) replace(ctx context.Context, fileID string, createErr error) (*buckets.CreateMetaResponse, error) {
+	existing, err := w.f.findFile(ctx, path.Base(w.remote), w.dirID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, createErr
+	}
+	err = w.f.pacer.Call(func() (bool, error) {
+		_, err := files.ReplaceFile(ctx, w.f.cfg, existing.UUID, fileID, w.size)
+		return w.f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to replace existing file: %w", err)
+	}
+	fs.Debugf(w.f, "Replaced existing file %s (UUID: %s)", w.remote, existing.UUID)
+	return &buckets.CreateMetaResponse{UUID: existing.UUID, FileID: fileID}, nil
 }
 
 // Abort cleans up after a failed upload.
