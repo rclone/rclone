@@ -148,6 +148,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Do not verify the server SSL certificate (insecure)",
 	Groups:  "Networking",
 }, {
+	Name:    "allow_https_downgrade",
+	Default: false,
+	Help:    "Follow redirects from HTTPS to HTTP (insecure)",
+	Groups:  "Networking",
+}, {
 	Name:    "ask_password",
 	Default: true,
 	Help:    "Allow prompt for password for encrypted configuration",
@@ -605,6 +610,7 @@ type ConfigInfo struct {
 	ExpectContinueTimeout      Duration          `config:"expect_continue_timeout"`
 	Dump                       DumpFlags         `config:"dump"`
 	InsecureSkipVerify         bool              `config:"no_check_certificate"` // Skip server certificate verification
+	AllowHTTPSDowngrade        bool              `config:"allow_https_downgrade"`
 	DeleteMode                 DeleteMode        `config:"delete_mode"`
 	MaxDelete                  int64             `config:"max_delete"`
 	MaxDeleteSize              SizeSuffix        `config:"max_delete_size"`

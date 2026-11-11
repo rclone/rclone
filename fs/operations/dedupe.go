@@ -115,8 +115,12 @@ func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, obj
 				} else {
 					fs.LogfCtx(ctx, o, "Ignoring as it appears %d times in the listing and deleting would lead to data loss", IDs[ID])
 				}
+				continue
 			}
 		}
+		// Keep objects whose ID is unknown - they can still be
+		// deduplicated by hash.
+		newObjs = append(newObjs, o)
 	}
 	objs = newObjs
 

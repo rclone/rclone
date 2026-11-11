@@ -87,8 +87,10 @@ Metadata is supported on files and directories.
 When restoring metadata with ` + "`--metadata`" + ` rclone applies the
 "mode", "uid" and "gid" from the source. These come from the source
 remote which may not be trusted, so restoring metadata as root from an
-untrusted source can change file ownership and is not recommended. The
-setuid, setgid and sticky bits are not restored by default - see the
+untrusted source can change file ownership and is not recommended. A
+user other than root keeps its own uid and sets the gid only to a group
+it is a member of, as rsync does. The setuid, setgid and sticky bits are
+not restored by default - see the
 ` + "`--local-metadata-restore-special-bits`" + ` flag.
 `,
 		},
@@ -251,6 +253,13 @@ Cloning is usually preferable to copying, as it is much faster and is
 deduplicated by default (i.e. having two identical files does not consume more
 storage than having just one.)  However, for use cases where data redundancy is
 preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
+
+Cloning also preserves macOS-specific metadata such as extended attributes,
+which a normal copy does not, so this metadata is lost when cloning is disabled.
+
+If the destination file already exists, cloning replaces it with a new file,
+even with --inplace, so hard links to it are broken. Use --local-no-clone to
+update existing files in place.
 
 Currently, cloning is only supported when using APFS on macOS (support for other
 platforms may be added in the future.)`,
@@ -951,13 +960,13 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	if err != nil {
 		return nil, err
 	}
-	fi, err := f.lstat(localPath)
+	fi, err := f.lstatRoot(localPath)
 	if errors.Is(err, os.ErrNotExist) {
 		err := f.Mkdir(ctx, dir)
 		if err != nil {
 			return nil, fmt.Errorf("mkdir metadata: failed make directory: %w", err)
 		}
-		fi, err = f.lstat(localPath)
+		fi, err = f.lstatRoot(localPath)
 		if err != nil {
 			return nil, fmt.Errorf("mkdir metadata: failed to read info: %w", err)
 		}
@@ -989,20 +998,34 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 // Rmdir removes the directory
 //
 // If it isn't empty it will return an error
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	localPath, err := f.localPath(dir)
 	if err != nil {
 		return err
 	}
-	if fi, err := os.Stat(localPath); err != nil {
+	// When translating symlinks go through os.Root so a symlink planted at
+	// any parent can't redirect the removal out of the destination, and
+	// don't follow the leaf as a symlink is a file in this mode. The root
+	// itself is the trusted destination and is removed directly.
+	stat, removeFn, chmod := os.Stat, os.Remove, os.Chmod
+	if f.opt.TranslateSymlinks && localPath != f.root {
+		var root *os.Root
+		root, localPath, err = f.osRoot(localPath)
+		if err != nil {
+			return err
+		}
+		defer fs.CheckClose(root, &err)
+		stat, removeFn, chmod = root.Lstat, root.Remove, root.Chmod
+	}
+	if fi, err := stat(localPath); err != nil {
 		return err
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
-	err = os.Remove(localPath)
+	err = removeFn(localPath)
 	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
-		if os.Chmod(localPath, 0o600) == nil {
-			err = os.Remove(localPath)
+		if chmod(localPath, 0o600) == nil {
+			err = removeFn(localPath)
 		}
 	}
 	return err
@@ -1179,9 +1202,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	// Create parent of destination
+	// Create parent of destination. The root itself is the trusted
+	// destination so its parent, which lies outside it, is created directly.
 	dstParentPath := filepath.Dir(dstPath)
-	err = file.MkdirAll(dstParentPath, 0777)
+	if dstPath == f.root {
+		err = file.MkdirAll(dstParentPath, 0777)
+	} else {
+		err = f.mkdirAll(dstParentPath)
+	}
 	if err != nil {
 		return err
 	}
@@ -1598,10 +1626,26 @@ func (f *Fs) mkdirAll(localPath string) (err error) {
 	return root.MkdirAll(rel, 0777)
 }
 
-// openFile opens localPath for writing. When translating symlinks it goes
-// through os.Root so a symlink planted at the path, or at any parent, is never
-// followed out of the destination. The returned file is independent of the
-// root, which is closed before returning.
+// lstatRoot returns the info for localPath without following a symlink at
+// the leaf. When translating symlinks it goes through os.Root so a symlink
+// planted at any parent can't make a path outside the destination look like
+// it exists, which would let its metadata be written there.
+func (f *Fs) lstatRoot(localPath string) (fi os.FileInfo, err error) {
+	if !f.opt.TranslateSymlinks {
+		return f.lstat(localPath)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return nil, err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Lstat(rel)
+}
+
+// openFile opens localPath with the given flags and perm. When translating
+// symlinks it goes through os.Root so a symlink planted at the path, or at any
+// parent, is never followed out of the destination. The returned file is
+// independent of the root, which is closed before returning.
 func (f *Fs) openFile(localPath string, flags int, perm os.FileMode) (fi *os.File, err error) {
 	if !f.opt.TranslateSymlinks {
 		return file.OpenFile(localPath, flags, perm)
@@ -1668,6 +1712,21 @@ func (f *Fs) chtimes(localPath string, atime, mtime time.Time) (err error) {
 	}
 	defer fs.CheckClose(root, &err)
 	return root.Chtimes(rel, atime, mtime)
+}
+
+// remove removes the file, symlink or empty directory at localPath. When
+// translating symlinks it goes through os.Root so a symlink planted at any
+// parent can't redirect the removal out of the destination.
+func (f *Fs) remove(localPath string) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return remove(localPath, os.Remove)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return remove(rel, root.Remove)
 }
 
 // mkdirAll makes all the directories needed to store the object
@@ -1794,7 +1853,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	if err != nil {
 		fs.Logf(o, "Removing partially written file on error: %v", err)
-		if removeErr := os.Remove(o.path); removeErr != nil {
+		if removeErr := o.fs.remove(o.path); removeErr != nil {
 			fs.Errorf(o, "Failed to remove partially written file: %v", removeErr)
 		}
 		return err
@@ -1942,7 +2001,7 @@ func (o *Object) lstat() error {
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	o.clearHashCache()
-	return remove(o.path)
+	return o.fs.remove(o.path)
 }
 
 // Metadata returns metadata for an object

@@ -99,6 +99,31 @@ func TestVerifyCopy(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// Test server-side copy over an existing file
+func TestCopyOverExisting(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	doCopy := r.Flocal.Features().Copy
+	if doCopy == nil {
+		t.Skip("local backend has no server-side copy on this platform")
+	}
+	t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	t2 := fstest.Time("2002-02-03T04:05:06.499999999Z")
+	file1 := r.WriteFile("a.txt", "hello1", t1)
+	file2 := r.WriteFile("b.txt", "HELLO2 longer", t2)
+
+	src, err := r.Flocal.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	dst, err := doCopy(ctx, src, file2.Path)
+	require.NoError(t, err)
+	assert.Equal(t, file2.Path, dst.Remote())
+
+	file2.Size = file1.Size
+	file2.Hashes = file1.Hashes
+	file2.ModTime = file1.ModTime
+	r.CheckLocalItems(t, file1, file2)
+}
+
 // skipIfNoSymlinks skips the test if this process can't create symlinks.
 //
 // Windows grants the privilege only to an elevated process or one running with
@@ -533,6 +558,115 @@ func TestDirBTimeThroughPlantedSymlinkBlocked(t *testing.T) {
 	_, _ = f.MkdirMetadata(ctx, "pwn", fs.Metadata{"btime": "2001-02-03T04:05:06Z"})
 
 	require.Equal(t, before, readBTime(), "btime escaped through planted symlink to %q", evilDir)
+}
+
+// TestMkdirMetadataThroughPlantedSymlinkBlocked checks MkdirMetadata can't
+// be fooled into treating a directory outside the root, reached through a
+// planted symlink, as the directory to apply metadata to.
+func TestMkdirMetadataThroughPlantedSymlinkBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+	require.NoError(t, os.Mkdir(filepath.Join(evilDir, "sub"), 0700))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// Control: an existing in-tree directory is found as normal.
+	require.NoError(t, f.Mkdir(ctx, "sub"))
+	_, err := f.MkdirMetadata(ctx, "sub", nil)
+	require.NoError(t, err)
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	// "pwn/sub" exists outside the root but must not be found through the
+	// planted symlink, and must not be created there either.
+	_, err = f.MkdirMetadata(ctx, "pwn/sub", nil)
+	require.Error(t, err, "finding a directory through a planted symlink should be refused")
+	_, err = f.MkdirMetadata(ctx, "pwn/new", nil)
+	require.Error(t, err, "making a directory through a planted symlink should be refused")
+	_, err = os.Lstat(filepath.Join(evilDir, "new"))
+	require.True(t, os.IsNotExist(err), "a directory escaped the destination into %q", evilDir)
+}
+
+// TestRemoveThroughPlantedSymlinkBlocked checks Remove and Rmdir can't
+// delete anything outside the root through a planted symlink.
+func TestRemoveThroughPlantedSymlinkBlocked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// os.Root.Symlink makes a file symlink to a directory outside
+		// the root, which Windows can't traverse, so the planted link
+		// can't reach the outside files.
+		t.Skip("planted directory symlinks can't be traversed on Windows")
+	}
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilFile := filepath.Join(evil, "secret.txt")
+	require.NoError(t, os.WriteFile(evilFile, []byte("keep me"), 0600))
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// Control: in-tree removals work as normal.
+	require.NoError(t, putFile(ctx, f, "file.txt", "data"))
+	o, err := f.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	require.NoError(t, o.Remove(ctx))
+	require.NoError(t, f.Mkdir(ctx, "dir"))
+	require.NoError(t, f.Rmdir(ctx, "dir"))
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evil))
+
+	// Removing the outside file and directory named through the planted
+	// symlink must be refused.
+	o, err = f.NewObject(ctx, "pwn/secret.txt")
+	require.NoError(t, err)
+	err = o.Remove(ctx)
+	require.Error(t, err, "removing through a planted symlink should be refused")
+	_, err = os.Lstat(evilFile)
+	require.NoError(t, err, "a file was removed outside the destination at %q", evilFile)
+
+	err = f.Rmdir(ctx, "pwn/secret.d")
+	require.Error(t, err, "removing a directory through a planted symlink should be refused")
+	_, err = os.Lstat(evilDir)
+	require.NoError(t, err, "a directory was removed outside the destination at %q", evilDir)
+}
+
+// TestDirMoveThroughPlantedSymlinkBlocked checks DirMove can't move a
+// directory out of the root through a planted symlink.
+func TestDirMoveThroughPlantedSymlinkBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+
+	evil := t.TempDir()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// Control: an in-tree directory move works as normal.
+	require.NoError(t, f.Mkdir(ctx, "dir"))
+	require.NoError(t, f.DirMove(ctx, f, "dir", "sub/moved"))
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evil))
+
+	err := f.DirMove(ctx, f, "sub/moved", "pwn/moved")
+	require.Error(t, err, "moving a directory through a planted symlink should be refused")
+	_, err = os.Lstat(filepath.Join(evil, "moved"))
+	require.True(t, os.IsNotExist(err), "a directory escaped the destination into %q", evil)
+	_, err = os.Lstat(filepath.Join(f.root, "sub", "moved"))
+	require.NoError(t, err, "the directory should still be in the destination")
 }
 
 // TestEncodingEscapeBlocked checks that a name from a malicious source can't

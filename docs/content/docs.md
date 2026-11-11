@@ -65,6 +65,7 @@ See the following for detailed instructions for
 - [Internet Archive](/internetarchive/)
 - [Internxt](/internxt/)
 - [Jottacloud](/jottacloud/)
+- [kDrive](/kdrive/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
 - [Mail.ru Cloud](/mailru/)
@@ -493,6 +494,7 @@ Not all global variables make sense to be overridden like this as the config is
 only applied during the remote creation. Here is a non exhaustive list of ones
 which might be useful:
 
+- `allow_https_downgrade`
 - `bind_addr`
 - `ca_cert`
 - `client_cert`
@@ -994,6 +996,21 @@ See also [--human-readable](#human-readable).
 
 ## Main options
 
+### --allow-https-downgrade
+
+By default rclone refuses to follow a redirect from an `https://` URL
+to a plain `http://` URL, as any credentials or other headers in the
+request would then be sent unencrypted, and the response could be
+altered by anyone on the network path. The request fails with an error
+which mentions this flag.
+
+Set `--allow-https-downgrade` to follow such redirects, for example
+when downloading from a mirror which redirects to plain HTTP. Some
+backends still refuse to follow them, as doing so would send their
+credentials in cleartext.
+
+This option defaults to `false`.
+
 ### --backup-dir string
 
 When using [sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/) or
@@ -1438,7 +1455,7 @@ for more information as to what these options mean.
 
 ### --default-time Time
 
-If a file or directory does have a modification time rclone can read
+If a file or directory does not have a modification time rclone can read
 then rclone will display this fixed time instead.
 
 The default is `2000-01-01 00:00:00 UTC`. This can be configured in
@@ -1790,6 +1807,12 @@ existing file if the transfer fails.
 Note that on the local file system if you don't use `--inplace` hard
 links (Unix only) will be broken. And if you do use `--inplace` you
 won't be able to update in use executables.
+
+On macOS, if rclone clones a file (see
+[--local-no-clone](/local/#local-no-clone)) and the destination
+already exists, the existing file is replaced with a new one, even
+with `--inplace`, so hard links to it will be broken. Use
+`--local-no-clone` to keep them.
 
 Note also that versions of rclone prior to v1.63.0 behave as if the
 `--inplace` flag is always supplied.
@@ -3372,13 +3395,13 @@ at rest or transfer. Detailed instructions for popular OSes:
 - Generate and store a password
 
   ```powershell
-  New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"
+  Add-Type -AssemblyName System.Web; New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "$env:USERPROFILE\rclone-credential.xml"
   ```
 
 - Add the password retrieval instruction
 
   ```powershell
-  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")
+  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "powershell [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path '$env:USERPROFILE\rclone-credential.xml').Password))")
   ```
 
 #### Encrypt the config file (all systems)

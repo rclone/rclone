@@ -476,6 +476,14 @@ func RandomRemote() (fs.Fs, string, func(), error) {
 				fs.Logf(nil, "Failed to purge %v: %v", parentRemote, err)
 			}
 		}
+		// The remote isn't in the fs cache so release its resources
+		// (e.g. pooled connections) here rather than letting them
+		// pile up until they time out.
+		if do := remote.Features().Shutdown; do != nil {
+			if err := do(context.Background()); err != nil {
+				fs.Logf(nil, "Failed to shutdown %v: %v", remote, err)
+			}
+		}
 	}
 
 	return remote, remoteName, finalise, nil

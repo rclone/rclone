@@ -212,6 +212,13 @@ For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
 
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. When headers are set, a redirect from https to http is
+refused as it would send them in cleartext, even with
+--allow-https-downgrade.
+
 Properties:
 
 - Config:      headers
@@ -264,6 +271,42 @@ Properties:
 - Env Var:     RCLONE_HTTP_NO_HEAD
 - Type:        bool
 - Default:     false
+
+#### --http-no-head-size
+
+Set the reported file size for --http-no-head.
+
+When HEAD requests are disabled, rclone normally reports an unknown file size.
+Set this option to a non-negative value to report that size for every file,
+including 0. Leave it unset (the default, shown as "off") to keep reporting
+an unknown size.
+
+The configured size is authoritative. If it does not match the actual file
+size, transfers may fail their size check and retry unless --ignore-size is
+used. It can also make multi-thread transfers request incorrect ranges and
+make mounted files unreadable past the reported size.
+
+Properties:
+
+- Config:      no_head_size
+- Env Var:     RCLONE_HTTP_NO_HEAD_SIZE
+- Type:        SizeSuffix
+- Default:     off
+
+#### --http-no-head-time
+
+Set a default modification time for --http-no-head.
+
+When HEAD requests are disabled, rclone normally reports an unset modification
+time. Set this option to report the specified time for every file instead.
+Changing the configured time later makes every file appear modified to a sync.
+
+Properties:
+
+- Config:      no_head_time
+- Env Var:     RCLONE_HTTP_NO_HEAD_TIME
+- Type:        Time
+- Default:     off
 
 #### --http-description
 

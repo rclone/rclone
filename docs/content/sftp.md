@@ -920,7 +920,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_SFTP_ENCODING
 - Type:        Encoding
-- Default:     Slash,Del,Ctl,Dot
+- Default:     Slash,Dot
 
 #### --sftp-set-modtime
 
@@ -1166,6 +1166,34 @@ Properties:
 
 - Config:      disable_concurrent_writes
 - Env Var:     RCLONE_SFTP_DISABLE_CONCURRENT_WRITES
+- Type:        bool
+- Default:     false
+
+#### --sftp-multithread-upload
+
+Set this to use multi-thread (multi-connection) uploads.
+
+Normally rclone uploads a single large file over one SFTP connection.
+With this set rclone uploads large files over several SFTP connections
+at once (one per chunk), which greatly improves throughput on high
+latency links, the same way multi-thread downloads already work. Each
+connection writes a different, non-overlapping byte range of the file,
+so this requires a server that allows several handles to the same file
+with writes at arbitrary offsets, which OpenSSH does.
+
+This is off by default because many SFTP servers only accept sequential
+writes (for example some object storage backed SFTP gateways) and would
+fail large uploads with "truncate failed" or "invalid offset" style
+errors.
+
+This is ignored (uploads stay single-threaded) when
+--sftp-disable-concurrent-writes or --sftp-connections is in use.
+
+
+Properties:
+
+- Config:      multithread_upload
+- Env Var:     RCLONE_SFTP_MULTITHREAD_UPLOAD
 - Type:        bool
 - Default:     false
 
@@ -1454,7 +1482,7 @@ default, due to security concerns. This can be re-enabled on a
 per-connection basis by setting the `use_insecure_cipher` setting in
 the configuration file to `true`. Further details on the insecurity of
 this cipher can be found
-[in this paper](http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf).
+[in this paper](https://conferences.computer.org/sp/pdfs/sp/2009/oakland2009-01.pdf).
 
 SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.

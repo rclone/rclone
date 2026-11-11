@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -149,7 +150,16 @@ type Fs struct {
 	createDirMutex      sync.Mutex   // Protect creation of directories
 	useOldDirectoryAPI  bool         // Use the old API v2 if seafile < 7
 	moveDirNotAvailable bool         // Version < 7.0 don't have an API to move a directory
+	uploadModTime       bool         // Version >= 12.0.4 accepts last_modify when uploading a file
 	renew               *Renew       // Renew an encrypted library token
+}
+
+// minUploadModTimeVersion is the first server version which reads the
+// last_modify field of the upload form
+var minUploadModTimeVersion = *semver.New("12.0.4")
+
+func canUploadModTime(serverVersion *semver.Version) bool {
+	return !serverVersion.LessThan(minUploadModTimeVersion)
 }
 
 // ------------------------------------------------------------
@@ -205,7 +215,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:           *opt,
 		endpoint:      u,
 		endpointURL:   u.String(),
-		srv:           rest.NewClient(fshttp.NewClient(ctx)).SetRoot(u.String()),
+		srv:           rest.NewClient(newClient(ctx)).SetRoot(u.String()),
 		pacer:         getPacer(ctx, opt.URL),
 	}
 	f.features = (&fs.Features{
@@ -231,6 +241,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// It also does no support moving directories
 		f.moveDirNotAvailable = true
 	}
+	f.uploadModTime = canUploadModTime(serverVersion)
 
 	// Take the authentication token from the configuration first
 	token := f.opt.AuthToken
@@ -369,10 +380,10 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 		// Create rest client for getAuthorizationToken
 		url := u.String()
-		if !strings.HasPrefix(url, "/") {
+		if !strings.HasSuffix(url, "/") {
 			url += "/"
 		}
-		srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
+		srv := rest.NewClient(newClient(ctx)).SetRoot(url)
 
 		// We loop asking for a 2FA code
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -398,6 +409,17 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return nil, errors.New("2fa authentication failed")
 	}
 	return nil, fmt.Errorf("unknown state %q", config.State)
+}
+
+// newClient returns the HTTP client used to talk to the Seafile API.
+//
+// It refuses redirects which downgrade HTTPS to plaintext HTTP as
+// following one would send the authorization token, or the password
+// during configuration, in cleartext.
+func newClient(ctx context.Context) *http.Client {
+	client := fshttp.NewClient(ctx)
+	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
+	return client
 }
 
 // Shutdown the Fs
@@ -494,7 +516,10 @@ func (f *Fs) String() string {
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	// The API doesn't support setting the modified time
+	// The modification time can only be set when uploading, and only from v12.0.4
+	if f.uploadModTime {
+		return time.Second
+	}
 	return fs.ModTimeNotSupported
 }
 
@@ -1169,7 +1194,11 @@ func (f *Fs) mkLibrary(ctx context.Context, libraryName, password string) error 
 	return nil
 }
 
-// splitPath returns the library name and the full path inside the library
+// splitPath returns the library name and the full path inside the library.
+//
+// The path is returned in NFC: Seafile stores names in NFC whatever form it
+// is given but looks them up byte for byte. Library names are stored verbatim
+// so they are left untouched.
 func (f *Fs) splitPath(dir string) (library, folder string) {
 	library = f.libraryName
 	folder = dir
@@ -1180,6 +1209,7 @@ func (f *Fs) splitPath(dir string) (library, folder string) {
 		// Adds the root folder to the path to get a full path
 		folder = path.Join(f.rootDirectory, folder)
 	}
+	folder = norm.NFC.String(folder)
 	return
 }
 

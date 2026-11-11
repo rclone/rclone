@@ -50,6 +50,8 @@ func TestParseTime(t *testing.T) {
 		{"-1x", time.Time{}, true},
 		{"off", time.Time{}, false},
 		{"1h2m3s", now.Add(-(time.Hour + 2*time.Minute + 3*time.Second)), false},
+		{"1d12h", now.Add(-time.Hour * 36), false},
+		{"1w2d", now.Add(-time.Hour * 24 * 9), false},
 		{"2001-02-03", time.Date(2001, 2, 3, 0, 0, 0, 0, time.Local), false},
 		{"2001-02-03 10:11:12", time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local), false},
 		{"2001-08-03 10:11:12", time.Date(2001, 8, 3, 10, 11, 12, 0, time.Local), false},

@@ -10,12 +10,12 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// Removes name, retrying on a sharing violation
-func remove(name string) (err error) {
+// remove removes name with removeFn, retrying on a sharing violation
+func remove(name string, removeFn func(string) error) (err error) {
 	const maxTries = 10
 	var sleepTime = 1 * time.Millisecond
 	for i := range maxTries {
-		err = os.Remove(name)
+		err = removeFn(name)
 		if err == nil {
 			break
 		}

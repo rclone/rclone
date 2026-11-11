@@ -1269,15 +1269,18 @@ func (o *Object) Storable() bool {
 
 // ftpReadCloser implements io.ReadCloser for FTP objects.
 type ftpReadCloser struct {
-	rc  io.ReadCloser
-	c   *ftp.ServerConn
-	f   *Fs
-	err error // errors found during read
+	rc     io.ReadCloser
+	c      *ftp.ServerConn
+	f      *Fs
+	err    error // errors found during read
+	closed bool  // set by Close so a second call is a no-op
+	read   int64 // bytes returned by Read
 }
 
 // Read bytes into p
 func (f *ftpReadCloser) Read(p []byte) (n int, err error) {
 	n, err = f.rc.Read(p)
+	f.read += int64(n)
 	if err != nil && err != io.EOF {
 		f.err = err // store any errors for Close to examine
 	}
@@ -1286,6 +1289,10 @@ func (f *ftpReadCloser) Read(p []byte) (n int, err error) {
 
 // Close the FTP reader and return the connection to the pool
 func (f *ftpReadCloser) Close() error {
+	if f.closed {
+		return nil
+	}
+	f.closed = true
 	var err error
 	errchan := make(chan error, 1)
 	go func() {
@@ -1309,6 +1316,7 @@ func (f *ftpReadCloser) Close() error {
 	// if errors while reading or closing, dump the connection
 	if err != nil || f.err != nil {
 		_ = f.c.Quit()
+		f.c = nil // never pool a connection after Quit
 		f.f.putFtpConnection(nil, nil)
 	} else {
 		f.f.putFtpConnection(&f.c, nil)
@@ -1320,6 +1328,12 @@ func (f *ftpReadCloser) Close() error {
 		switch errX.Code {
 		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend, ftp.StatusRequestedFileActionOK:
 			err = nil
+		case ftp.StatusCanNotOpenDataConnection:
+			// Egnyte answers 425 when a RETR is closed before the first
+			// read; a transfer cut after data was read stays an error
+			if f.read == 0 {
+				err = nil
+			}
 		}
 	}
 	return err

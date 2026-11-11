@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"crypto/md5"
+	"encoding/hex"
 	"io"
 	"os"
 	"path/filepath"
@@ -306,4 +307,174 @@ func TestMetadataStale(t *testing.T) {
 	later := time.Now().Add(time.Hour)
 	require.NoError(t, os.Chtimes(objPath, later, later))
 	assert.Equal(t, "", colour(ctxA), "metadata kept after the object was changed on the backend")
+}
+
+// TestCopyObjectMetadata checks a copy gets exactly the metadata given,
+// as worked out by gofakes3 from the metadata directive, and keeps the
+// source's modification time without adding it to the metadata.
+func TestCopyObjectMetadata(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctx := context.Background()
+	srcTime := time.Date(2011, 12, 25, 12, 59, 59, 0, time.UTC)
+	require.NoError(t, os.Chtimes(filepath.Join(root, "bucket", "object.txt"), srcTime, srcTime))
+
+	_, err := b.CopyObject(ctx, "bucket", "object.txt", "bucket", "copy.txt", map[string]string{"X-Amz-Meta-Colour": "red"})
+	require.NoError(t, err)
+	obj, err := b.HeadObject(ctx, "bucket", "copy.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "red", obj.Metadata["X-Amz-Meta-Colour"])
+	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Mtime")
+	assert.NotContains(t, obj.Metadata, "mtime")
+	info, err := os.Stat(filepath.Join(root, "bucket", "copy.txt"))
+	require.NoError(t, err)
+	assert.True(t, srcTime.Equal(info.ModTime()), "modification time %v", info.ModTime())
+
+	// Copying again with other metadata replaces it all
+	_, err = b.CopyObject(ctx, "bucket", "copy.txt", "bucket", "copy2.txt", map[string]string{"X-Amz-Meta-Size": "big"})
+	require.NoError(t, err)
+	obj, err = b.HeadObject(ctx, "bucket", "copy2.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "big", obj.Metadata["X-Amz-Meta-Size"])
+	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Colour")
+}
+
+// TestSetObjectTagging checks the tags of an object can be changed
+// without changing its other metadata.
+func TestSetObjectTagging(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctx := context.Background()
+	_, err := b.PutObject(ctx, "bucket", "tagged.txt", map[string]string{"X-Amz-Meta-Colour": "red"}, strings.NewReader("data"), 4)
+	require.NoError(t, err)
+	meta := func() map[string]string {
+		obj, err := b.HeadObject(ctx, "bucket", "tagged.txt")
+		require.NoError(t, err)
+		return obj.Metadata
+	}
+
+	require.NoError(t, b.SetObjectTagging(ctx, "bucket", "tagged.txt", "a=1&b=2"))
+	assert.Equal(t, "a=1&b=2", meta()[gofakes3.TaggingMetadataKey])
+	assert.Equal(t, "red", meta()["X-Amz-Meta-Colour"])
+
+	require.NoError(t, b.SetObjectTagging(ctx, "bucket", "tagged.txt", ""))
+	assert.NotContains(t, meta(), gofakes3.TaggingMetadataKey)
+	assert.Equal(t, "red", meta()["X-Amz-Meta-Colour"])
+
+	// An object without stored metadata can be tagged
+	require.NoError(t, b.SetObjectTagging(ctx, "bucket", "object.txt", "c=3"))
+	obj, err := b.HeadObject(ctx, "bucket", "object.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "c=3", obj.Metadata[gofakes3.TaggingMetadataKey])
+
+	err = b.SetObjectTagging(ctx, "bucket", "missing.txt", "a=1")
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%v", err)
+}
+
+// TestDirMarkers checks directory marker keys, which end in "/", stand
+// for directories.
+func TestDirMarkers(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctx := context.Background()
+	put := func(key, data string) error {
+		_, err := b.PutObject(ctx, "bucket", key, nil, strings.NewReader(data), int64(len(data)))
+		return err
+	}
+	isDir := func(dir string) bool {
+		info, err := os.Stat(filepath.Join(root, "bucket", dir))
+		return err == nil && info.IsDir()
+	}
+
+	// Putting an empty marker makes the directory
+	require.NoError(t, put("dir/sub/", ""))
+	assert.True(t, isDir("dir/sub"))
+	obj, err := b.HeadObject(ctx, "bucket", "dir/sub/")
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), obj.Size)
+	assert.Equal(t, "d41d8cd98f00b204e9800998ecf8427e", hex.EncodeToString(obj.Hash)) // md5("")
+	obj, err = b.GetObject(ctx, "bucket", "dir/", nil)
+	require.NoError(t, err)
+	data, err := io.ReadAll(obj.Contents)
+	require.NoError(t, err)
+	assert.Empty(t, data)
+
+	// A marker with data is refused
+	err = put("data/", "x")
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidArgument), "%v", err)
+	assert.False(t, isDir("data"))
+
+	// A marker for a directory which doesn't exist isn't found, nor is
+	// a directory without the "/"
+	for _, key := range []string{"missing/", "dir"} {
+		_, err = b.HeadObject(ctx, "bucket", key)
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%s: %v", key, err)
+	}
+
+	// Copying a marker makes the directory of another marker, or an
+	// empty object
+	_, err = b.CopyObject(ctx, "bucket", "dir/sub/", "bucket", "copy/", map[string]string{})
+	require.NoError(t, err)
+	assert.True(t, isDir("copy"))
+	_, err = b.CopyObject(ctx, "bucket", "dir/sub/", "bucket", "empty.txt", map[string]string{})
+	require.NoError(t, err)
+	obj, err = b.HeadObject(ctx, "bucket", "empty.txt")
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), obj.Size)
+	_, err = b.CopyObject(ctx, "bucket", "dir/", "bucket", "dir/", map[string]string{})
+	require.NoError(t, err)
+
+	// A copy needs the "/" for a directory and none for an object
+	for _, key := range []string{"dir", "empty.txt/", "missing/"} {
+		_, err = b.CopyObject(ctx, "bucket", key, "bucket", "other.txt", map[string]string{})
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%s: %v", key, err)
+	}
+
+	// Deleting a marker removes its directory only if empty
+	require.NoError(t, put("dir/sub/file.txt", "data"))
+	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/"))
+	assert.True(t, isDir("dir/sub"))
+	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/file.txt"))
+	require.NoError(t, put("dir/sub/", ""))
+	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/"))
+	assert.False(t, isDir("dir/sub"))
+
+	// Markers must be in canonical form apart from the "/"
+	for _, key := range []string{"/", "a//", "a/./"} {
+		err = put(key, "")
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidArgument), "%s: %v", key, err)
+	}
+}
+
+// TestFileDirConflicts checks keys which conflict with directories or
+// files are refused with a client error rather than an internal one,
+// which clients would retry.
+func TestFileDirConflicts(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctx := context.Background()
+	put := func(key string) error {
+		_, err := b.PutObject(ctx, "bucket", key, nil, strings.NewReader("data"), 4)
+		return err
+	}
+	require.NoError(t, put("dir/file.txt"))
+
+	for _, test := range []struct {
+		key  string
+		call func(key string) error
+	}{
+		{"object.txt/below", put},
+		{"object.txt/", func(key string) error {
+			_, err := b.PutObject(ctx, "bucket", key, nil, strings.NewReader(""), 0)
+			return err
+		}},
+		{"dir", put},
+		{"dir", func(key string) error {
+			_, err := b.CreateMultipartUpload(ctx, "bucket", key, nil)
+			return err
+		}},
+		{"object.txt/below", func(key string) error {
+			_, err := b.CreateMultipartUpload(ctx, "bucket", key, nil)
+			return err
+		}},
+	} {
+		err := test.call(test.key)
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidRequest), "%s: %v", test.key, err)
+	}
 }

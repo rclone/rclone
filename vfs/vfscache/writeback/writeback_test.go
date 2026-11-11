@@ -467,6 +467,28 @@ func TestWriteBackAddUpdateNotStarted(t *testing.T) {
 	assert.False(t, pi.called)
 }
 
+// Re-adding an unmodified item, as closing a dirty file which was only
+// read does, must not delay its upload, otherwise a file which is read
+// more often than the writeback delay never gets uploaded.
+func TestWriteBackAddNotModifiedKeepsExpiry(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+	wb.opt.WriteBack = fs.Duration(time.Hour)
+
+	pi := newPutItem(t)
+	id := wb.Add(0, "one", 10, true, pi.put)
+	wbItem := wb.lookup[id]
+	expiry := wbItem.expiry
+
+	time.Sleep(10 * time.Millisecond)
+	wb.Add(id, "one", 10, false, pi.put)
+	assert.Equal(t, expiry, wbItem.expiry, "unmodified add delayed the upload")
+
+	wb.Add(id, "one", 10, true, pi.put)
+	assert.True(t, wbItem.expiry.After(expiry), "modified add didn't delay the upload")
+	assert.False(t, pi.called)
+}
+
 func TestWriteBackGetStats(t *testing.T) {
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()

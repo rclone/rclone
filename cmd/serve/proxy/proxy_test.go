@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -107,14 +108,25 @@ func TestRun(t *testing.T) {
 		// affect the cache key, otherwise the proxy would be run for
 		// every connection rather than once per client.
 		assert.Equal(t,
-			generateCacheKey(testUser, testPass, ipFromAddr(testIP+":1024")),
-			generateCacheKey(testUser, testPass, ipFromAddr(testIP+":2048")))
+			generateCacheKey(testUser, testPass, authPassword, ipFromAddr(testIP+":1024")),
+			generateCacheKey(testUser, testPass, authPassword, ipFromAddr(testIP+":2048")))
 
 		// A different client IP must produce a different key so the
 		// proxy is consulted again
 		assert.NotEqual(t,
-			generateCacheKey(testUser, testPass, ipFromAddr(testAddr)),
-			generateCacheKey(testUser, testPass, ipFromAddr(otherAddr)))
+			generateCacheKey(testUser, testPass, authPassword, ipFromAddr(testAddr)),
+			generateCacheKey(testUser, testPass, authPassword, ipFromAddr(otherAddr)))
+
+		// The same credential presented by a different method must
+		// produce a different key, otherwise a public key, which isn't
+		// a secret, sent as a password would hit the entry made when
+		// its owner logged in with it and skip the proxy.
+		assert.NotEqual(t,
+			generateCacheKey(testUser, testPass, authPublicKey, ipFromAddr(testAddr)),
+			generateCacheKey(testUser, testPass, authPassword, ipFromAddr(testAddr)))
+		assert.NotEqual(t,
+			generateCacheKey(testUser, "", authAccessKey, ipFromAddr(testAddr)),
+			generateCacheKey(testUser, "", authPassword, ipFromAddr(testAddr)))
 	})
 
 	t.Run("call w/Password", func(t *testing.T) {
@@ -133,7 +145,7 @@ func TestRun(t *testing.T) {
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
-		cacheKey := generateCacheKey(testUser, testPass, testIP)
+		cacheKey := generateCacheKey(testUser, testPass, authPassword, testIP)
 		assert.Equal(t, "proxy-"+cacheKey, f.Name())
 		assert.True(t, strings.HasPrefix(f.String(), "Local file system"))
 
@@ -149,7 +161,7 @@ func TestRun(t *testing.T) {
 		assert.Equal(t, 0, p.vfsCache.Entries())
 		defer p.vfsCache.Clear()
 
-		cacheKey := generateCacheKey(testUser, testPass, testIP)
+		cacheKey := generateCacheKey(testUser, testPass, authPassword, testIP)
 		vfs, vfsKey, err := p.Call(testUser, testPass, false, testAddr)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
@@ -206,7 +218,8 @@ func TestRun(t *testing.T) {
 		// If a cached entry's pwHash somehow doesn't match the supplied
 		// auth (eg a hash collision on the cache key), Call must reject
 		// it. Simulate by corrupting the cached pwHash.
-		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered"))}
+		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered")), refreshed: new(atomic.Int64)}
+		entry.refreshed.Store(time.Now().UnixNano())
 		p.vfsCache.Put(cacheKey, entry)
 		vfs, vfsKey, err = p.Call(testUser, testPass, false, testAddr)
 		require.Error(t, err)
@@ -224,7 +237,35 @@ func TestRun(t *testing.T) {
 		vfs, vfsKey, err := p.Call(testUser, testPass, false, "")
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, generateCacheKey(testUser, testPass, ""), vfsKey)
+		assert.Equal(t, generateCacheKey(testUser, testPass, authPassword, ""), vfsKey)
+		assert.Equal(t, 1, p.vfsCache.Entries())
+	})
+
+	t.Run("Call revalidates", func(t *testing.T) {
+		assert.Equal(t, 0, p.vfsCache.Entries())
+		defer p.vfsCache.Clear()
+		oldRevalidate := revalidateInterval
+		defer func() { revalidateInterval = oldRevalidate }()
+
+		VFS, _, err := p.Call(testUser, testPass, false, testAddr)
+		require.NoError(t, err)
+
+		// A recently confirmed entry is used without asking the proxy
+		t.Setenv("RCLONE_TEST_PROXY_REVOKED", testUser)
+		VFS2, _, err := p.Call(testUser, testPass, false, testAddr)
+		require.NoError(t, err, "cached entry should still be trusted")
+		assert.Same(t, VFS, VFS2)
+
+		// Once old enough the proxy is asked again and can revoke the user
+		revalidateInterval = 0
+		_, _, err = p.Call(testUser, testPass, false, testAddr)
+		require.ErrorContains(t, err, "revoked")
+
+		// A user the proxy still allows keeps the cached backend
+		t.Setenv("RCLONE_TEST_PROXY_REVOKED", "")
+		VFS3, _, err := p.Call(testUser, testPass, false, testAddr)
+		require.NoError(t, err)
+		assert.Same(t, VFS, VFS3)
 		assert.Equal(t, 1, p.vfsCache.Entries())
 	})
 
@@ -254,7 +295,7 @@ func TestRun(t *testing.T) {
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
-		cacheKey := generateCacheKey(testUser, publicKeyString, testIP)
+		cacheKey := generateCacheKey(testUser, publicKeyString, authPublicKey, testIP)
 		assert.Equal(t, "proxy-"+cacheKey, f.Name())
 		assert.True(t, strings.HasPrefix(f.String(), "Local file system"))
 
@@ -270,7 +311,7 @@ func TestRun(t *testing.T) {
 		assert.Equal(t, 0, p.vfsCache.Entries())
 		defer p.vfsCache.Clear()
 
-		cacheKey := generateCacheKey(testUser, publicKeyString, testIP)
+		cacheKey := generateCacheKey(testUser, publicKeyString, authPublicKey, testIP)
 		vfs, vfsKey, err := p.Call(
 			testUser,
 			publicKeyString,
@@ -323,13 +364,50 @@ func TestRun(t *testing.T) {
 		// If a cached entry's pwHash somehow doesn't match the supplied
 		// auth (eg a hash collision on the cache key), Call must reject
 		// it. Simulate by corrupting the cached pwHash.
-		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered"))}
+		entry := cacheEntry{vfs: vfs, kind: authPublicKey, pwHash: sha256.Sum256([]byte("tampered")), refreshed: new(atomic.Int64)}
+		entry.refreshed.Store(time.Now().UnixNano())
 		p.vfsCache.Put(cacheKey, entry)
 		vfs, vfsKey, err = p.Call(testUser, publicKeyString, true, testAddr)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "incorrect public key")
 		require.Nil(t, vfs)
 		require.Equal(t, "", vfsKey)
+	})
+
+	t.Run("Call w/PublicKey as Password", func(t *testing.T) {
+		// A public key isn't a secret, so once its owner has logged in
+		// with it anyone who knows it must not be able to send it as a
+		// password from the same address and get the cached backend
+		// without the proxy being asked whether that password is valid.
+		assert.Equal(t, 0, p.vfsCache.Entries())
+		defer p.vfsCache.Clear()
+
+		vfs, vfsKey, err := p.Call(testUser, publicKeyString, true, testAddr)
+		require.NoError(t, err)
+		require.NotNil(t, vfs)
+		assert.Equal(t, 1, p.vfsCache.Entries())
+
+		// The proxy must be consulted, which shows up as a fresh cache
+		// entry with a different key and backend
+		vfs2, vfsKey2, err := p.Call(testUser, publicKeyString, false, testAddr)
+		require.NoError(t, err)
+		require.NotNil(t, vfs2)
+		assert.NotEqual(t, vfsKey, vfsKey2)
+		assert.Equal(t, 2, p.vfsCache.Entries())
+		if vfs.Fs() == vfs2.Fs() {
+			t.Error("password login got the backend created for a public key login")
+		}
+
+		// A cached entry of the wrong kind must be rejected even if
+		// the cache key somehow matches (eg a hash collision).
+		entry := cacheEntry{vfs: vfs2, kind: authPublicKey, pwHash: sha256.Sum256([]byte(publicKeyString)), refreshed: new(atomic.Int64)}
+		entry.refreshed.Store(time.Now().UnixNano())
+		p.vfsCache.Put(vfsKey2, entry)
+		vfs2, vfsKey2, err = p.Call(testUser, publicKeyString, false, testAddr)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "incorrect password")
+		require.Nil(t, vfs2)
+		require.Equal(t, "", vfsKey2)
 	})
 }
 
@@ -467,13 +545,13 @@ func TestCallAccessKey(t *testing.T) {
 
 	// Check a cached entry is revalidated with the proxy once it is
 	// old enough even without a refresh being asked for
-	oldRevalidate := accessKeyRevalidateInterval
-	defer func() { accessKeyRevalidateInterval = oldRevalidate }()
+	oldRevalidate := revalidateInterval
+	defer func() { revalidateInterval = oldRevalidate }()
 	t.Setenv("RCLONE_TEST_PROXY_REVOKED", "AKID")
 	_, secret8, err := p.CallAccessKey("AKID", remoteAddr, false)
 	require.NoError(t, err, "cached entry should still be trusted")
 	assert.Equal(t, "AKID-rotated-again", secret8)
-	accessKeyRevalidateInterval = 0
+	revalidateInterval = 0
 	_, _, err = p.CallAccessKey("AKID", remoteAddr, false)
 	require.ErrorContains(t, err, "revoked")
 }

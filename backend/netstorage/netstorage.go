@@ -208,6 +208,24 @@ func (d Du) GetName() xml.Name {
 
 //------------------------------------------------------------------------------
 
+// apiHeaders are the NetStorage API request headers which carry the
+// account name, the request signature and the signed action. They must
+// not be forwarded when a redirect leaves the configured host.
+//
+// The action header is sent uncanonicalised, hence the "*" prefix.
+var apiHeaders = []string{"X-Akamai-ACS-Auth-Data", "X-Akamai-ACS-Auth-Sign", "*X-Akamai-ACS-Action"}
+
+// newClient makes the http client used for all NetStorage requests.
+//
+// The signer adds the API headers to every request, so the client
+// strips them on cross host redirects and refuses an HTTPS to HTTP
+// downgrade.
+func newClient(ctx context.Context) *http.Client {
+	client := fshttp.NewClient(ctx)
+	client.CheckRedirect = rest.StripHeadersOnCrossHostRedirectFn(apiHeaders...)
+	return client
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 //
@@ -240,7 +258,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	client := fshttp.NewClient(ctx)
+	client := newClient(ctx)
 
 	f := &Fs{
 		name:        name,

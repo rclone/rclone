@@ -6,11 +6,13 @@ package local
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/go-darwin/apfs"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/random"
 )
 
 // Copy src to this remote using server-side copy operations.
@@ -63,7 +65,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	err = Clone(srcPath, dstPath)
+	err = cloneOver(srcPath, dstPath)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +79,27 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	return f.NewObject(ctx, remote)
+}
+
+// cloneOver clones src to dst, replacing dst if it already exists.
+//
+// COPYFILE_CLONE implies COPYFILE_EXCL so Clone fails if dst exists.
+// Cloning to a temporary name in the same directory and renaming it
+// over dst avoids this and leaves dst untouched if the clone fails.
+func cloneOver(src, dst string) error {
+	if _, err := os.Lstat(dst); os.IsNotExist(err) {
+		return Clone(src, dst)
+	}
+	tmp := filepath.Join(filepath.Dir(dst), "."+random.String(16)+".rclone-clone")
+	err := Clone(src, tmp)
+	if err == nil {
+		err = os.Rename(tmp, dst)
+	}
+	if err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("failed to clone %q to %q: %w", src, dst, err)
+	}
+	return nil
 }
 
 // Clone uses APFS cloning if possible, otherwise falls back to copying (with full metadata preservation)

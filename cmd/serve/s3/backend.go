@@ -3,7 +3,10 @@ package s3
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/hex"
+	"errors"
+	"hash"
 	"io"
 	"maps"
 	"math"
@@ -20,6 +23,7 @@ import (
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
+	fshash "github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -57,6 +61,8 @@ type s3Backend struct {
 
 	reaperQuit chan struct{} // closed to stop the abandoned upload reaper
 	reaperStop sync.Once
+
+	commitLocks pathLocks // serialises moving objects into place, see commitObject
 }
 
 // tenant is the state kept between requests for one user of the server.
@@ -80,16 +86,21 @@ type tenant struct {
 	// set by --multipart-streaming-buffer-total.
 	budget *bufferBudget
 
-	// meta is the stored metadata of objects, by object path.
+	// meta is the stored metadata of objects, by object path, and
+	// the directory markers put, by directory path.
 	meta *lru.Cache[string, objectMeta]
 }
 
 // objectMeta is the metadata stored for an object, with the size and
 // modification time the object had when it was stored.
 type objectMeta struct {
-	meta    map[string]string
-	size    int64
-	modTime time.Time
+	meta        map[string]string
+	hash        []byte  // the ETag of the object, if not its hash
+	partSizes   []int64 // the sizes of the parts of an object made by a multipart upload
+	size        int64
+	modTime     time.Time
+	dirMarker   bool // a directory marker was put for the directory at this path
+	noDirMarker bool // the directory marker of the directory at this path was deleted, with --directory-markers
 }
 
 // newMetadataStore makes a store for the metadata of up to maxObjects
@@ -149,44 +160,46 @@ func (t *tenant) context() context.Context {
 //
 // Nothing is returned if the object has changed since the metadata was
 // stored, as it has been replaced by something other than this user.
-func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta map[string]string, ok bool) {
-	om, ok := t.meta.Get(fp)
-	if !ok || om.size != node.Size() {
-		return nil, false
+func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (om objectMeta, ok bool) {
+	om, ok = t.meta.Get(fp)
+	if !ok || om.dirMarker || om.noDirMarker || om.size != node.Size() {
+		return objectMeta{}, false
 	}
 	window := fs.GetModifyWindow(ctx, node.VFS().Fs())
 	if window != fs.ModTimeNotSupported {
 		if dt := node.ModTime().Sub(om.modTime); dt < -window || dt > window {
-			return nil, false
+			return objectMeta{}, false
 		}
 	}
-	return om.meta, true
+	return om, true
 }
 
 // storeMeta stores meta as the metadata of the object at fp in _vfs.
 //
-// If meta has a modification time in "X-Amz-Meta-Mtime" or "mtime" the
-// object's modification time is set to it, returning any error, and
-// both are set to it in meta.
+// If meta has a modification time in the "X-Amz-Meta-Mtime" user
+// metadata, or failing that in "mtime", the object's modification time
+// is set to it, returning any error. "mtime" isn't user metadata so it
+// is removed from meta.
 //
 // Any "Last-Modified" in meta is dropped: gofakes3 sets it to the time
 // of the request, and caching it would make HeadObject and GetObject
 // report that instead of the object's modification time.
 func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (err error) {
+	return t.storeObjectMeta(_vfs, fp, objectMeta{meta: meta})
+}
+
+// storeObjectMeta stores om as the metadata of the object at fp in
+// _vfs, as storeMeta does.
+func (t *tenant) storeObjectMeta(_vfs *vfs.VFS, fp string, om objectMeta) (err error) {
+	meta := om.meta
 	delete(meta, "Last-Modified")
-	for _, key := range []string{"X-Amz-Meta-Mtime", "mtime"} {
-		val, ok := meta[key]
-		if !ok {
-			continue
-		}
-		ti, parseErr := swift.FloatStringToTime(val)
-		if parseErr != nil {
-			continue
-		}
-		meta["X-Amz-Meta-Mtime"] = val
-		meta["mtime"] = val
+	mtime, ok := meta["X-Amz-Meta-Mtime"]
+	if !ok {
+		mtime = meta["mtime"]
+	}
+	delete(meta, "mtime")
+	if ti, parseErr := swift.FloatStringToTime(mtime); mtime != "" && parseErr == nil {
 		err = _vfs.Chtimes(fp, ti, ti)
-		break
 	}
 	// Stat after setting the modification time as getMeta compares with it
 	node, statErr := _vfs.Stat(fp)
@@ -194,17 +207,78 @@ func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (er
 		t.removeMeta(fp)
 		return err
 	}
-	t.meta.Add(fp, objectMeta{
-		meta:    meta,
-		size:    node.Size(),
-		modTime: node.ModTime(),
-	})
+	om.size, om.modTime = node.Size(), node.ModTime()
+	t.meta.Add(fp, om)
 	return err
 }
 
-// removeMeta forgets the metadata of the object at fp.
+// Check s3Backend satisfies the optional interface
+var _ gofakes3.ObjectTaggingBackend = (*s3Backend)(nil)
+
+// SetObjectTagging sets the tags of an existing object, which are kept
+// with its metadata.
+func (b *s3Backend) SetObjectTagging(ctx context.Context, bucketName, objectName string, tagging string) error {
+	_vfs, err := b.s.getVFS(ctx)
+	if err != nil {
+		return err
+	}
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return err
+	}
+	node, err := _vfs.Stat(fp)
+	if err != nil || !node.IsFile() {
+		return gofakes3.KeyNotFound(objectName)
+	}
+	t := b.tenant(ctx)
+	om, _ := t.getMeta(ctx, fp, node)
+	meta := maps.Clone(om.meta)
+	if meta == nil {
+		meta = map[string]string{}
+	}
+	if tagging == "" {
+		delete(meta, gofakes3.TaggingMetadataKey)
+	} else {
+		meta[gofakes3.TaggingMetadataKey] = tagging
+	}
+	om.meta = meta
+	return t.storeObjectMeta(_vfs, fp, om)
+}
+
+// removeMeta forgets the metadata of the object at fp, or the
+// directory marker of the directory at fp.
 func (t *tenant) removeMeta(fp string) {
 	t.meta.Remove(fp)
+}
+
+// storeDirMarker records that a directory marker was put for the
+// directory at fp, so it is listed while the directory holds other
+// keys.
+func (t *tenant) storeDirMarker(fp string) {
+	t.meta.Add(fp, objectMeta{dirMarker: true})
+}
+
+// hasDirMarker reports whether the directory at fp has a directory
+// marker: one was put for it, or --directory-markers is set and it
+// hasn't been deleted.
+func (t *tenant) hasDirMarker(fp string) bool {
+	om, ok := t.meta.Get(fp)
+	if t.b.s.opt.DirectoryMarkers {
+		return !ok || !om.noDirMarker
+	}
+	return ok && om.dirMarker
+}
+
+// removeDirMarkers forgets the directory markers of every user below
+// the directory dir.
+func (b *s3Backend) removeDirMarkers(dir string) {
+	for _, t := range b.allTenants() {
+		for _, fp := range t.meta.Keys() {
+			if strings.HasPrefix(fp, dir+"/") {
+				t.meta.Remove(fp)
+			}
+		}
+	}
 }
 
 // ListBuckets always returns the default bucket.
@@ -245,18 +319,13 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 		prefix = emptyPrefix
 	}
 
-	// workaround
-	if strings.TrimSpace(prefix.Prefix) == "" {
-		prefix.HasPrefix = false
-	}
-	if strings.TrimSpace(prefix.Delimiter) == "" {
-		prefix.HasDelimiter = false
-	}
-
 	response := gofakes3.NewObjectList()
-	path, remaining := prefixParser(prefix)
+	// Keys can't start with "/" so such a prefix matches nothing
+	if strings.HasPrefix(prefix.Prefix, "/") {
+		return response, nil
+	}
 
-	err = b.listPage(_vfs, bucket, path, remaining, prefix.HasDelimiter, page, response)
+	err = b.listPage(ctx, _vfs, bucket, prefix.Prefix, prefix.Delimiter, page, response)
 	if err == gofakes3.ErrNoSuchKey {
 		// AWS just returns an empty list
 		response = gofakes3.NewObjectList()
@@ -287,6 +356,12 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		return nil, gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return nil, err
+		}
+		return b.dirMarkerObject(_vfs, fp, objectName)
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return nil, err
@@ -320,16 +395,22 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
-		maps.Copy(meta, metaMap)
+	var partSizes []int64
+	if om, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
+		maps.Copy(meta, om.meta)
+		if om.hash != nil {
+			hash = om.hash
+		}
+		partSizes = om.partSizes
 	}
 
 	return &gofakes3.Object{
-		Name:     objectName,
-		Hash:     hash,
-		Metadata: meta,
-		Size:     size,
-		Contents: noOpReadCloser{},
+		Name:      objectName,
+		Hash:      hash,
+		Metadata:  meta,
+		Size:      size,
+		Contents:  noOpReadCloser{},
+		PartSizes: partSizes,
 	}, nil
 }
 
@@ -344,6 +425,15 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		return nil, gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return nil, err
+		}
+		if _, err := rangeRequest.Range(0); err != nil {
+			return nil, err
+		}
+		return b.dirMarkerObject(_vfs, fp, objectName)
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return nil, err
@@ -400,18 +490,62 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
-		maps.Copy(meta, metaMap)
+	var partSizes []int64
+	if om, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
+		maps.Copy(meta, om.meta)
+		if om.hash != nil {
+			hash = om.hash
+		}
+		partSizes = om.partSizes
 	}
 
 	return &gofakes3.Object{
-		Name:     objectName,
-		Hash:     hash,
-		Metadata: meta,
-		Size:     size,
-		Range:    rnge,
-		Contents: rdr,
+		Name:      objectName,
+		Hash:      hash,
+		Metadata:  meta,
+		Size:      size,
+		Range:     rnge,
+		Contents:  rdr,
+		PartSizes: partSizes,
 	}, nil
+}
+
+// dirMarkerObject returns the empty object the directory marker key
+// objectName stands for if its directory fp exists.
+func (b *s3Backend) dirMarkerObject(_vfs *vfs.VFS, fp, objectName string) (*gofakes3.Object, error) {
+	node, err := _vfs.Stat(fp)
+	if err != nil || !node.IsDir() {
+		return nil, gofakes3.KeyNotFound(objectName)
+	}
+	return &gofakes3.Object{
+		Name: objectName,
+		Hash: emptyHash(b.s.etagHash(_vfs)),
+		Metadata: map[string]string{
+			"Last-Modified": formatHeaderTime(node.ModTime()),
+			"Content-Type":  "application/x-directory",
+		},
+		Size:     0,
+		Contents: noOpReadCloser{},
+	}, nil
+}
+
+// putDirMarker makes the directory fp the directory marker key
+// objectName stands for. A directory marker can't hold data.
+func putDirMarker(_vfs *vfs.VFS, fp, objectName string, input io.Reader) error {
+	// Read to the end of an empty input so any checksum of it is
+	// checked, but no further.
+	n, err := io.Copy(io.Discard, io.LimitReader(input, 1))
+	if err != nil {
+		return err
+	}
+	if n != 0 {
+		return gofakes3.ErrorMessagef(gofakes3.ErrInvalidArgument, "Directory marker %q must be empty", objectName)
+	}
+	if node, err := _vfs.Stat(fp); err == nil && !node.IsDir() {
+		return errParentIsObject(strings.TrimSuffix(objectName, "/"))
+	}
+	_, err = mkdirRecursive(fp, _vfs)
+	return err
 }
 
 // TouchObject creates or updates meta on specified object.
@@ -459,9 +593,25 @@ func (b *s3Backend) PutObject(
 		return result, gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return result, err
+		}
+		if b.s.etagHash(_vfs) != fshash.MD5 {
+			result.ETag = quoteETag(emptyHash(b.s.etagHash(_vfs)))
+		}
+		if err := putDirMarker(_vfs, fp, objectName, input); err != nil {
+			return result, err
+		}
+		b.tenant(ctx).storeDirMarker(fp)
+		return result, nil
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return result, err
+	}
+	if node, err := _vfs.Stat(fp); err == nil && node.IsDir() {
+		return result, errIsDirectory(objectName)
 	}
 	objectDir := path.Dir(fp)
 	// _, err = db.fs.Stat(objectDir)
@@ -470,8 +620,11 @@ func (b *s3Backend) PutObject(
 	// 	return result, gofakes3.KeyNotFound(objectName)
 	// }
 
+	var madeDir string
 	if objectDir != "." {
-		if err := mkdirRecursive(objectDir, _vfs); err != nil {
+		madeDir, err = mkdirRecursive(objectDir, _vfs)
+		if err != nil {
+			removeMadeDirs(objectDir, madeDir, _vfs)
 			return result, err
 		}
 	}
@@ -487,7 +640,9 @@ func (b *s3Backend) PutObject(
 	}
 
 	// cleanup discards a failed upload, removing the temporary object
-	// (never the object at fp) and any stale VFS state for fp.
+	// (never the object at fp), any stale VFS state for fp and the
+	// directories made for it, which would be listed as directory
+	// markers.
 	cleanup := func() {
 		if tmpFp != fp {
 			b.forgetPath(_vfs, tmpFp)
@@ -495,10 +650,21 @@ func (b *s3Backend) PutObject(
 		} else {
 			b.forgetPath(_vfs, fp)
 		}
+		removeMadeDirs(objectDir, madeDir, _vfs)
+	}
+
+	// With MD5 ETags gofakes3 returns the MD5 of the data, which is
+	// kept with the metadata if the remote can't give it, so HEAD
+	// returns it too.
+	var md5Hasher hash.Hash
+	if b.s.etagHash(_vfs) == fshash.MD5 && !fsys.Hashes().Contains(fshash.MD5) {
+		md5Hasher = md5.New()
+		input = io.TeeReader(input, md5Hasher)
 	}
 
 	f, err := _vfs.Create(tmpFp)
 	if err != nil {
+		cleanup()
 		return result, err
 	}
 
@@ -525,20 +691,67 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	// Rename the temporary object into place
+	// Move the temporary object into place
 	if tmpFp != fp {
-		if err := _vfs.Rename(tmpFp, fp); err != nil {
+		if err := b.commitObject(ctx, _vfs, tmpFp, fp); err != nil {
 			cleanup()
 			return result, err
 		}
 	}
 
-	_, err = _vfs.Stat(fp)
+	node, err := _vfs.Stat(fp)
 	if err != nil {
 		return result, err
 	}
 
-	return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
+	om := objectMeta{meta: meta}
+	if md5Hasher != nil {
+		om.hash = md5Hasher.Sum(nil)
+	}
+	if err := b.tenant(ctx).storeObjectMeta(_vfs, fp, om); err != nil {
+		return result, err
+	}
+
+	// gofakes3 returns the MD5 of the data as the ETag, so another
+	// hash must be given to match what HeadObject returns.
+	if b.s.etagHash(_vfs) != fshash.MD5 {
+		result.ETag = quoteETag(b.objectHash(ctx, _vfs, fp, node))
+	}
+	return result, nil
+}
+
+// quoteETag returns hash as an ETag.
+func quoteETag(hash []byte) string {
+	return `"` + hex.EncodeToString(hash) + `"`
+}
+
+// commitObject moves the object written to tmpFp into place at fp,
+// first checking the request's conditions on writing it.
+//
+// Moving objects into place through this server is serialised per
+// object, so the check and the move are atomic against other writes
+// through it, though not against changes made some other way.
+func (b *s3Backend) commitObject(ctx context.Context, _vfs *vfs.VFS, tmpFp, fp string) error {
+	unlock := b.commitLocks.lock(fs.ConfigString(_vfs.Fs()) + "\x00" + fp)
+	defer unlock()
+	if gofakes3.HasWriteConditions(ctx) {
+		exists, etag := false, ""
+		if node, err := _vfs.Stat(fp); err == nil && node.IsFile() {
+			exists, etag = true, hex.EncodeToString(b.objectHash(ctx, _vfs, fp, node))
+		}
+		if err := gofakes3.CheckWriteConditions(ctx, exists, etag); err != nil {
+			return err
+		}
+	}
+	return _vfs.Rename(tmpFp, fp)
+}
+
+// objectHash returns the hash returned as the ETag of the object at fp.
+func (b *s3Backend) objectHash(ctx context.Context, _vfs *vfs.VFS, fp string, node vfs.Node) []byte {
+	if om, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok && om.hash != nil {
+		return om.hash
+	}
+	return getFileHashByte(node, b.s.etagHash(_vfs))
 }
 
 // DeleteMulti deletes multiple objects in a single request.
@@ -576,7 +789,26 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err != nil {
 		return gofakes3.BucketNotFound(bucketName)
 	}
+	t := b.tenant(ctx)
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return err
+		}
+		// Deleting a directory marker leaves the objects in its
+		// directory, so the directory is only removed if empty.
+		t.removeMeta(fp)
+		if isEmptyDir(fp, _vfs) {
+			if err := _vfs.Remove(fp); err != nil {
+				return err
+			}
+			rmdirRecursive(fp, _vfs, t)
+		} else if b.s.opt.DirectoryMarkers {
+			// Otherwise it is removed with the last key below it
+			t.meta.Add(fp, objectMeta{noDirMarker: true})
+		}
+		return nil
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return err
@@ -586,10 +818,10 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	b.tenant(ctx).removeMeta(fp)
+	t.removeMeta(fp)
 
 	// FIXME: unsafe operation
-	rmdirRecursive(fp, _vfs)
+	rmdirRecursive(fp, _vfs, t)
 	return nil
 }
 
@@ -625,9 +857,15 @@ func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 		return gofakes3.BucketNotFound(name)
 	}
 
-	if err := _vfs.Remove(name); err != nil {
-		return gofakes3.ErrBucketNotEmpty
+	// The bucket may hold empty directories, which S3 clients can't
+	// see, so is removed if it has nothing else.
+	if err := removeEmptyTree(name, _vfs); err != nil {
+		if errors.Is(err, errNotEmpty) {
+			return gofakes3.ErrBucketNotEmpty
+		}
+		return err
 	}
+	b.removeDirMarkers(name)
 
 	return nil
 }
@@ -652,16 +890,28 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	if err != nil {
 		return result, err
 	}
-	fp, err := bucketObjectPath(srcBucket, srcKey)
+	fp, isMarker, err := bucketDirMarkerPath(srcBucket, srcKey)
+	if !isMarker {
+		fp, err = bucketObjectPath(srcBucket, srcKey)
+	}
 	if err != nil {
 		return result, err
 	}
 	cStat, err := _vfs.Stat(fp)
-	if err != nil || !cStat.IsFile() {
+	if err != nil || cStat.IsDir() != isMarker {
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {
-		return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
+		if isMarker {
+			// Directory markers have no metadata to replace
+			return result, nil
+		}
+		// The data is unchanged, so its stored ETag and part sizes
+		// still apply
+		t := b.tenant(ctx)
+		om, _ := t.getMeta(ctx, fp, cStat)
+		om.meta = meta
+		return result, t.storeObjectMeta(_vfs, fp, om)
 	}
 
 	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)
@@ -672,12 +922,9 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		_ = c.Contents.Close()
 	}()
 
-	for k, v := range c.Metadata {
-		if _, found := meta[k]; !found && k != "X-Amz-Acl" {
-			meta[k] = v
-		}
-	}
-	if _, ok := meta["mtime"]; !ok {
+	// meta is the complete metadata of the copy. It keeps the source's
+	// modification time unless the metadata sets one.
+	if _, ok := meta["X-Amz-Meta-Mtime"]; !ok {
 		meta["mtime"] = swift.TimeToFloatString(cStat.ModTime())
 	}
 
@@ -691,7 +938,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	}
 
 	return gofakes3.CopyObjectResult{
-		ETag:         `"` + hex.EncodeToString(c.Hash) + `"`,
+		ETag:         quoteETag(c.Hash),
 		LastModified: gofakes3.NewContentTime(cStat.ModTime()),
 	}, nil
 }

@@ -610,7 +610,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_OOS_ENCODING
 - Type:        Encoding
-- Default:     Slash,InvalidUtf8,Dot
+- Default:     Slash,CrLf,InvalidUtf8,Dot
 
 #### --oos-leave-parts-on-error
 
