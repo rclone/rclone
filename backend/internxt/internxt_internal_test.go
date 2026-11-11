@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -192,54 +193,83 @@ func TestFindFileIgnoresStale(t *testing.T) {
 	assert.Equal(t, "uuid-renamed", file.UUID)
 }
 
-func TestFindFileFindsRecentUpload(t *testing.T) {
+// lagServer wraps existenceServer so the first lag existence checks find
+// nothing, as when the replicas haven't caught up with an upload.
+func lagServer(t *testing.T, stored []storedFile, lag int32) (server *httptest.Server, calls *atomic.Int32) {
+	t.Helper()
+	inner := existenceServer(t, stored)
+	t.Cleanup(inner.Close)
+	calls = new(atomic.Int32)
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/meta") && calls.Add(1) <= lag {
+			w.Header().Set("Content-Type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"existentFiles": []any{}}))
+			return
+		}
+		inner.Config.Handler.ServeHTTP(w, r)
+	}))
+	t.Cleanup(server.Close)
+	return server, calls
+}
+
+func TestWaitForFile(t *testing.T) {
 	ctx := context.Background()
-	// The service has not caught up with the upload so reports nothing
-	server := existenceServer(t, nil)
+	stored := []storedFile{{"uuid-new", "foo", "txt"}}
+
+	t.Run("Visible", func(t *testing.T) {
+		server, calls := lagServer(t, stored, 0)
+		file := testFs(t, server).waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new")
+		require.NotNil(t, file)
+		assert.Equal(t, "uuid-new", file.UUID)
+		assert.Equal(t, int32(1), calls.Load())
+	})
+
+	t.Run("VisibleAfterLag", func(t *testing.T) {
+		server, calls := lagServer(t, stored, 3)
+		file := testFs(t, server).waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new")
+		require.NotNil(t, file)
+		assert.Equal(t, "uuid-new", file.UUID)
+		assert.Equal(t, int32(4), calls.Load())
+	})
+
+	t.Run("NeverVisible", func(t *testing.T) {
+		server, calls := lagServer(t, stored, 1000)
+		f := testFs(t, server)
+		f.pacer.SetRetries(3)
+		assert.Nil(t, f.waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new"))
+		assert.Equal(t, int32(3), calls.Load(), "gives up after the low level retries")
+	})
+
+	t.Run("OtherFileOfSameName", func(t *testing.T) {
+		// The replicas still show the file we just replaced
+		server, _ := lagServer(t, []storedFile{{"uuid-old", "foo", "txt"}}, 0)
+		f := testFs(t, server)
+		f.pacer.SetRetries(2)
+		assert.Nil(t, f.waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new"))
+	})
+}
+
+func TestGetFile(t *testing.T) {
+	ctx := context.Background()
+	server := existenceServer(t, []storedFile{{"uuid-1", "foo", "txt"}})
 	defer server.Close()
 	f := testFs(t, server)
 
-	upload := func(uuid, parentUUID, name string) {
-		recentUploads.add(parentUUID, name, &folders.File{UUID: uuid, PlainName: name})
-	}
-
-	upload("uuid-uploaded", "dir-uuid", "uploaded.bin")
-	file, err := f.findFile(ctx, "uploaded.bin", "dir-uuid")
+	file, err := f.getFile(ctx, "uuid-1")
 	require.NoError(t, err)
-	require.NotNil(t, file, "uploaded")
-	assert.Equal(t, "uuid-uploaded", file.UUID)
+	require.NotNil(t, file)
+	assert.Equal(t, "uuid-1", file.UUID)
 
-	file, err = f.findFile(ctx, "uploaded.bin", "other-dir-uuid")
-	require.NoError(t, err)
-	assert.Nil(t, file, "uploaded to a different directory")
-
-	file, err = f.findFile(ctx, "other.bin", "dir-uuid")
-	require.NoError(t, err)
-	assert.Nil(t, file, "uploaded with a different name")
-
-	upload("uuid-deleted", "dir-uuid", "deleted.bin")
-	recent.deleted("uuid-deleted")
-	file, err = f.findFile(ctx, "deleted.bin", "dir-uuid")
-	require.NoError(t, err)
-	assert.Nil(t, file, "deleted after upload")
-
-	upload("uuid-moved", "dir-uuid", "moved.bin")
-	recent.moved("uuid-moved", "other-dir-uuid", "moved.bin")
-	file, err = f.findFile(ctx, "moved.bin", "dir-uuid")
-	require.NoError(t, err)
-	assert.Nil(t, file, "moved after upload")
+	_, err = f.getFile(ctx, "uuid-missing")
+	assert.Error(t, err, "a file the replicas don't have yet")
 }
 
-func TestRecentUploadsExpire(t *testing.T) {
-	r := uploadTracker{items: map[uploadKey]uploadedFile{}}
-	r.add("dir-uuid", "foo.bin", &folders.File{UUID: "uuid-foo"})
-	require.NotNil(t, r.find("dir-uuid", "foo.bin"))
-
-	r.mu.Lock()
-	for k, v := range r.items {
-		v.expires = time.Now().Add(-time.Second)
-		r.items[k] = v
-	}
-	r.mu.Unlock()
-	assert.Nil(t, r.find("dir-uuid", "foo.bin"), "expired")
+func TestObjectSetMetaData(t *testing.T) {
+	modTime := time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)
+	o := &Object{size: -1, modTime: time.Unix(1, 0), uuid: "old-uuid", id: "old-id"}
+	o.setMetaData(&folders.File{UUID: "uuid", FileID: "id", Size: "42", ModificationTime: modTime})
+	assert.Equal(t, "uuid", o.uuid)
+	assert.Equal(t, "id", o.id)
+	assert.Equal(t, int64(42), o.size)
+	assert.True(t, modTime.Equal(o.modTime), "modification time is replaced, not left as the old file's")
 }

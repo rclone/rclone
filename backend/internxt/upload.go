@@ -69,6 +69,7 @@ type internxtChunkWriter struct {
 	size           int64
 	dirID          string
 	meta           *buckets.CreateMetaResponse
+	file           *folders.File // the file as the service holds it, nil if not visible yet
 	chunkSize      int64
 	hashMu         sync.Mutex
 	nextHashChunk  int
@@ -278,19 +279,8 @@ func (w *internxtChunkWriter) Close(ctx context.Context) error {
 	}
 	w.meta = meta
 
-	// The lookup core makes after the upload can be served by a replica
-	// which doesn't have the file yet so remember it for findFile.
-	recentUploads.add(w.dirID, joinNameExt(name, ext), &folders.File{
-		UUID:             meta.UUID,
-		FileID:           meta.FileID,
-		PlainName:        name,
-		Type:             ext,
-		Size:             meta.Size,
-		Bucket:           meta.Bucket,
-		FolderUUID:       w.dirID,
-		EncryptVersion:   meta.EncryptVersion,
-		ModificationTime: w.src.ModTime(ctx),
-	})
+	// Core looks the object up as soon as we return, so wait for it
+	w.file = w.f.waitForFile(ctx, path.Base(w.remote), w.dirID, meta.UUID)
 
 	return nil
 }
