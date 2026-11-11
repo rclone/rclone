@@ -1,8 +1,9 @@
 package funambol
 
-// OAuth login for O2 Spain, used when pass is empty and application credentials
-// are configured or supplied by the O2 defaults.
-// It sends the same SMS code as the SMS login (sms.go), but runs the OAuth
+// OAuth login for O2 Spain and Movistar Cloud, used when pass is empty and
+// application credentials are configured or supplied by the tenant defaults.
+//
+// On O2 it sends the same SMS code as the SMS login (sms.go), but runs the OAuth
 // flow itself with the client credentials of an O2 desktop app instead of
 // letting the server run it.  This gets a refresh token, from which SAPI
 // sessions are created again unattended when they expire:
@@ -15,6 +16,10 @@ package funambol
 //	  |<-- redirects to clientoauth.html?code&state ---|  (not fetched)
 //	  |-- token (code + verifier) -------------------->|
 //	  |-- /sapi/login/oauth + token ->|  (sets session cookies)
+//
+// rclone can't drive Movistar's login page, so there the user opens the
+// authorization URL in a browser and pastes back the callback URL the login
+// ends on, which carries the code.
 //
 // Every SAPI call carries the token in an "Authorization: oauth" header, and
 // the server returns renewed tokens in the same header of its replies.
@@ -39,10 +44,19 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// O2 Spain's OAuth endpoints; vars so tests can point them elsewhere.
+// The tenants' OAuth endpoints, and Movistar Cloud's SAPI endpoint; vars so
+// tests can point them elsewhere.
 var (
-	o2AuthURL  = o2OAuthAuthorize
-	o2TokenURL = o2OAuthToken
+	o2AuthURL        = o2OAuthAuthorize
+	o2TokenURL       = o2OAuthToken
+	movistarEndpoint = "https://micloud.movistar.es"
+	movistarAuthURL  = movistarOAuthAuthorize
+	movistarTokenURL = movistarOAuthToken
+)
+
+const (
+	movistarOAuthAuthorize = "https://apiseg.telefonica.es/openid/connect/cus/col/auth/oauth/v2/authorize"
+	movistarOAuthToken     = "https://apiseg.telefonica.es/openid/connect/cus/col/auth/oauth/v2/token"
 )
 
 const (
@@ -65,6 +79,21 @@ func (opt *Options) usesOAuth() bool {
 	return opt.ClientID != "" && opt.Pass == ""
 }
 
+// isMovistar reports whether the remote is on Movistar Cloud.  Its OAuth
+// login runs in a browser, as rclone can't drive its login page.
+func (opt *Options) isMovistar() bool {
+	return opt.Endpoint == movistarEndpoint
+}
+
+// oauthEndpoint returns the OAuth authorization server of the remote's tenant.
+// Other tenants than Movistar Cloud use O2's.
+func (opt *Options) oauthEndpoint() oauth2.Endpoint {
+	if opt.isMovistar() {
+		return oauth2.Endpoint{AuthURL: movistarAuthURL, TokenURL: movistarTokenURL}
+	}
+	return oauth2.Endpoint{AuthURL: o2AuthURL, TokenURL: o2TokenURL}
+}
+
 // oauthConfig returns the OAuth client configuration.
 func (f *Fs) oauthConfig() (*oauth2.Config, error) {
 	secret := f.opt.ClientSecret
@@ -78,7 +107,7 @@ func (f *Fs) oauthConfig() (*oauth2.Config, error) {
 	return &oauth2.Config{
 		ClientID:     f.opt.ClientID,
 		ClientSecret: secret,
-		Endpoint:     oauth2.Endpoint{AuthURL: o2AuthURL, TokenURL: o2TokenURL},
+		Endpoint:     f.opt.oauthEndpoint(),
 		RedirectURL:  f.opt.Endpoint + clientOAuthPath,
 		Scopes:       []string{"openid"},
 	}, nil
@@ -101,8 +130,28 @@ func (f *Fs) oauthStart(p *smsPending) (string, error) {
 		oauth2.SetAuthURLParam("acr_values", "2")), nil
 }
 
-// oauthFinish follows the redirect T3 returns after the code check to the
-// OAuth callback, exchanges the code for a token and logs in with it.
+// configBrowser starts a login in a browser and asks for the callback URL the
+// login ends on.  The state and PKCE verifier wait in the config meanwhile.
+func (f *Fs) configBrowser() (*fs.ConfigOut, error) {
+	var p smsPending
+	authURL, err := f.oauthStart(&p)
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.Marshal(p)
+	if err != nil {
+		return nil, err
+	}
+	f.m.Set(configTmpSMS, string(b))
+	return fs.ConfigInput("browser", "config_browser", fmt.Sprintf(`Open this URL in a browser and log in with the code sent to your phone:
+
+%s
+
+Then paste the address of the page the browser ends up on (it contains %q)`, authURL, clientOAuthPath))
+}
+
+// oauthFinish gets the code from redirect, the OAuth callback or a URL that
+// redirects to it, exchanges the code for a token and logs in with it.
 func (f *Fs) oauthFinish(ctx context.Context, p *smsPending, redirect string) error {
 	code, err := f.oauthCode(ctx, p, redirect)
 	if err != nil {
@@ -131,16 +180,12 @@ func (f *Fs) oauthFinish(ctx context.Context, p *smsPending, redirect string) er
 // the code it carries.  The callback itself is not fetched: it is a web page
 // for the desktop apps, which read the code from its URL.
 func (f *Fs) oauthCode(ctx context.Context, p *smsPending, rawURL string) (string, error) {
-	want, err := url.Parse(f.opt.Endpoint + clientOAuthPath)
-	if err != nil {
-		return "", err
-	}
 	for range maxHops {
 		u, err := url.Parse(rawURL)
 		if err != nil {
 			return "", errors.New("unparsable OAuth redirect")
 		}
-		if u.Scheme == want.Scheme && u.Host == want.Host && u.Path == want.Path {
+		if f.isOAuthCallback(u) {
 			q := u.Query()
 			if q.Get("state") != p.State {
 				return "", errors.New("OAuth state mismatch")
@@ -158,11 +203,17 @@ func (f *Fs) oauthCode(ctx context.Context, p *smsPending, rawURL string) (strin
 			return "", err
 		}
 		if next == "" {
-			return "", fmt.Errorf("OAuth redirects stopped before %s", want.Path)
+			return "", fmt.Errorf("OAuth redirects stopped before %s", clientOAuthPath)
 		}
 		rawURL = next
 	}
-	return "", fmt.Errorf("OAuth redirects did not reach %s", want.Path)
+	return "", fmt.Errorf("OAuth redirects did not reach %s", clientOAuthPath)
+}
+
+// isOAuthCallback reports whether u is the OAuth callback page on the endpoint.
+func (f *Fs) isOAuthCallback(u *url.URL) bool {
+	want := f.jarURL()
+	return u.Scheme == want.Scheme && strings.EqualFold(u.Host, want.Host) && u.Path == strings.TrimSuffix(want.Path, "/")+clientOAuthPath
 }
 
 // putToken saves token in the config.
@@ -426,6 +477,13 @@ func (f *Fs) saveOAuthHeader(resp *http.Response, sent string) {
 type oauthTransport struct {
 	f    *Fs
 	base http.RoundTripper
+}
+
+// CloseIdleConnections forwards connection cleanup to the underlying transport.
+func (t *oauthTransport) CloseIdleConnections() {
+	if closer, ok := t.base.(interface{ CloseIdleConnections() }); ok {
+		closer.CloseIdleConnections()
+	}
 }
 
 // RoundTrip implements http.RoundTripper.

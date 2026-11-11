@@ -244,13 +244,16 @@ type IDFieldsRequest struct {
 }
 
 // ChangesResponse is returned by /sapi/profile/changes?action=get.  Queried
-// with from=0 it describes the full account state: data.file.U holds the id of
-// every live file — crucially including items detached from any folder, which
-// no folder listing (and no folder-less media listing) will ever return.
+// with from=0 it describes the full account state: data.file.N and
+// data.file.U hold the ids of the live generic files — crucially including
+// items detached from any folder, which no folder listing (and no
+// folder-less media listing) will ever return.  Pictures, videos and audio
+// are reported under their own media type.
 type ChangesResponse struct {
 	Status
 	Data struct {
 		File struct {
+			New     []ID `json:"N"`
 			Updated []ID `json:"U"`
 			Deleted []ID `json:"D"`
 		} `json:"file"`
@@ -274,6 +277,7 @@ type FieldsRequest struct {
 // UploadMetadataRequest is the first phase of an upload
 type UploadMetadataRequest struct {
 	Data struct {
+		ID               ID     `json:"id,omitempty"`
 		Name             string `json:"name"`
 		ContentType      string `json:"contenttype"`
 		Size             int64  `json:"size"`

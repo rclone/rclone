@@ -28,7 +28,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -56,7 +55,7 @@ var mediaFields = []string{
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "funambol",
-		Description: "Funambol / OneMediaHub (O2 Cloud and other telco tenants)",
+		Description: "Funambol / OneMediaHub (O2 Cloud, Movistar Cloud and other telco tenants)",
 		NewFs:       NewFs,
 		Config:      Config,
 		CommandHelp: commandHelp,
@@ -67,7 +66,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:       "pass",
-			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2): rclone then logs in with an SMS code sent to the mobile\nnumber in user. O2 Spain uses built-in OAuth application credentials\nso the session can renew itself.",
+			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2, and Movistar Cloud accounts): rclone then logs in with an SMS\ncode sent to the mobile number in user. O2 Spain and Movistar Cloud use\nbuilt-in OAuth application credentials so the session can renew itself.",
 			IsPassword: true,
 		}, {
 			Name: "cookies",
@@ -96,26 +95,34 @@ here, registering itself just like the official app.  Set it only to reuse a spe
 Funambol / OneMediaHub is white-labelled by several operators.  Leave
 this set to the default for O2 Spain, or point it at another tenant,
 e.g. https://www.cloud.example.com`,
-			Default:  defaultEndpoint,
+			Default: defaultEndpoint,
+			Examples: []fs.OptionExample{{
+				Value: defaultEndpoint,
+				Help:  "O2 Cloud (Spain)",
+			}, {
+				Value: movistarEndpoint,
+				Help:  "Movistar Cloud (Spain)",
+			}},
 			Advanced: true,
 		}, {
 			Name: "client_id",
-			Help: `OAuth client ID of an O2 Spain desktop app.
+			Help: `OAuth client ID of a Telefónica desktop app.
 
-Only for O2 Spain accounts without a password. Leave this and client_secret
-blank to use the built-in O2 Cloud macOS application credentials at the default
-endpoint. The SMS login obtains a refresh token so sessions can renew unattended.
+Only for O2 Spain and Movistar Cloud accounts without a password. Leave this
+and client_secret blank to use the built-in application credentials: O2 Cloud
+macOS at the default endpoint, Movistar Cloud Windows at Movistar's. The login
+obtains a refresh token so sessions can renew unattended.
 A custom client ID does not inherit the built-in application's secret.`,
 			Advanced:  true,
 			Sensitive: true,
 		}, {
 			Name:       "client_secret",
-			Help:       "OAuth client secret that goes with client_id, if it has one. Leave both blank to use the built-in O2 defaults.",
+			Help:       "OAuth client secret that goes with client_id, if it has one. Leave both blank to use the built-in defaults.",
 			IsPassword: true,
 			Advanced:   true,
 		}, {
 			Name:     "oauth_platform",
-			Help:     "Platform of the OAuth application. Leave blank for macos with the built-in O2 credentials, or windows with custom credentials.",
+			Help:     "Platform of the OAuth application. Leave blank for macos with the built-in O2 credentials, or windows otherwise.",
 			Default:  "",
 			Advanced: true,
 		}, {
@@ -430,7 +437,9 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			resp, err = f.srv.CallJSON(ctx, requestOpts, request, response)
 			err = redactKey(err)
 			if retry, rErr := shouldRetry(ctx, resp, err); retry || err != nil {
-				return retry, rErr
+				// The CDN answers 403 with an HTML page during outages, which clear up.
+				var he *htmlPageError
+				return retry || (errors.As(err, &he) && he.status == http.StatusForbidden), rErr
 			}
 			// HTTP succeeded: retry transient SAPI exceptions (HTTP 200 +
 			// error envelope) with the pacer's backoff. SEC-1003 and other
@@ -630,12 +639,16 @@ func (f *Fs) listMedia(ctx context.Context, dirID string, fn func(*api.Item)) er
 	}
 }
 
-// listFileIDs returns the id of every live file in the account, from the
-// profile-changes feed queried from time zero.  This is the only enumeration
-// that includes items detached from any folder: a server-side folder delete
-// orphans the contained files, which then vanish from every folder listing
-// (and from the folder-less media listing, which returns nothing) but remain
-// in the changes feed and keep counting against the quota.
+// listFileIDs returns the id of every live generic file in the account, from
+// the profile-changes feed queried from time zero.  This is the only
+// enumeration that includes items detached from any folder: a server-side
+// folder delete orphans the contained files, which then vanish from every
+// folder listing (and from the folder-less media listing, which returns
+// nothing) but remain in the changes feed and keep counting against the quota.
+//
+// Pictures, videos and audio are left out: the service can take them out of
+// a folder without deleting them, so being in no folder doesn't make them
+// orphans.
 func (f *Fs) listFileIDs(ctx context.Context) ([]string, error) {
 	var res api.ChangesResponse
 	opts := rest.Opts{
@@ -650,9 +663,14 @@ func (f *Fs) listFileIDs(ctx context.Context) ([]string, error) {
 	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
 		return nil, fmt.Errorf("list file ids: %w", err)
 	}
-	ids := make([]string, 0, len(res.Data.File.Updated))
-	for _, id := range res.Data.File.Updated {
-		if id.String() != "" {
+	seen := make(map[api.ID]bool, len(res.Data.File.Deleted))
+	for _, id := range res.Data.File.Deleted {
+		seen[id] = true
+	}
+	var ids []string
+	for _, id := range slices.Concat(res.Data.File.New, res.Data.File.Updated) {
+		if id != "" && !seen[id] {
+			seen[id] = true
 			ids = append(ids, id.String())
 		}
 	}
@@ -971,15 +989,34 @@ func (f *Fs) purgeDir(ctx context.Context, dirID string) error {
 	return f.deleteFolder(ctx, dirID)
 }
 
+// deleteMedia moves the media items with the given ids to the trash.  Items
+// that are already there count as deleted.
 func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
 	var req api.IDsRequest
 	req.Data.IDs = numericIDs(ids)
 	if len(req.Data.IDs) == 0 {
 		return nil
 	}
+	// A file can't be deleted while the server validates it after its upload.
+	ctx, cancel := context.WithTimeout(ctx, fileOperationTimeout(0))
+	defer cancel()
 	opts := rest.Opts{Method: "POST", Path: "/sapi/media", Parameters: url.Values{"action": {"delete"}}}
 	var res api.Status
-	return f.callJSON(ctx, &opts, &req, &res)
+	err := f.callFileOperation(ctx, &opts, &req, &res)
+	var ae *api.Error
+	if !errors.As(err, &ae) || ae.Code != "MED-1022" {
+		return err
+	}
+	if len(req.Data.IDs) == 1 {
+		return nil
+	}
+	// The reply doesn't say whether the rest of the batch was deleted.
+	for _, id := range req.Data.IDs {
+		if err := f.deleteMedia(ctx, id.String()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // commandHelp describes the backend-specific commands.
@@ -1082,8 +1119,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// Put the object into the container.  No existence check here: Update sweeps
-// every same-name copy from a fresh listing before uploading anyway.
+// Put the object into the container. Update finds an existing item to replace.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	o := &Object{fs: f, remote: src.Remote()}
 	return o, o.Update(ctx, in, src, options...)
@@ -1155,10 +1191,9 @@ func (f *Fs) waitForFile(ctx context.Context, id, name, folderID string, size in
 				item.FolderID = item.Folder
 			}
 			last = &item
-			if item.MediaType != "" && item.MediaType != uploadMediaType {
-				return &item, nil
-			}
-			if (item.Status == "U" || item.Status == "N") && item.URL != "" &&
+			// Only generic files are known to report their validation.
+			validated := !isGenericFile(&item) || (item.Status == "U" || item.Status == "N") && item.URL != ""
+			if validated &&
 				(name == "" || item.Name == name) && (folderID == "" || item.FolderID.String() == folderID) &&
 				(size < 0 || item.Size == size) {
 				return &item, nil
@@ -1199,7 +1234,17 @@ func (f *Fs) callFileOperation(ctx context.Context, opts *rest.Opts, req, res an
 	}
 }
 
-// fileOperationSource rejects other accounts and untested media types before any writes.
+// isGenericFile reports whether item is a generic file rather than a
+// picture, video or audio item.
+func isGenericFile(item *api.Item) bool {
+	return item.MediaType == "" || item.MediaType == uploadMediaType
+}
+
+// movableMediaTypes are the media types whose items Move can move.  Each has
+// its own metadata endpoint, /sapi/upload/<type>, as in the web client.
+var movableMediaTypes = []string{uploadMediaType, "picture", "video", "audio"}
+
+// fileOperationSource rejects other accounts before any writes.
 func (f *Fs) fileOperationSource(ctx context.Context, src fs.Object, cant error) (*Object, *api.Item, error) {
 	o, ok := src.(*Object)
 	if !ok || o.fs.name != f.name || o.fs.opt.Endpoint != f.opt.Endpoint || o.fs.rootID == "" || o.fs.rootID != f.rootID {
@@ -1214,9 +1259,6 @@ func (f *Fs) fileOperationSource(ctx context.Context, src fs.Object, cant error)
 	item, err := o.fs.waitForFile(ctx, o.id, "", "", -1)
 	if err != nil {
 		return nil, nil, err
-	}
-	if item.MediaType != "" && item.MediaType != uploadMediaType {
-		return nil, nil, cant
 	}
 	return o, item, nil
 }
@@ -1260,6 +1302,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	o, item, err := f.fileOperationSource(ctx, src, fs.ErrorCantCopy)
 	if err != nil {
 		return nil, err
+	}
+	// The server only has a copy operation for generic files.
+	if !isGenericFile(item) {
+		return nil, fs.ErrorCantCopy
 	}
 	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
@@ -1418,7 +1464,7 @@ func sameContent(ctx context.Context, a, b fs.Object, size int64) (bool, error) 
 	return true, nil
 }
 
-// Move moves generic files on the same configured remote using metadata only.
+// Move moves files on the same configured remote using metadata only.
 // Extension changes return fs.ErrorCantMove so rclone can use server-side copy/delete.
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	ctx, cancel := context.WithTimeout(ctx, fileOperationTimeout(src.Size()))
@@ -1426,6 +1472,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	o, item, err := f.fileOperationSource(ctx, src, fs.ErrorCantMove)
 	if err != nil {
 		return nil, err
+	}
+	mediaType := item.MediaType
+	if mediaType == "" {
+		mediaType = uploadMediaType
+	}
+	if !slices.Contains(movableMediaTypes, mediaType) {
+		return nil, fs.ErrorCantMove
 	}
 	name := f.opt.Enc.FromStandardName(path.Base(remote))
 	// SAPI silently retains the old extension when updating metadata.
@@ -1451,7 +1504,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	body := url.Values{"data": {string(encoded)}}.Encode()
 	opts := rest.Opts{
-		Method: "POST", Path: "/sapi/upload/file", Parameters: url.Values{"action": {"save-metadata"}},
+		Method: "POST", Path: "/sapi/upload/" + mediaType, Parameters: url.Values{"action": {"save-metadata"}},
 		ContentType: "application/x-www-form-urlencoded;charset=UTF-8",
 		GetBody:     func() (io.ReadCloser, error) { return io.NopCloser(strings.NewReader(body)), nil },
 	}
@@ -1681,6 +1734,9 @@ func (o *Object) fetchURL(ctx context.Context) error {
 
 // Update the object with the contents of the io.Reader
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	if strings.EqualFold(path.Ext(o.remote), ".tmp") {
+		return fserrors.NoRetryError(errors.New("funambol: the service refuses filenames ending in .tmp"))
+	}
 	size := src.Size()
 	if size < 0 {
 		return errors.New("funambol: can't upload unknown-sized objects")
@@ -1694,44 +1750,66 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	name := o.fs.opt.Enc.FromStandardName(leaf)
 
-	// Overwrite: the server appends " (1)", " (2)" … when a name already
-	// exists rather than replacing, so remove any current same-name item
-	// before uploading to keep the requested name.  Sweep ALL copies from a
-	// fresh listing, not just the one this object knows about: a retried
-	// upload whose first attempt timed out after the server had committed it
-	// leaves an extra same-name copy behind (the fresh copy is not listable
-	// straight away, so the retry cannot see it and delete it).
+	// Supplying a generic file's ID replaces its content without deleting it.
+	// Check the cache as well as the listing: an upload that timed out after
+	// committing may not be indexed yet when the caller retries it.
 	ids := make([]string, 0, 1)
-	if o.id != "" {
+	items := make(map[string]api.Item)
+	absPath := o.fs.absPath(o.remote)
+	if cached, ok := o.fs.uploads.get(absPath); ok {
+		id := cached.ID.String()
+		ids = append(ids, id)
+		items[id] = cached
+	}
+	if o.id != "" && !slices.Contains(ids, o.id) {
 		ids = append(ids, o.id)
 	}
-	absPath := o.fs.absPath(o.remote)
-	if cached, ok := o.fs.uploads.get(absPath); ok && cached.ID.String() != o.id {
-		ids = append(ids, cached.ID.String())
-	}
-	o.fs.uploads.remove(absPath)
 	lcLeaf := strings.ToLower(leaf)
 	lErr := o.fs.listMedia(ctx, dirID, func(item *api.Item) {
 		id := item.ID.String()
-		if id == "" || slices.Contains(ids, id) {
+		if id == "" {
 			return
 		}
 		if strings.ToLower(o.fs.opt.Enc.ToStandardName(item.Name)) == lcLeaf {
-			ids = append(ids, id)
+			items[id] = *item
+			if !slices.Contains(ids, id) {
+				ids = append(ids, id)
+			}
 		}
 	})
 	if lErr != nil {
 		fs.Logf(o, "couldn't check for previous versions before upload: %v", lErr)
 	}
-	if len(ids) > 0 {
-		if dErr := o.fs.deleteMedia(ctx, ids...); dErr != nil {
-			fs.Logf(o, "couldn't remove previous version(s) before upload: %v", dErr)
+	if _, known := items[o.id]; o.id != "" && !known {
+		found, err := o.fs.getMediaByIDs(ctx, []string{o.id}, []string{"name", "size"})
+		if err != nil {
+			return fmt.Errorf("check overwrite target: %w", err)
+		}
+		for _, item := range found {
+			items[item.ID.String()] = item
 		}
 	}
-	o.id = ""
+	var overwriteID string
+	for _, id := range ids {
+		if item, ok := items[id]; ok && isGenericFile(&item) {
+			overwriteID = id
+			break
+		}
+	}
+	ids = slices.DeleteFunc(ids, func(id string) bool { return id == overwriteID })
+	if len(ids) > 0 {
+		if dErr := o.fs.deleteMedia(ctx, ids...); dErr != nil {
+			return fmt.Errorf("remove duplicate or unsupported previous versions before upload: %w", dErr)
+		}
+	}
+	if overwriteID == "" {
+		o.fs.uploads.remove(absPath)
+		o.id = ""
+	}
 
 	// Phase 1: metadata -> obtain the upload GUID
 	var metaReq api.UploadMetadataRequest
+	metaReq.Data.ID = api.ID(overwriteID)
 	metaReq.Data.Name = name
 	metaReq.Data.ContentType = fs.MimeType(ctx, src)
 	metaReq.Data.Size = size
@@ -1745,7 +1823,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Path:       "/sapi/upload/" + uploadMediaType,
 		Parameters: url.Values{"action": {"save-metadata"}},
 	}
-	if err := o.fs.callJSON(ctx, &metaOpts, &metaReq, &metaRes); err != nil {
+	metaCtx, cancel := context.WithTimeout(ctx, fileOperationTimeout(size))
+	defer cancel()
+	if err := o.fs.callFileOperation(metaCtx, &metaOpts, &metaReq, &metaRes); err != nil {
 		return fmt.Errorf("upload metadata: %w", err)
 	}
 	guid := metaRes.ID.String()
@@ -1861,7 +1941,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = browserUA
 
-	client := fshttp.NewClient(ctx)
+	client, err := newSAPIClient(ctx, opt.Endpoint)
+	if err != nil {
+		return nil, err
+	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err

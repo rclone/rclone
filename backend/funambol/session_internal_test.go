@@ -192,7 +192,7 @@ func TestConfigNonJSONReply(t *testing.T) {
 
 	_, err := Config(context.Background(), "test", m, fs.ConfigIn{})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "blocked")
+	assert.Contains(t, err.Error(), "HTML page")
 }
 
 // 403 points at a disabled account or a captcha.
@@ -204,4 +204,19 @@ func TestConfigForbidden(t *testing.T) {
 
 	_, err := Config(context.Background(), "test", m, fs.ConfigIn{})
 	require.ErrorIs(t, err, errCaptcha)
+}
+
+// An HTML error page gets a hint that the request never reached the API.
+func TestSapiErrorHandlerHTMLHint(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: http.StatusForbidden,
+		Status:     "403 Forbidden",
+		Header:     http.Header{"Server": {"CloudFront"}},
+		Body:       io.NopCloser(strings.NewReader("<!DOCTYPE HTML PUBLIC><HTML>ERROR</HTML>")),
+	}
+
+	err := sapiErrorHandler(resp)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "CloudFront")
+	assert.NotContains(t, err.Error(), "DOCTYPE")
 }
