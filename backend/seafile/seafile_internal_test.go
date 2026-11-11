@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -275,7 +277,7 @@ func TestUploadErrorReleasesSource(t *testing.T) {
 	in, err := asyncreader.New(ctx, io.NopCloser(readers.NewPatternReader(64<<20)), 4)
 	require.NoError(t, err)
 
-	_, err = f.upload(ctx, in, server.URL+"/upload", "/file.bin")
+	_, err = f.upload(ctx, in, server.URL+"/upload", "/file.bin", time.Time{})
 	require.Error(t, err)
 
 	closed := make(chan struct{})
@@ -288,4 +290,107 @@ func TestUploadErrorReleasesSource(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("source still in use after upload returned")
 	}
+}
+
+// testPassword is the password the downgrade tests look for on the
+// plaintext hop. It is distinctive so that it can't match the JSON
+// field names of the authentication request.
+const testPassword = "s3cret-pass-4242"
+
+// Test2FAGetToken checks the 2FA config flow posts the credentials to
+// the auth token endpoint without doubling the slash when the
+// configured URL ends in one, and saves the token it gets back.
+func Test2FAGetToken(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"token":"token123"}`))
+	}))
+	defer srv.Close()
+
+	m := configmap.Simple{"url": srv.URL + "/", "2fa": "true", "user": "username", "pass": obscure.MustObscure(testPassword)}
+	out, err := Config(context.Background(), "test", m, fs.ConfigIn{State: "2fa_do", Result: "123456"})
+	require.NoError(t, err)
+	assert.Nil(t, out)
+	assert.Equal(t, "/api2/auth-token/", gotPath)
+	assert.Equal(t, "token123", m["auth_token"])
+	assert.Equal(t, "", m["pass"])
+}
+
+// newDowngradeServers returns an HTTPS server which answers the server
+// info request itself and redirects every other request to a plaintext
+// HTTP server on the same machine. The returned flags record whether
+// the plaintext server ever received an Authorization header or
+// testPassword in a request body.
+func newDowngradeServers(t *testing.T) (tlsSrv *httptest.Server, sawAuth, sawPassword *atomic.Bool) {
+	t.Helper()
+	sawAuth, sawPassword = new(atomic.Bool), new(atomic.Bool)
+
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			sawAuth.Store(true)
+		}
+		body, _ := io.ReadAll(r.Body)
+		if strings.Contains(string(body), testPassword) {
+			sawPassword.Store(true)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("[]"))
+	}))
+	t.Cleanup(plain.Close)
+
+	tlsSrv = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api2/server-info/" {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"version":"9.0.0"}`))
+			return
+		}
+		http.Redirect(w, r, plain.URL+r.URL.Path, http.StatusTemporaryRedirect)
+	}))
+	t.Cleanup(tlsSrv.Close)
+
+	return tlsSrv, sawAuth, sawPassword
+}
+
+// TestRefuseHTTPSDowngradeRedirect checks that neither the
+// authorization token nor the password is sent over plaintext HTTP
+// when the server redirects an HTTPS request to an http:// URL.
+func TestRefuseHTTPSDowngradeRedirect(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.InsecureSkipVerify = true // trust the httptest certificate
+
+	// Every API call made through the Fs carries the token.
+	t.Run("Token", func(t *testing.T) {
+		tlsSrv, sawAuth, _ := newDowngradeServers(t)
+		m := configmap.Simple{"url": tlsSrv.URL, "user": "username", "auth_token": "secret"}
+		fsys, err := NewFs(ctx, "test", "", m)
+		require.NoError(t, err)
+		f := fsys.(*Fs)
+		_, err = f.getLibraries(ctx)
+		assert.False(t, sawAuth.Load(), "authorization token was sent over plaintext HTTP")
+		assert.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	// Without a token NewFs posts the user's password to get one.
+	t.Run("Login", func(t *testing.T) {
+		tlsSrv, _, sawPassword := newDowngradeServers(t)
+		m := configmap.Simple{"url": tlsSrv.URL, "user": "username", "pass": obscure.MustObscure(testPassword)}
+		_, err := NewFs(ctx, "test", "", m)
+		assert.False(t, sawPassword.Load(), "password was sent over plaintext HTTP")
+		assert.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	// The 2FA config flow posts the user's password to get a token.
+	t.Run("Password", func(t *testing.T) {
+		tlsSrv, _, sawPassword := newDowngradeServers(t)
+		m := configmap.Simple{"url": tlsSrv.URL, "2fa": "true", "user": "username", "pass": obscure.MustObscure(testPassword)}
+		out, err := Config(ctx, "test", m, fs.ConfigIn{State: "2fa_do", Result: "123456"})
+		require.NoError(t, err)
+		require.NotNil(t, out)
+		assert.False(t, sawPassword.Load(), "password was sent over plaintext HTTP")
+		assert.Equal(t, "2fa_error", out.State)
+		require.NotNil(t, out.Option)
+		assert.Contains(t, out.Option.Help, rest.ErrHTTPSDowngrade.Error())
+	})
 }

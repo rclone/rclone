@@ -5,6 +5,8 @@ This takes the following parameters:
 - path1 (required) - (string) a remote directory string e.g. `drive:path1`
 - path2 (required) - (string) a remote directory string e.g. `drive:path2`
 - dryRun - (bool) dry-run mode
+- maxDelete - (int) Safety check on maximum percentage of deleted files
+allowed. If exceeded, the bisync run will abort. (default: 50%)
 - backupDir1 - (string) --backup-dir for Path1. Must be a non-overlapping path on
 the same remote.  
 - backupDir2 - (string) --backup-dir for Path2. Must be a non-overlapping path on
@@ -34,6 +36,8 @@ unavailable. (warning: may be slow and use lots of data!)
 using with --verbose  
 - ignoreListingChecksum - (bool) Do not use checksums for listings (add --ignore-
 checksum to additionally skip post-copy checksum checks)  
+- maxDeleteRenamesAware - (bool) Exclude tracked renames from the --max-delete
+safety check (requires --track-renames)  
 - maxLock - (Duration) Consider lock files older than this to be expired
 (default: 0 (never expire)) (minimum: 2m)  
 - noCleanup - (bool) Retain working files (useful for troubleshooting and

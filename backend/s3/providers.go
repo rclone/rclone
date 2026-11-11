@@ -22,6 +22,7 @@ var NewYamlMap = orderedmap.New[string, string]
 type Quirks struct {
 	ListVersion                 *int   `yaml:"list_version,omitempty"`     // 1 or 2
 	ForcePathStyle              *bool  `yaml:"force_path_style,omitempty"` // true = path-style
+	NoCheckBucket               *bool  `yaml:"no_check_bucket,omitempty"`  // true = skip HeadBucket/CreateBucket
 	ListURLEncode               *bool  `yaml:"list_url_encode,omitempty"`
 	UseMultipartEtag            *bool  `yaml:"use_multipart_etag,omitempty"`
 	UseAlreadyExists            *bool  `yaml:"use_already_exists,omitempty"`

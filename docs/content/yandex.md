@@ -278,6 +278,26 @@ Properties:
 - Type:        Duration
 - Default:     0s
 
+#### --yandex-app-folder
+
+Use the application folder as the root.
+
+If you registered your own OAuth application with Yandex with only
+the "Application Folder" permission (cloud_api:disk.app_folder)
+instead of full disk access, then rclone needs to address paths with
+the "app:/" prefix instead of the usual "disk:/" prefix, otherwise
+all requests fail with a 403 Forbidden error.
+
+Set this to true if your OAuth token only has access to the
+application folder.
+
+Properties:
+
+- Config:      app_folder
+- Env Var:     RCLONE_YANDEX_APP_FOLDER
+- Type:        bool
+- Default:     false
+
 #### --yandex-description
 
 Description of the remote.

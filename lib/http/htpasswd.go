@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/random"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -97,13 +98,23 @@ func isBcrypt(secret string) bool {
 	return false
 }
 
-// supportedHash returns true if secret is in a format checkHash
-// can check.
-func supportedHash(secret string) bool {
-	if _, _, ok := parseMD5Crypt(secret); ok {
-		return true
+// hashCost ranks secret by how expensive it is to check a password
+// against it, or returns -1 if it isn't in a supported format.
+func hashCost(secret string) int {
+	switch {
+	case strings.HasPrefix(secret, "{SHA}"):
+		return 0
+	case isBcrypt(secret):
+		cost, err := bcrypt.Cost([]byte(secret))
+		if err != nil {
+			return -1
+		}
+		return 2 + cost
 	}
-	return strings.HasPrefix(secret, "{SHA}") || isBcrypt(secret)
+	if _, _, ok := parseMD5Crypt(secret); ok {
+		return 1
+	}
+	return -1
 }
 
 // checkHash returns true if password matches the hashed secret.
@@ -121,6 +132,37 @@ func checkHash(secret, password string) bool {
 		return subtle.ConstantTimeCompare([]byte(secret), []byte(md5Crypt(password, salt, magic))) == 1
 	}
 	return false
+}
+
+// decoyHash returns a hash of a random password in the same format
+// and with the same cost as secret, so checking a password against it
+// takes as long as checking against secret but never succeeds.
+//
+// It returns "" if secret isn't in a supported format.
+func decoyHash(secret string) string {
+	cost := hashCost(secret)
+	if cost < 0 {
+		return ""
+	}
+	password, err := random.Password(128)
+	if err != nil {
+		fs.Errorf(nil, "Failed to make htpasswd decoy hash: %v", err)
+		return ""
+	}
+	switch cost {
+	case 0:
+		sum := sha1.Sum([]byte(password))
+		return "{SHA}" + base64.StdEncoding.EncodeToString(sum[:])
+	case 1:
+		magic, salt, _ := parseMD5Crypt(secret)
+		return md5Crypt(password, salt, magic)
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), cost-2)
+	if err != nil {
+		fs.Errorf(nil, "Failed to make htpasswd decoy hash: %v", err)
+		return ""
+	}
+	return string(hash)
 }
 
 // parseHtpasswd reads user:hash lines from in, returning a map of
@@ -143,7 +185,7 @@ func parseHtpasswd(name string, in io.Reader) (map[string]string, error) {
 			fs.Errorf(name, "Ignoring malformed htpasswd line %d", lineNumber)
 			continue
 		}
-		if !supportedHash(secret) {
+		if hashCost(secret) < 0 {
 			fs.Errorf(name, "Password for htpasswd user %q is in an unsupported format - use bcrypt, MD5 or SHA1", user)
 		}
 		users[user] = secret
@@ -160,15 +202,17 @@ type htpasswdFile struct {
 	modTime time.Time
 	size    int64
 	users   map[string]string // user => hashed password
+	decoy   string            // hash to check unknown users against
 }
 
-// load reads the users from the file. On error it leaves no users and
-// the load is retried on the next lookup, as fixing errors such as
-// permissions needn't change the file's size or modification time.
+// load reads the users from the file and makes a decoy hash from
+// the most expensive entry. On error it leaves no users and the load
+// is retried on the next lookup, as fixing errors such as permissions
+// needn't change the file's size or modification time.
 //
 // Call with mu held.
 func (h *htpasswdFile) load(info os.FileInfo) {
-	h.loaded, h.users = false, nil
+	h.loaded, h.users, h.decoy = false, nil, ""
 	f, err := os.Open(h.path)
 	if err != nil {
 		fs.Errorf(nil, "Failed to read htpasswd file: %v", err)
@@ -180,28 +224,42 @@ func (h *htpasswdFile) load(info os.FileInfo) {
 		fs.Errorf(nil, "Failed to read htpasswd file %q: %v", h.path, err)
 		return
 	}
+	best, bestCost := "", -1
+	for _, secret := range users {
+		if cost := hashCost(secret); cost > bestCost {
+			best, bestCost = secret, cost
+		}
+	}
 	h.loaded, h.modTime, h.size = true, info.ModTime(), info.Size()
-	h.users = users
+	h.users, h.decoy = users, decoyHash(best)
 }
 
 // lookup returns the hashed password for user, or "" if there isn't
-// one.
-func (h *htpasswdFile) lookup(user string) string {
+// one, and the decoy hash.
+func (h *htpasswdFile) lookup(user string) (secret, decoy string) {
 	info, err := os.Stat(h.path)
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if err != nil {
 		fs.Errorf(nil, "Failed to read htpasswd file: %v", err)
-		h.loaded, h.users = false, nil
-		return ""
+		h.loaded, h.users, h.decoy = false, nil, ""
+		return "", ""
 	}
 	if !h.loaded || !info.ModTime().Equal(h.modTime) || info.Size() != h.size {
 		h.load(info)
 	}
-	return h.users[user]
+	return h.users[user], h.decoy
 }
 
 // check returns true if user and password match an entry in the file.
 func (h *htpasswdFile) check(user, password string) bool {
-	return checkHash(h.lookup(user), password)
+	secret, decoy := h.lookup(user)
+	if hashCost(secret) < 0 {
+		// Check unknown users against the decoy so they take as
+		// long to reject as a known user with the wrong password,
+		// otherwise the timing reveals which users exist.
+		_ = checkHash(decoy, password)
+		return false
+	}
+	return checkHash(secret, password)
 }

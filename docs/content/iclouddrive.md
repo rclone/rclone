@@ -24,6 +24,10 @@ This backend serves two Apple services:
 for 30 days. After which you will have to reauthenticate with `rclone reconnect`
 or `rclone config`.
 
+China Mainland (GCBD) iCloud accounts are supported. rclone normally detects
+them automatically during sign-in. The advanced `region` option can be set to
+`china` if automatic detection is unavailable.
+
 ## Authentication
 
 rclone authenticates with Apple using [SRP (Secure Remote Password)](https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol),

@@ -973,3 +973,19 @@ func TestBufferForObjectLockMD5(t *testing.T) {
 		assert.Equal(t, inUse, pool.Global().InUse(), "pool buffers leaked")
 	})
 }
+
+func TestSetQuirksNoCheckBucket(t *testing.T) {
+	opt := &Options{}
+	setQuirks(opt, loadProvider("AbrhaStorage"))
+	assert.True(t, opt.NoCheckBucket)
+
+	opt = &Options{}
+	setQuirks(opt, loadProvider("AWS"))
+	assert.False(t, opt.NoCheckBucket)
+}
+
+func TestLoadProviderByListedName(t *testing.T) {
+	for name := range loadProviders() {
+		assert.NotNil(t, loadProvider(name), name)
+	}
+}

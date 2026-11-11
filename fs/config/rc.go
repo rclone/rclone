@@ -94,8 +94,18 @@ func init() {
 		Fn:    rcListRemotes,
 		Title: "Lists the remotes in the config file and defined in environment variables.",
 		Help: `
+This takes the following parameters:
+
+- long - set to true to return an object for each remote instead of its name
+
 Returns
-- remotes - array of remote names
+- remotes - array of remote names, or if long is set, array of objects with
+    - name - name of the remote
+    - type - type of the remote, e.g. "s3"
+    - source - where the remote is defined: "file" or "environment"
+    - description - description of the remote
+
+The objects are the same as those output by "rclone listremotes --long --json".
 
 See the [listremotes](/commands/rclone_listremotes/) command for more information on the above.
 `,
@@ -105,6 +115,17 @@ See the [listremotes](/commands/rclone_listremotes/) command for more informatio
 // Return the a list of remotes in the config file
 // including any defined by environment variables.
 func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	long, err := in.GetBool("long")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	if long {
+		remotes := GetRemotes()
+		if remotes == nil {
+			remotes = []Remote{}
+		}
+		return rc.Params{"remotes": remotes}, nil
+	}
 	remoteNames := GetRemoteNames()
 	if remoteNames == nil {
 		remoteNames = []string{}

@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -240,6 +242,66 @@ func TestMiddlewareAuth(t *testing.T) {
 				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "preflight with no creds and no CORS should return unauthorized")
 			})
 		})
+	}
+}
+
+// authTime returns the average time handler takes to reject user with
+// a wrong password.
+//
+// It times many attempts with testing.Benchmark rather than timing them
+// one at a time as a single rejection can take less than the resolution
+// of the clock on Windows.
+func authTime(t *testing.T, handler http.Handler, user string) time.Duration {
+	t.Helper()
+	reject := func() int {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.SetBasicAuth(user, "definitely-wrong-password")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	require.Equal(t, http.StatusUnauthorized, reject())
+	result := testing.Benchmark(func(b *testing.B) {
+		for b.Loop() {
+			reject()
+		}
+	})
+	return time.Duration(result.NsPerOp())
+}
+
+// Rejecting an unknown user must take about as long as rejecting a
+// known user with a wrong password otherwise the timing reveals which
+// users exist.
+func TestMiddlewareAuthHtpasswdUnknownUserTiming(t *testing.T) {
+	handler := MiddlewareAuthHtpasswd("./testdata/.htpasswd", "test")(testEchoHandler([]byte("ok")))
+	known := authTime(t, handler, "bcrypt")
+	unknown := authTime(t, handler, "nosuchuser")
+	assert.Greater(t, unknown, known/4, "unknown user rejected in %v but known user in %v", unknown, known)
+}
+
+// As TestMiddlewareAuthHtpasswdUnknownUserTiming but for --user/--pass
+func TestMiddlewareAuthBasicUnknownUserTiming(t *testing.T) {
+	handler := MiddlewareAuthBasic("user", "pass", "test", "dlPL2MqE")(testEchoHandler([]byte("ok")))
+	known := authTime(t, handler, "user")
+	unknown := authTime(t, handler, "nosuchuser")
+	assert.Greater(t, unknown, known/4, "unknown user rejected in %v but known user in %v", unknown, known)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.SetBasicAuth("user", "pass")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+// An unknown user must never be authenticated by the decoy secret
+func TestMiddlewareAuthHtpasswdUnknownUser(t *testing.T) {
+	handler := MiddlewareAuthHtpasswd("./testdata/.htpasswd", "test")(testEchoHandler([]byte("ok")))
+	for _, pass := range []string{"", "bcrypt", "md5", "sha"} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.SetBasicAuth("nosuchuser", pass)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code, pass)
 	}
 }
 

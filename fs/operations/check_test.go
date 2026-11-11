@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -23,6 +24,8 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -297,6 +300,28 @@ func TestParseSumFile(t *testing.T) {
 		{"7", " \t", " file7 ", false},
 		{"", "  ", "file8", false},
 		{"", "", "file9", false},
+		{"10", "  ", "ファイル10", true},
+		{"#", "  ", "comment11", false},
+		{";", " *", "comment12", false},
+		{"13", " ?SHA1*", "file13", true},
+		{"14", " ?sha1 ", "file14", true},
+		{"15", " ?MD5*", "file15", false},
+		{"16", " *", "file16", false},
+		{"17", " ?SHA1*", "file16", true},
+		{"18", " ?SHA1*", "file18", true},
+		{"19", " *", "file18", false},
+		{"20", " ?*", "file20", false},
+		{"21", "  ", strings.Repeat("dir/", 1100) + "file21", true},
+	}
+
+	encodings := []struct {
+		name string
+		enc  encoding.Encoding
+	}{
+		{"UTF-8", encoding.Nop},
+		{"UTF-8 with BOM", unicode.UTF8BOM},
+		{"UTF-16LE with BOM", unicode.UTF16(unicode.LittleEndian, unicode.UseBOM)},
+		{"UTF-16BE with BOM", unicode.UTF16(unicode.BigEndian, unicode.UseBOM)},
 	}
 
 	for _, eol := range []string{"\n", "\r\n"} {
@@ -309,18 +334,60 @@ func TestParseSumFile(t *testing.T) {
 			}
 		}
 
-		_ = r.WriteObject(ctx, sumFile, data.String(), t1)
-		file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
-		sums, err := operations.ParseSumFile(ctx, file)
-		assert.NoError(t, err)
+		for _, e := range encodings {
+			content, err := e.enc.NewEncoder().String(data.String())
+			require.NoError(t, err)
 
-		assert.Equal(t, wantNum, len(sums))
-		for _, s := range samples {
-			if s.ok {
-				assert.Equal(t, s.hash, sums[s.name])
+			_ = r.WriteObject(ctx, sumFile, content, t1)
+			file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
+			sums, err := operations.ParseSumFile(ctx, file, hash.SHA1)
+			assert.NoError(t, err)
+
+			assert.Equal(t, wantNum, len(sums), "%s %q", e.name, eol)
+			for _, s := range samples {
+				if s.ok {
+					assert.Equal(t, s.hash, sums[s.name], "%s %q", e.name, eol)
+				}
 			}
 		}
 	}
+
+	// The last line doesn't need a line ending
+	_ = r.WriteObject(ctx, sumFile, "1  file1\n2  file2", t1)
+	file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
+	sums, err := operations.ParseSumFile(ctx, file, hash.SHA1)
+	require.NoError(t, err)
+	assert.Equal(t, operations.HashSums{"file1": "1", "file2": "2"}, sums)
+
+	// A leading backslash marks an escaped file name, as written by GNU md5sum
+	_ = r.WriteObject(ctx, sumFile, strings.Join([]string{
+		`\1  dir\\file1`,
+		`\2 *a\nb\rc`,
+		`\4  invalid\x`,
+		`\5  invalid\`,
+	}, "\n"), t1)
+	file = fstest.NewObject(ctx, t, r.Fremote, sumFile)
+	sums, err = operations.ParseSumFile(ctx, file, hash.SHA1)
+	require.NoError(t, err)
+	assert.Equal(t, operations.HashSums{`dir\file1`: "1", "a\nb\rc": "2"}, sums)
+
+	// Paths are cleaned, and an unescaped backslash is a path separator on Windows
+	_ = r.WriteObject(ctx, sumFile, strings.Join([]string{
+		`1  ./file1`,
+		`2  /dir/file2`,
+		`3  dir//file3`,
+		`4 *dir\file4`,
+		`\5  dir\\file5`,
+	}, "\n"), t1)
+	file = fstest.NewObject(ctx, t, r.Fremote, sumFile)
+	sums, err = operations.ParseSumFile(ctx, file, hash.SHA1)
+	require.NoError(t, err)
+	want := operations.HashSums{"file1": "1", "dir/file2": "2", "dir/file3": "3", `dir\file4`: "4", `dir\file5`: "5"}
+	if runtime.GOOS == "windows" {
+		delete(want, `dir\file4`)
+		want["dir/file4"] = "4"
+	}
+	assert.Equal(t, want, sums)
 }
 
 func testCheckSum(t *testing.T, download bool) {

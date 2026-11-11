@@ -688,7 +688,7 @@ func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
 
 	// open makes a remote pointing at ts with or without headers
 	// and opens file.txt on it
-	open := func(t *testing.T, withHeaders bool) (io.ReadCloser, error) {
+	open := func(t *testing.T, withHeaders, allowDowngrade bool) (io.ReadCloser, error) {
 		configfile.Install()
 		m := configmap.Simple{
 			"type":    "http",
@@ -700,6 +700,7 @@ func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
 		}
 		ctx, ci := fs.AddConfig(context.Background())
 		ci.InsecureSkipVerify = true
+		ci.AllowHTTPSDowngrade = allowDowngrade
 		f, err := NewFs(ctx, remoteName, "", m)
 		require.NoError(t, err)
 
@@ -711,13 +712,25 @@ func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
 
 	t.Run("WithHeaders", func(t *testing.T) {
 		// Headers could leak so the downgrade must be refused
-		_, err := open(t, true)
+		_, err := open(t, true, false)
+		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	t.Run("WithHeadersAllowDowngrade", func(t *testing.T) {
+		// Headers could leak so the downgrade is refused even when allowed
+		_, err := open(t, true, true)
 		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
 	})
 
 	t.Run("WithoutHeaders", func(t *testing.T) {
-		// Nothing to leak so the downgrade is followed
-		fd, err := open(t, false)
+		// The transport refuses downgrades by default
+		_, err := open(t, false, false)
+		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	t.Run("WithoutHeadersAllowDowngrade", func(t *testing.T) {
+		// Nothing to leak so the downgrade is followed when allowed
+		fd, err := open(t, false, true)
 		require.NoError(t, err)
 		data, err := io.ReadAll(fd)
 		require.NoError(t, err)

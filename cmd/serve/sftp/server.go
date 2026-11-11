@@ -197,6 +197,24 @@ func (s *server) configure() (err error) {
 		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Public key login attempt for %s", c.User())
 			if s.provider.IsProxy() {
+				// This is also called for keys offered without a
+				// signature, so leave asking the proxy until
+				// VerifiedPublicKeyCallback when the client has proved
+				// it holds the private key.
+				return &ssh.Permissions{}, nil
+			}
+			if _, ok := authorizedKeysMap[string(pubKey.Marshal())]; ok {
+				return &ssh.Permissions{
+					// Record the public key used for authentication.
+					Extensions: map[string]string{
+						"pubkey-fp": ssh.FingerprintSHA256(pubKey),
+					},
+				}, nil
+			}
+			return nil, fmt.Errorf("unknown public key for %q", c.User())
+		},
+		VerifiedPublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey, perms *ssh.Permissions, _ string) (*ssh.Permissions, error) {
+			if s.provider.IsProxy() {
 				//query the proxy for the config
 				_, vfsKey, err := s.provider.Proxy().Call(
 					c.User(),
@@ -214,15 +232,7 @@ func (s *server) configure() (err error) {
 					},
 				}, nil
 			}
-			if _, ok := authorizedKeysMap[string(pubKey.Marshal())]; ok {
-				return &ssh.Permissions{
-					// Record the public key used for authentication.
-					Extensions: map[string]string{
-						"pubkey-fp": ssh.FingerprintSHA256(pubKey),
-					},
-				}, nil
-			}
-			return nil, fmt.Errorf("unknown public key for %q", c.User())
+			return perms, nil
 		},
 		AuthLogCallback: func(conn ssh.ConnMetadata, method string, err error) {
 			status := "OK"
