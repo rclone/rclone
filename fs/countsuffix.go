@@ -66,7 +66,21 @@ func (x CountSuffix) string() (string, string) {
 	if math.Floor(scaled) == scaled {
 		return fmt.Sprintf("%.0f", scaled), suffix
 	}
+	// Just below the next step the value rounds up to "1000.000", so show
+	// it as 1 of the next suffix instead.
+	if next, ok := nextCountSuffix[suffix]; ok && math.Round(scaled*1000) >= 1000*1000 {
+		return "1.000", next
+	}
 	return fmt.Sprintf("%.3f", scaled), suffix
+}
+
+// nextCountSuffix maps each suffix to the one 1000 times larger.
+var nextCountSuffix = map[string]string{
+	"k": "M",
+	"M": "G",
+	"G": "T",
+	"T": "P",
+	"P": "E",
 }
 
 // String turns CountSuffix into a string

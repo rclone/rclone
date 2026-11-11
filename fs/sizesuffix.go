@@ -67,7 +67,21 @@ func (x SizeSuffix) string() (string, string) {
 	if math.Floor(scaled) == scaled {
 		return fmt.Sprintf("%.0f", scaled), suffix
 	}
+	// Just below the next step the value rounds up to "1024.000", so show
+	// it as 1 of the next suffix instead.
+	if next, ok := nextSizeSuffix[suffix]; ok && math.Round(scaled*1000) >= 1024*1000 {
+		return "1.000", next
+	}
 	return fmt.Sprintf("%.3f", scaled), suffix
+}
+
+// nextSizeSuffix maps each suffix to the one 1024 times larger.
+var nextSizeSuffix = map[string]string{
+	"Ki": "Mi",
+	"Mi": "Gi",
+	"Gi": "Ti",
+	"Ti": "Pi",
+	"Pi": "Ei",
 }
 
 // String turns SizeSuffix into a string
