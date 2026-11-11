@@ -274,3 +274,57 @@ func TestAuthRedirectRefusesToResendPassword(t *testing.T) {
 		})
 	}
 }
+
+// newForbiddenAccountFs makes an Fs for the root of a server which
+// forbids listing the account and has one container called container.
+func newForbiddenAccountFs(ctx context.Context, t *testing.T, user, container string) *Fs {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/AUTH_test":
+			http.Error(w, "<html><h1>Forbidden</h1></html>", http.StatusForbidden)
+		case "/v1/AUTH_test/" + container:
+			w.Header().Set("X-Container-Bytes-Used", "123")
+			w.Header().Set("X-Container-Object-Count", "4")
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	f, err := NewFs(ctx, "swift-test", "", configmap.Simple{
+		"user":        user,
+		"storage_url": srv.URL + "/v1/AUTH_test",
+		"auth_token":  testToken,
+		"chunk_size":  "5Gi",
+	})
+	require.NoError(t, err)
+	return f.(*Fs)
+}
+
+func TestInternalForbiddenAccountUsesUserContainer(t *testing.T) {
+	const user = "user@example.com"
+	ctx := context.Background()
+	f := newForbiddenAccountFs(ctx, t, user, user)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, user, entries[0].Remote())
+	assert.Equal(t, int64(123), entries[0].Size())
+
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(123), *usage.Used)
+	assert.Equal(t, int64(4), *usage.Objects)
+}
+
+func TestInternalForbiddenAccountWithoutUserContainer(t *testing.T) {
+	ctx := context.Background()
+	f := newForbiddenAccountFs(ctx, t, "user@example.com", "other")
+
+	_, err := f.List(ctx, "")
+	require.ErrorContains(t, err, "Operation forbidden")
+
+	_, err = f.About(ctx)
+	require.ErrorContains(t, err, "Operation forbidden")
+}
