@@ -321,12 +321,16 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if do == nil {
 		return nil, fs.ErrorCantCopy
 	}
-	// FIXME
-	// o, ok := src.(*Object)
-	// if !ok {
-	// 	return nil, fs.ErrorCantCopy
-	// }
-	return do(ctx, src, remote)
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	o, err := do(ctx, srcObj.Object, remote)
+	if err != nil {
+		return nil, err
+	}
+	return f.newObject(o), nil
 }
 
 // Move src to this remote using server-side move operations.
@@ -343,12 +347,16 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if do == nil {
 		return nil, fs.ErrorCantMove
 	}
-	// FIXME
-	// o, ok := src.(*Object)
-	// if !ok {
-	// 	return nil, fs.ErrorCantMove
-	// }
-	return do(ctx, src, remote)
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+	o, err := do(ctx, srcObj.Object, remote)
+	if err != nil {
+		return nil, err
+	}
+	return f.newObject(o), nil
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -413,7 +421,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 	if err != nil {
 		return nil, err
 	}
-	return o, nil
+	return f.newObject(o), nil
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -521,6 +529,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if archive != nil {
 				// Overwrite entry with directory
 				entry = fs.NewDir(remote, o.ModTime(ctx))
+			} else if subFs == f.f {
+				entry = f.newObject(o)
 			}
 		}
 		entries = append(entries, entry)
@@ -566,6 +576,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs.Debugf(f, "Ignoring object %q returned for %q", o.Remote(), remote)
 		return nil, fs.ErrorObjectNotFound
 	}
+	if subFs == f.f {
+		return f.newObject(o), nil
+	}
 	return o, nil
 }
 
@@ -609,7 +622,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if err != nil {
 		return nil, err
 	}
-	return o, nil
+	return f.newObject(o), nil
 }
 
 // MergeDirs merges the contents of all the directories passed
@@ -695,6 +708,81 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 	return do(ctx)
 }
 
+// Object wraps an object of the underlying remote so that its Fs is
+// this Fs, not the underlying one.
+type Object struct {
+	fs.Object
+	f *Fs
+}
+
+func (f *Fs) newObject(o fs.Object) *Object {
+	return &Object{Object: o, f: f}
+}
+
+// Fs returns read only access to the Fs that this object is part of
+func (o *Object) Fs() fs.Info {
+	return o.f
+}
+
+// UnWrap returns the Object that this Object is wrapping
+func (o *Object) UnWrap() fs.Object {
+	return o.Object
+}
+
+// MimeType returns the content type of the Object if known
+func (o *Object) MimeType(ctx context.Context) (mimeType string) {
+	if do, ok := o.Object.(fs.MimeTyper); ok {
+		mimeType = do.MimeType(ctx)
+	}
+	return mimeType
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	if do, ok := o.Object.(fs.GetTierer); ok {
+		return do.GetTier()
+	}
+	return ""
+}
+
+// SetTier changes the storage tier of the Object
+func (o *Object) SetTier(tier string) error {
+	do, ok := o.Object.(fs.SetTierer)
+	if !ok {
+		return errors.New("underlying remote does not support SetTier")
+	}
+	return do.SetTier(tier)
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	if do, ok := o.Object.(fs.IDer); ok {
+		return do.ID()
+	}
+	return ""
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	if do, ok := o.Object.(fs.Metadataer); ok {
+		return do.Metadata(ctx)
+	}
+	return nil, nil
+}
+
+// SetMetadata sets metadata for an Object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	do, ok := o.Object.(fs.SetMetadataer)
+	if !ok {
+		return fs.ErrorNotImplemented
+	}
+	return do.SetMetadata(ctx, metadata)
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -715,5 +803,5 @@ var (
 	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
-	// FIXME _ fs.FullObject      = (*Object)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

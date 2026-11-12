@@ -562,3 +562,33 @@ func TestArchiveZipSymlinkEscape(t *testing.T) {
 	_, err = os.Stat(filepath.Join(dir, "outside", "pwned.txt"))
 	assert.True(t, os.IsNotExist(err), "the archive wrote outside the destination")
 }
+
+// TestArchivePassthroughObjectFs checks that files outside an archive
+// report the archive Fs as their Fs, so that a move onto the same path
+// is recognised as such rather than copying the file onto itself and
+// deleting it.
+func TestArchivePassthroughObjectFs(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "file.txt")
+	require.NoError(t, os.WriteFile(filePath, []byte("hello"), 0600))
+
+	f, err := cache.Get(ctx, ":archive:"+dir)
+	require.NoError(t, err)
+
+	o, err := f.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	assert.Equal(t, fs.Info(f), o.Fs())
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, fs.Info(f), entries[0].(fs.Object).Fs())
+
+	require.NoError(t, operations.TransformFile(ctx, f, "file.txt"))
+	data, err := os.ReadFile(filePath)
+	require.NoError(t, err)
+	assert.Equal(t, "hello", string(data))
+}
