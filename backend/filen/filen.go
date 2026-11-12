@@ -170,6 +170,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
+		CaseInsensitive:         true,
 		ChunkWriterDoesntSeek:   true,
 	}).Fill(ctx, fileSystem)
 
