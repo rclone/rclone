@@ -1225,6 +1225,24 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	}
 	// oldName may only match oldNode with case or unicode normalization
 	oldLeaf := oldNode.Name()
+	// A symlink is stored as newName+".rclonelink" so renaming a
+	// non-symlink onto it (or vice versa) would leave both on the remote
+	if d.vfs.Opt.Links {
+		newNode, err := destDir.stat(newName)
+		switch err {
+		case ENOENT:
+			// not found, carry on
+		case nil:
+			// found so check what it is
+			if (newNode.Mode()^oldNode.Mode())&os.ModeSymlink != 0 {
+				return EEXIST
+			}
+		default:
+			// a different error - report
+			fs.Errorf(newPath, "Dir.Rename stat failed: %v", err)
+			return err
+		}
+	}
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
