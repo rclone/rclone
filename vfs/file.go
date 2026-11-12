@@ -807,7 +807,7 @@ func (f *File) resolveNode() (target Node, err error) {
 	return nil, ELOOP
 }
 
-// Open also also implements the internal flag o_SYMLINK which instead
+// Open also implements the internal flag o_SYMLINK which instead
 // of opening the file a symlink points to, opens the symlink itself.
 // This is used for reading and writing the symlink and shouldn't be
 // used externally.
