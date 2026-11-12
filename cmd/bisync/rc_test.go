@@ -264,3 +264,12 @@ func TestRcFlagParity(t *testing.T) {
 		})
 	})
 }
+
+func TestRcEditFilters(t *testing.T) {
+	_, _, run := newRcBisync(t, 1)
+	for _, name := range []string{"editFilters", "editFiltersPath2"} {
+		err := run(rc.Params{name: true})
+		assert.ErrorContains(t, err, name+" is interactive, so it can only be used on the command line")
+		assert.NoError(t, run(rc.Params{name: false}))
+	}
+}
