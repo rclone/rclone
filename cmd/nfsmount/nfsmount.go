@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"path/filepath"
 	"runtime"
+	"syscall"
 
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/cmd/serve/nfs"
@@ -126,11 +128,30 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 		return nil
 	}
 
-	nfs.OnUnmountFunc = func() {
+	s.OnUnmount(func() bool {
+		if isMountpoint(mountpoint) {
+			return false
+		}
 		s.UnmountedExternally = true
-		errChan <- nil
-	}
+		// don't block the go-nfs request if errChan is full
+		select {
+		case errChan <- nil:
+		default:
+		}
+		return true
+	})
 
 	actualMountpoint = mountpoint
 	return
+}
+
+// isMountpoint returns whether a file system is mounted on dir
+func isMountpoint(dir string) bool {
+	dir = filepath.Clean(dir)
+	var st, parent syscall.Stat_t
+	if syscall.Stat(dir, &st) != nil || syscall.Stat(filepath.Dir(dir), &parent) != nil {
+		// can't tell, so treat it as still mounted
+		return true
+	}
+	return st.Dev != parent.Dev
 }

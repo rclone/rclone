@@ -55,6 +55,9 @@ func (s *Server) Addr() net.Addr {
 
 // Shutdown stops the server
 func (s *Server) Shutdown() error {
+	unmountMu.Lock()
+	delete(unmountFuncs, s)
+	unmountMu.Unlock()
 	return s.listener.Close()
 }
 
