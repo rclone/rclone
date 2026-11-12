@@ -495,6 +495,7 @@ Not all global variables make sense to be overridden like this as the config is
 only applied during the remote creation. Here is a non exhaustive list of ones
 which might be useful:
 
+- `allow_https_downgrade`
 - `bind_addr`
 - `ca_cert`
 - `client_cert`
@@ -995,6 +996,21 @@ the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 See also [--human-readable](#human-readable).
 
 ## Main options
+
+### --allow-https-downgrade
+
+By default rclone refuses to follow a redirect from an `https://` URL
+to a plain `http://` URL, as any credentials or other headers in the
+request would then be sent unencrypted, and the response could be
+altered by anyone on the network path. The request fails with an error
+which mentions this flag.
+
+Set `--allow-https-downgrade` to follow such redirects, for example
+when downloading from a mirror which redirects to plain HTTP. Some
+backends still refuse to follow them, as doing so would send their
+credentials in cleartext.
+
+This option defaults to `false`.
 
 ### --backup-dir string
 
@@ -2107,7 +2123,7 @@ If set, don't allocate more than given amount of memory as buffers. If
 not set or set to `0` or `off` this will not limit the amount of memory
 in use.
 
-This includes memory used by buffers created by the `--buffer` flag
+This includes memory used by buffers created by the `--buffer-size` flag
 and buffers used by multi-thread transfers.
 
 Most multi-thread transfers do not take additional memory, but some do
@@ -2127,7 +2143,7 @@ in use and the use of HTTP1 vs HTTP2.
 
 When downloading files, backends only limit the initial opening of the
 stream. The bulk data download is not counted as a connection. This
-means that the `--max--connections` flag won't limit the total number
+means that the `--max-connections` flag won't limit the total number
 of downloads.
 
 Note that it is possible to cause deadlocks with this setting so it
@@ -2409,7 +2425,7 @@ Most multi-thread transfers do not take additional memory, but some do
 (for example uploading to s3). In the worst case memory usage can be
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
-`--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
+`--transfers` \* `--s3-chunk-size` \* `--s3-upload-concurrency`. However you
 can use the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
@@ -2907,7 +2923,7 @@ See also `--tpslimit-burst`.
 Max burst of transactions for `--tpslimit` (default `1`).
 
 Normally `--tpslimit` will do exactly the number of transaction per
-second specified.  However if you supply `--tps-burst` then rclone can
+second specified.  However if you supply `--tpslimit-burst` then rclone can
 save up some transactions from when it was idle giving a burst of up
 to the parameter supplied.
 
@@ -3380,13 +3396,13 @@ at rest or transfer. Detailed instructions for popular OSes:
 - Generate and store a password
 
   ```powershell
-  New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"
+  Add-Type -AssemblyName System.Web; New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "$env:USERPROFILE\rclone-credential.xml"
   ```
 
 - Add the password retrieval instruction
 
   ```powershell
-  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")
+  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "powershell [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path '$env:USERPROFILE\rclone-credential.xml').Password))")
   ```
 
 #### Encrypt the config file (all systems)

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -20,6 +22,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -430,7 +434,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 	if err != nil {
 		return fmt.Errorf("cannot open sum file: %w", err)
 	}
-	hashes, err := ParseSumFile(ctx, sumObj)
+	hashes, err := ParseSumFile(ctx, sumObj, hashType)
 	if err != nil {
 		return fmt.Errorf("failed to parse sum file: %w", err)
 	}
@@ -566,33 +570,41 @@ func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj 
 type HashSums map[string]string
 
 // ParseSumFile parses a hash SUM file and returns hashes as a map
-func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
+func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (HashSums, error) {
 	rd, err := Open(ctx, sumFile)
 	if err != nil {
 		return nil, err
 	}
-	parser := bufio.NewReader(rd)
+	parser := bufio.NewReader(transform.NewReader(rd, unicode.BOMOverride(transform.Nop)))
 
 	const maxWarn = 3
 	numWarn := 0
 
-	re := regexp.MustCompile(`^([^ ]+) [ *](.+)$`)
+	re := regexp.MustCompile(`^([^ ]+) (?:\?([^ *]+))?[ *](.+)$`)
 	hashes := HashSums{}
+	marked := map[string]bool{} // files with a hash from a line marked with hashType
 	for lineNo := 0; true; lineNo++ {
-		lineBytes, _, err := parser.ReadLine()
-		if err == io.EOF {
+		line, err := parser.ReadString('\n')
+		if err == io.EOF && line == "" {
 			break
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		line := string(lineBytes)
-		if line == "" {
+		line = strings.TrimSuffix(strings.TrimSuffix(line, "\n"), "\r")
+		if line == "" || line[0] == '#' || line[0] == ';' {
 			continue
+		}
+		escaped := line[0] == '\\'
+		if escaped {
+			line = line[1:]
 		}
 
 		fields := re.FindStringSubmatch(ApplyTransforms(ctx, line))
-		if fields == nil {
+		if fields != nil && escaped {
+			fields[3] = unescapeSumFileName(fields[3])
+		}
+		if fields == nil || fields[3] == "" {
 			numWarn++
 			if numWarn <= maxWarn {
 				fs.LogfCtx(ctx, sumFile, "improperly formatted checksum line %d", lineNo)
@@ -600,13 +612,29 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 			continue
 		}
 
-		sum, file := fields[1], fields[2]
-		if hashes[file] != "" {
+		sum, algo, file := fields[1], fields[2], fields[3]
+		// Treat the path like a local path, where backslash is a separator
+		// on Windows, unless the escaping says it is a literal backslash
+		if !escaped {
+			file = filepath.ToSlash(file)
+		}
+		file = strings.TrimPrefix(path.Clean(file), "/")
+		if algo != "" && !strings.EqualFold(algo, hashType.String()) {
+			continue
+		}
+		// A marked line replaces an unmarked one, but not the reverse
+		if algo == "" && marked[file] {
+			continue
+		}
+		if hashes[file] != "" && (algo == "" || marked[file]) {
 			numWarn++
 			if numWarn <= maxWarn {
 				fs.LogfCtx(ctx, sumFile, "duplicate file on checksum line %d", lineNo)
 			}
 			continue
+		}
+		if algo != "" {
+			marked[file] = true
 		}
 
 		// We've standardised on lower case checksums in rclone internals.
@@ -620,4 +648,33 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 		return nil, err
 	}
 	return hashes, nil
+}
+
+// unescapeSumFileName reverses the escaping GNU md5sum and friends use for
+// file names containing backslash, newline or carriage return. It returns
+// "" if s is not validly escaped.
+func unescapeSumFileName(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\\' {
+			i++
+			if i == len(s) {
+				return ""
+			}
+			switch s[i] {
+			case '\\':
+				c = '\\'
+			case 'n':
+				c = '\n'
+			case 'r':
+				c = '\r'
+			default:
+				return ""
+			}
+		}
+		b.WriteByte(c)
+	}
+	return b.String()
 }

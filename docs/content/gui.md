@@ -116,6 +116,7 @@ Tailscale (all free).
       --enable-metrics         Enable OpenMetrics/Prometheus compatible endpoint at /metrics
   -h, --help                   help for gui
       --no-auth                Don't require auth for the RC API
+      --no-check-usage         Turn off the GUI's automatic remote usage checks
       --no-open-browser        Skip opening the browser automatically
       --pass string            Password for RC authentication
       --user string            User name for RC authentication

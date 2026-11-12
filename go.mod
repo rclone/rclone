@@ -14,7 +14,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.8.2
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.7.1
 	github.com/Azure/go-ntlmssp v0.1.1
-	github.com/FilenCloudDienste/filen-sdk-go v0.0.39
+	github.com/FilenCloudDienste/filen-sdk-go v0.0.40
 	github.com/Files-com/files-sdk-go/v3 v3.3.194
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
@@ -128,7 +128,7 @@ require (
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/anchore/go-lzo v0.1.1 // indirect
-	github.com/andybalholm/brotli v1.2.2 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.22 // indirect

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"net/http"
 	"path"
 	"regexp"
 	"slices"
@@ -33,6 +34,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // Constants
@@ -193,6 +195,18 @@ func init() {
 			}, {
 				Value: "https://authenticate.ain.net",
 				Help:  "Blomp Cloud Storage",
+			}, {
+				Value: "https://swiss-backup01.infomaniak.com/identity/v3",
+				Help:  "Infomaniak Swiss Backup Location 01",
+			}, {
+				Value: "https://swiss-backup02.infomaniak.com/identity/v3",
+				Help:  "Infomaniak Swiss Backup Location 02",
+			}, {
+				Value: "https://swiss-backup03.infomaniak.com/identity/v3",
+				Help:  "Infomaniak Swiss Backup Location 03",
+			}, {
+				Value: "https://swiss-backup04.infomaniak.com/identity/v3",
+				Help:  "Infomaniak Swiss Backup Location 04",
 			}},
 		}, {
 			Name:      "user_id",
@@ -470,6 +484,90 @@ func (o *Object) split() (container, containerPath string) {
 	return o.fs.split(o.remote)
 }
 
+// authHeaders are the request headers which carry the Swift
+// credentials: the token sent on every storage request and the user
+// name and API key sent on a v1 auth request. They must not be
+// forwarded when a redirect leaves the host of the original request.
+var authHeaders = []string{"X-Auth-Token", "X-Auth-Key", "X-Auth-User"}
+
+// errRedirectResendsBody is returned when following a redirect which
+// leaves the host of the original request would resend that request's
+// body, such as the password in a v2 or v3 auth request, to the new
+// host.
+var errRedirectResendsBody = errors.New("refusing to follow redirect which leaves the original host: would resend the request body")
+
+// transport is the http.RoundTripper for the swift connection.
+//
+// The swift library makes its own http.Client with the default
+// redirect policy and does not let the caller replace it, so the
+// redirect policy is applied here at the transport level instead. A
+// redirect which downgrades HTTPS to plaintext HTTP is refused with
+// rest.ErrHTTPSDowngrade. Once the redirect chain has left the host
+// and port of the original request the auth headers are removed from
+// every further hop, and a hop which would resend the request body is
+// refused with errRedirectResendsBody.
+type transport struct {
+	*fshttp.Transport
+}
+
+// newTransport returns the transport for the swift connection
+func newTransport(ctx context.Context) *transport {
+	return &transport{Transport: fshttp.NewTransport(ctx)}
+}
+
+// RoundTrip implements http.RoundTripper
+func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// net/http fills in req.Response on the requests it makes to
+	// follow a redirect, so a request without one is not a redirect.
+	if req.Response != nil {
+		origin, leftHost := redirectOrigin(req)
+		if origin.URL.Scheme == "https" && req.URL.Scheme == "http" {
+			if req.Body != nil {
+				_ = req.Body.Close()
+			}
+			return nil, fmt.Errorf("redirect to %s: %w", req.URL.Redacted(), rest.ErrHTTPSDowngrade)
+		}
+		if leftHost {
+			// net/http resends the body on a 307 or 308 if it
+			// can be rewound, which for an auth request means
+			// the password, so those redirects stop here.
+			if req.Body != nil && req.Body != http.NoBody {
+				_ = req.Body.Close()
+				return nil, fmt.Errorf("redirect to %s leaves %s: %w", req.URL.Redacted(), origin.URL.Redacted(), errRedirectResendsBody)
+			}
+			for _, header := range authHeaders {
+				if req.Header.Get(header) == "" {
+					continue
+				}
+				fs.Debugf(nil, "redirect to %s leaves %s: not sending %s", req.URL.Redacted(), origin.URL.Redacted(), header)
+				req.Header.Del(header)
+			}
+		}
+	}
+	return t.Transport.RoundTrip(req)
+}
+
+// redirectOrigin walks back along the chain of redirects which led to
+// req and returns the original request and whether any hop, including
+// req, was to a different host or port from it.
+//
+// net/http copies the headers afresh from the original request for
+// every hop, so once the chain has visited another host the headers
+// must be stripped from every subsequent hop, even one back to the
+// original host, as the other host chose the URL.
+func redirectOrigin(req *http.Request) (origin *http.Request, leftHost bool) {
+	origin = req
+	for origin.Response != nil && origin.Response.Request != nil {
+		origin = origin.Response.Request
+	}
+	for hop := req; hop != origin; hop = hop.Response.Request {
+		if !rest.SameHost(hop.URL, origin.URL) {
+			leftHost = true
+		}
+	}
+	return origin, leftHost
+}
+
 // swiftConnection makes a connection to swift
 func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Connection, error) {
 	ci := fs.GetConfig(ctx)
@@ -493,7 +591,7 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 		EndpointType:                swift.EndpointType(opt.EndpointType),
 		ConnectTimeout:              time.Duration(10 * ci.ConnectTimeout), // Use the timeouts in the transport
 		Timeout:                     time.Duration(10 * ci.Timeout),        // Use the timeouts in the transport
-		Transport:                   fshttp.NewTransport(ctx),
+		Transport:                   newTransport(ctx),
 		FetchUntilEmptyPage:         opt.FetchUntilEmptyPage,
 		PartialPageFetchThreshold:   opt.PartialPageFetchThreshold,
 	}
@@ -1204,7 +1302,7 @@ func (su *segmentedUpload) onFail() {
 		return
 	}
 	ctx := context.Background()
-	fs.Debugf(f, "Segment operation failed: bulk deleting failed segments")
+	fs.Debugf(f, "Segment operation failed: deleting failed segments")
 	if len(su.container) == 0 {
 		fs.Debugf(f, "Invalid segments container")
 		return
@@ -1213,9 +1311,9 @@ func (su *segmentedUpload) onFail() {
 		fs.Debugf(f, "No segments to delete")
 		return
 	}
-	_, err := f.c.BulkDelete(ctx, su.container, su.segments)
+	err := f.deleteSegments(ctx, su.container, su.segments)
 	if err != nil {
-		fs.Errorf(f, "Failed to bulk delete failed segments: %v", err)
+		fs.Errorf(f, "Failed to delete failed segments: %v", err)
 	}
 }
 
@@ -1503,11 +1601,41 @@ func (o *Object) removeSegmentsLargeObject(ctx context.Context, container string
 	if len(segments) == 0 {
 		return nil
 	}
-	_, err := o.fs.c.BulkDelete(ctx, container, segments)
+	err := o.fs.deleteSegments(ctx, container, segments)
 	if err != nil {
-		return fmt.Errorf("failed to delete bulk segments: %w", err)
+		return fmt.Errorf("failed to delete segments: %w", err)
 	}
 	return nil
+}
+
+// deleteSegments deletes segments from container with a bulk delete,
+// deleting them one by one if the server doesn't support that.
+//
+// It returns the first error encountered.
+func (f *Fs) deleteSegments(ctx context.Context, container string, segments []string) error {
+	_, err := f.c.BulkDelete(ctx, container, segments)
+	if err != swift.Forbidden {
+		return err
+	}
+	fs.Debugf(f, "Bulk delete not supported, deleting %d segments one by one", len(segments))
+	var firstErr error
+	for _, segment := range segments {
+		err = f.pacer.Call(func() (bool, error) {
+			err = f.c.ObjectDelete(ctx, container, segment)
+			// A bulk delete doesn't fail on missing segments either
+			if err == swift.ObjectNotFound {
+				err = nil
+			}
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			fs.Debugf(f, "Failed to delete segment %q: %v", segment, err)
+			if firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+	return firstErr
 }
 
 // urlEncode encodes a string so that it is a valid URL

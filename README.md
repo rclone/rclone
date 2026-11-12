@@ -24,6 +24,7 @@ directories to and from different cloud storage providers.
 ## Storage providers
 
 - 1Fichier [:page_facing_up:](https://rclone.org/fichier/)
+- Abrha Storage [:page_facing_up:](https://rclone.org/s3/#abrhastorage)
 - Akamai Netstorage [:page_facing_up:](https://rclone.org/netstorage/)
 - Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
 - Amazon S3 [:page_facing_up:](https://rclone.org/s3/)
@@ -74,6 +75,8 @@ directories to and from different cloud storage providers.
 - Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
 - IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
 - Impossible Cloud [:page_facing_up:](https://rclone.org/s3/#impossible-cloud)
+- Infomaniak Swiss Backup (S3) [:page_facing_up:](https://rclone.org/s3/#infomaniak)
+- Infomaniak Swiss Backup (Swift) [:page_facing_up:](https://rclone.org/swift/)
 - Intercolo Object Storage [:page_facing_up:](https://rclone.org/s3/#intercolo)
 - IONOS Cloud [:page_facing_up:](https://rclone.org/s3/#ionos)
 - kDrive [:page_facing_up:](https://rclone.org/kdrive/)
@@ -92,6 +95,7 @@ directories to and from different cloud storage providers.
 - Microsoft Azure Files Storage [:page_facing_up:](https://rclone.org/azurefiles/)
 - Microsoft OneDrive [:page_facing_up:](https://rclone.org/onedrive/)
 - Minio [:page_facing_up:](https://rclone.org/s3/#minio)
+- Neon Object Storage [:page_facing_up:](https://rclone.org/s3/#neon)
 - Nextcloud [:page_facing_up:](https://rclone.org/webdav/#nextcloud)
 - Blomp Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
 - OpenDrive [:page_facing_up:](https://rclone.org/opendrive/)

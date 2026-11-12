@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	minSleep      = 100 * time.Millisecond
+	minSleep      = 10 * time.Millisecond
 	maxSleep      = 10 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 )

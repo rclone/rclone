@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
@@ -19,7 +20,7 @@ func parseAuthorization(r *http.Request) (user, pass string, ok bool) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		s := strings.SplitN(authHeader, " ", 2)
-		if len(s) == 2 && s[0] == "Basic" {
+		if len(s) == 2 && strings.EqualFold(s[0], "Basic") {
 			b, err := base64.StdEncoding.DecodeString(s[1])
 			if err == nil {
 				parts := strings.SplitN(string(b), ":", 2)
@@ -93,8 +94,16 @@ func MiddlewareAuthHtpasswd(path, realm string) Middleware {
 func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 	fs.Infof(nil, "Using --user %s --pass XXXX as authenticated user", user)
 	pass = md5Crypt(pass, salt, "$1$")
+	// Compare hashes of the users as ConstantTimeCompare returns
+	// early if the lengths differ which would reveal the user's length
+	userSum := sha256.Sum256([]byte(user))
 	return basicAuth(realm, func(u, p string) bool {
-		return u == user && subtle.ConstantTimeCompare([]byte(md5Crypt(p, salt, "$1$")), []byte(pass)) == 1
+		// Always hash the password so a wrong user takes as long to
+		// reject as a wrong password
+		uSum := sha256.Sum256([]byte(u))
+		userOK := subtle.ConstantTimeCompare(uSum[:], userSum[:]) == 1
+		passOK := subtle.ConstantTimeCompare([]byte(md5Crypt(p, salt, "$1$")), []byte(pass)) == 1
+		return userOK && passOK
 	})
 }
 

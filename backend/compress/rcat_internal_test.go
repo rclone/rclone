@@ -123,7 +123,7 @@ func TestIsCompressible(t *testing.T) {
 	require.NoError(t, err)
 	for name, handler := range map[string]compressionModeHandler{
 		"gzip": &gzipModeHandler{},
-		"zstd": &zstdModeHandler{},
+		"zstd": &zstdModeHandler{level: defaultZstdLevel},
 	} {
 		t.Run(name, func(t *testing.T) {
 			ok, err := handler.isCompressible(bytes.NewReader(compressible), 0)

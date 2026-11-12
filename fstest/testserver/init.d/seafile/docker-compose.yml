@@ -1,16 +1,22 @@
-version: '2.0'
 services:
   db:
-    image: mariadb:10.5
+    image: mariadb:10.11
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_LOG_CONSOLE=true
+      - MARIADB_AUTO_UPGRADE=1
     volumes:
       - ${SEAFILE_TEST_DATA}/${NAME}/seafile-mysql/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh", "--connect", "--mariadbupgrade", "--innodb_initialized"]
+      interval: 5s
+      start_period: 30s
+      timeout: 5s
+      retries: 20
 
-  memcached:
-    image: memcached:1.6.9
-    entrypoint: memcached -m 256
+  redis:
+    image: redis:7
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
 
   seafile:
     image: seafileltd/seafile-mc:${SEAFILE_VERSION}
@@ -19,13 +25,25 @@ services:
     volumes:
       - ${SEAFILE_TEST_DATA}/${NAME}/seafile-data:/shared
     environment:
-      - DB_HOST=db
-      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
+      - SEAFILE_MYSQL_DB_HOST=db
+      - SEAFILE_MYSQL_DB_PORT=3306
+      - SEAFILE_MYSQL_DB_USER=seafile
+      - SEAFILE_MYSQL_DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
+      - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
+      - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
+      - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - JWT_PRIVATE_KEY=${SEAFILE_JWT_PRIVATE_KEY}
       - TIME_ZONE=Etc/UTC
-      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
-      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
-      - SEAFILE_SERVER_LETSENCRYPT=false
+      - INIT_SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - INIT_SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
+      - SEAFILE_SERVER_PROTOCOL=http
       - SEAFILE_SERVER_HOSTNAME=${SEAFILE_IP}:${SEAFILE_PORT}
+      - CACHE_PROVIDER=redis
+      - REDIS_HOST=redis
+      - ENABLE_SEADOC=false
     depends_on:
-      - db
-      - memcached
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started

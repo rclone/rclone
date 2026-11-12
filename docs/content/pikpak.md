@@ -196,6 +196,8 @@ Properties:
 
 Files bigger than this will be cached on disk to calculate hash if required.
 
+Files of unknown size are always cached on disk.
+
 Properties:
 
 - Config:      hash_memory_limit

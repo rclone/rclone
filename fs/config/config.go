@@ -595,6 +595,12 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 			ephemeral.Set(k, vStr)
 		}
 	}
+	// A token passed in is the one to keep, so don't offer to replace it
+	if _, ok := keyValues[ConfigToken]; ok {
+		if _, ok := choices.Get("config_refresh_token"); !ok {
+			choices.Set("config_refresh_token", "false")
+		}
+	}
 	// Add a getter to make sure ephemeral config is still visible
 	if len(ephemeral) > 0 {
 		m.AddGetter(ephemeral, configmap.PriorityNormal)

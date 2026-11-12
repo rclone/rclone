@@ -98,6 +98,7 @@ Flags used for check commands.
 Flags for general networking and HTTP stuff.
 
 ```
+      --allow-https-downgrade              Follow redirects from HTTPS to HTTP (insecure)
       --bind string                        Local address to bind to for outgoing connections, IPv4, IPv6 or name
       --bwlimit BwTimetable                Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
       --bwlimit-file BwTimetable           Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
@@ -121,7 +122,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.76.0")
 ```
 
 
@@ -302,11 +303,6 @@ Flags to control the Remote Control API.
       --rc-template string                 User-specified template
       --rc-user string                     User name for authentication
       --rc-user-from-header string         User name from a defined HTTP header
-      --rc-web-fetch-url string            URL to fetch the releases for webgui (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
-      --rc-web-gui                         Launch WebGUI on localhost
-      --rc-web-gui-force-update            Force update to latest version of web gui
-      --rc-web-gui-no-open-browser         Don't open the browser automatically
-      --rc-web-gui-update                  Check and update to latest version of web gui
 ```
 
 
@@ -368,8 +364,10 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-encoding Encoding                         The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
       --azureblob-endpoint string                           Endpoint for the service
       --azureblob-env-auth                                  Read credentials from runtime (environment variables, CLI or MSI)
+      --azureblob-hns Tristate                              Set if the storage account has a hierarchical namespace (default unset)
       --azureblob-key string                                Storage Account Shared Key
       --azureblob-list-chunk int                            Size of blob list (default 5000)
+      --azureblob-list-parallelism int                      Number of parallel shards to list a directory with
       --azureblob-msi-client-id string                      Object ID of the user-assigned MSI to use, if any
       --azureblob-msi-mi-res-id string                      Azure resource ID of the user-assigned MSI to use, if any
       --azureblob-msi-object-id string                      Object ID of the user-assigned MSI to use, if any
@@ -382,6 +380,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-tenant string                             ID of the service principal's tenant. Also called its directory ID
       --azureblob-upload-concurrency int                    Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string                      Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
+      --azureblob-use-arrow-list                            Use the Apache Arrow listing format
       --azureblob-use-az                                    Use Azure CLI tool az for authentication
       --azureblob-use-copy-blob                             Whether to use the Copy Blob API when copying to the same storage account (default true)
       --azureblob-use-emulator                              Uses local storage emulator if provided as 'true'
@@ -514,6 +513,12 @@ Backend-only flags (these can be set in the config file also).
       --doi-doi string                                      The DOI or the doi.org URL
       --doi-doi-resolver-api-url string                     The URL of the DOI resolver API to use
       --doi-provider string                                 DOI provider
+      --dosya-api-key string                                Your API Key, get it from https://dosya.dev/profile under "API keys"
+      --dosya-api-url string                                API base URL (default "https://api.dosya.dev")
+      --dosya-description string                            Description of the remote
+      --dosya-encoding Encoding                             The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
+      --dosya-upload-concurrency int                        Concurrency for multipart uploads (default 4)
+      --dosya-workspace-id string                           Your workspace ID
       --drime-access-token string                           API Access token
       --drime-chunk-size SizeSuffix                         Chunk size to use for uploading (default 5Mi)
       --drime-description string                            Description of the remote
@@ -736,6 +741,8 @@ Backend-only flags (these can be set in the config file also).
       --http-headers CommaSepList                           Set HTTP headers for all transactions
       --http-no-escape                                      Do not escape URL metacharacters in path names
       --http-no-head                                        Don't use HEAD requests
+      --http-no-head-size SizeSuffix                        Set the reported file size for --http-no-head (default off)
+      --http-no-head-time Time                              Set a default modification time for --http-no-head (default off)
       --http-no-slash                                       Set this if the site doesn't end directories with /
       --http-url string                                     URL of HTTP host to connect to
       --huaweidrive-auth-url string                         Auth server URL
@@ -795,6 +802,17 @@ Backend-only flags (these can be set in the config file also).
       --jottacloud-token-url string                         Token server url
       --jottacloud-trashed-only                             Only show files that are in the trash
       --jottacloud-upload-resume-limit SizeSuffix           Files bigger than this can be resumed if the upload fail's (default 10Mi)
+      --kdrive-auth-url string                              Auth server URL
+      --kdrive-chunk-size SizeSuffix                        Files above this size are uploaded in chunks of this size (default 20Mi)
+      --kdrive-client-id string                             OAuth Client Id
+      --kdrive-description string                           Description of the remote
+      --kdrive-drive-id string                              ID of the kDrive to use
+      --kdrive-encoding Encoding                            The encoding for the backend (default Slash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
+      --kdrive-endpoint string                              The API endpoint to use
+      --kdrive-root-folder-id string                        The folder to use as root
+      --kdrive-token string                                 OAuth Access Token as a JSON blob
+      --kdrive-token-url string                             Token server url
+      --kdrive-upload-concurrency int                       Concurrency for chunked uploads (default 4)
       --koofr-description string                            Description of the remote
       --koofr-encoding Encoding                             The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                               The Koofr API endpoint to use
@@ -880,6 +898,7 @@ Backend-only flags (these can be set in the config file also).
       --onedrive-root-folder-id string                      ID of the root folder
       --onedrive-server-side-across-configs                 Deprecated: use --server-side-across-configs instead
       --onedrive-tenant string                              ID of the service principal's tenant. Also called its directory ID
+      --onedrive-tenant-api-version string                  The SharePoint API version to use with tenant_url (default "v2.0")
       --onedrive-tenant-url string                          The tenant URL for non-admin OneDrive access
       --onedrive-token string                               OAuth Access Token as a JSON blob
       --onedrive-token-url string                           Token server url
@@ -894,7 +913,7 @@ Backend-only flags (these can be set in the config file also).
       --oos-decompress                                      If set this will decompress gzip encoded objects
       --oos-description string                              Description of the remote
       --oos-disable-checksum                                Don't store MD5 checksum with object metadata
-      --oos-encoding Encoding                               The encoding for the backend (default Slash,InvalidUtf8,Dot)
+      --oos-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --oos-endpoint string                                 Endpoint for Object storage API
       --oos-leave-parts-on-error                            If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery
       --oos-max-upload-parts int                            Maximum number of parts in a multipart upload (default 10000)
@@ -1089,7 +1108,7 @@ Backend-only flags (these can be set in the config file also).
       --sftp-disable-concurrent-reads                       If set don't use concurrent reads
       --sftp-disable-concurrent-writes                      If set don't use concurrent writes
       --sftp-disable-hashcheck                              Disable the execution of SSH commands to determine if remote file hashing is available
-      --sftp-encoding Encoding                              The encoding for the backend (default Slash,Del,Ctl,Dot)
+      --sftp-encoding Encoding                              The encoding for the backend (default Slash,Dot)
       --sftp-hashes CommaSepList                            Comma separated list of supported checksum types
       --sftp-host string                                    SSH host to connect to
       --sftp-host-key-algorithms SpaceSepList               Space separated list of host key algorithms, ordered by preference
@@ -1104,6 +1123,7 @@ Backend-only flags (these can be set in the config file also).
       --sftp-known-hosts-file string                        Optional path to known_hosts file
       --sftp-macs SpaceSepList                              Space separated list of MACs (message authentication code) algorithms, ordered by preference
       --sftp-md5sum-command string                          The command used to read MD5 hashes
+      --sftp-multithread-upload                             Set this to use multi-thread (multi-connection) uploads
       --sftp-pass string                                    SSH password, leave blank to use ssh-agent (obscured)
       --sftp-path-override string                           Override path used by SSH shell commands
       --sftp-pin-host-key                                   Pin the server host key on first connection (Trust On First Use)
@@ -1166,7 +1186,8 @@ Backend-only flags (these can be set in the config file also).
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
       --smb-use-kerberos                                    Use Kerberos authentication
-      --smb-user string                                     SMB username (default "$USER")
+      --smb-user string                                     SMB username
+      --smb-workstation string                              Workstation name sent in NTLM authentication
       --storj-access-grant string                           Access grant
       --storj-api-key string                                API key
       --storj-description string                            Description of the remote
@@ -1241,6 +1262,7 @@ Backend-only flags (these can be set in the config file also).
       --webdav-url string                                   URL of http host to connect to
       --webdav-user string                                  User name
       --webdav-vendor string                                Name of the WebDAV site/service/software you are using
+      --yandex-app-folder                                   Use the application folder as the root
       --yandex-auth-url string                              Auth server URL
       --yandex-client-credentials                           Use client credentials OAuth flow
       --yandex-client-id string                             OAuth Client Id

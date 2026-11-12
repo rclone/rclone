@@ -4,6 +4,7 @@ package local
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"syscall"
 
@@ -95,6 +96,11 @@ func (o *Object) setXattr(metadata fs.Metadata) (err error) {
 	if !xattrSupported || o.fs.xattrSupported.Load() == 0 {
 		return nil
 	}
+	// When translating symlinks (-l/--links) write the xattrs through a
+	// descriptor opened under os.Root so a symlink planted in the destination
+	// can't redirect the write outside it (CWE-59). A translated link is
+	// itself the leaf, so it keeps the non-following path based write.
+	var fd *os.File
 	for k, value := range metadata {
 		k = strings.ToLower(k)
 		if _, found := systemMetadataInfo[k]; found {
@@ -102,9 +108,27 @@ func (o *Object) setXattr(metadata fs.Metadata) (err error) {
 		}
 		k = xattrPrefix + k
 		v := []byte(value)
-		if o.fs.opt.FollowSymlinks {
+		switch {
+		case o.fs.opt.TranslateSymlinks && !o.translatedLink:
+			if fd == nil {
+				fd, err = o.fs.openFile(o.path, os.O_RDONLY, 0)
+				if os.IsPermission(err) {
+					// A write only file can't be opened for reading but its
+					// owner may still set xattrs on it, so try opening it for
+					// writing instead (which can't succeed for a directory).
+					if wfd, werr := o.fs.openFile(o.path, os.O_WRONLY, 0); werr == nil {
+						fd, err = wfd, nil
+					}
+				}
+				if err != nil {
+					return fmt.Errorf("failed to open for xattr: %w", err)
+				}
+				defer fs.CheckClose(fd, &err)
+			}
+			err = xattr.FSet(fd, k, v)
+		case o.fs.opt.FollowSymlinks:
 			err = xattr.Set(o.path, k, v)
-		} else {
+		default:
 			err = xattr.LSet(o.path, k, v)
 		}
 		if err != nil {

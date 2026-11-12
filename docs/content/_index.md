@@ -113,6 +113,7 @@ WebDAV or S3, that work out of the box.)
 
 {{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
+{{< provider name="Abrha Storage" home="https://parspack.com/cloud-storage" config="/s3/#abrhastorage" >}}
 {{< provider name="Akamai Netstorage" home="https://www.akamai.com/us/en/products/media-delivery/netstorage.jsp" config="/netstorage/" >}}
 {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
 {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
@@ -164,6 +165,8 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
 {{< provider name="Impossible Cloud" home="https://www.impossiblecloud.com/" config="/s3/#impossible-cloud" >}}
+{{< provider name="Infomaniak Swiss Backup (S3)" home="https://www.infomaniak.com/en/swiss-backup/cloud-storage" config="/s3/#infomaniak" >}}
+{{< provider name="Infomaniak Swiss Backup (Swift)" home="https://www.infomaniak.com/en/swiss-backup/cloud-storage" config="/swift" >}}
 {{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="kDrive" home="https://www.infomaniak.com/en/ksuite/kdrive" config="/kdrive/" >}}
@@ -182,6 +185,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Microsoft Azure Files Storage" home="https://azure.microsoft.com/en-us/services/storage/files/" config="/azurefiles/" >}}
 {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
 {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
+{{< provider name="Neon Object Storage" home="https://neon.com/docs/storage/overview" config="/s3/#neon" >}}
 {{< provider name="Nextcloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
 {{< provider name="Blomp Cloud Storage" home="https://rclone.org/swift/" config="/swift/" >}}
 {{< provider name="OpenDrive" home="https://www.opendrive.com/" config="/opendrive/" >}}

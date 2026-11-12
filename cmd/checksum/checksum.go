@@ -37,6 +37,10 @@ If you supply the |--download| flag, it will download the data from the remote
 and calculate the content hash on the fly.  This can be useful for remotes
 that don't support hashes or if you really want to check all the data.
 
+The SUM file can be in the format of the standard md5sum/sha1sum tools.
+Lines starting with |#| or |;| are ignored. The file may be UTF-8, or
+UTF-16 with a byte order mark.
+
 Note that hash values in the SUM file are treated as case insensitive.
 `, "|", "`") + check.FlagsHelp,
 	Annotations: map[string]string{

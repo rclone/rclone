@@ -919,6 +919,52 @@ Properties:
 - Type:        int
 - Default:     5000
 
+#### --azureblob-use-arrow-list
+
+Use the Apache Arrow listing format.
+
+If set, directory listings are fetched using the ListBlobs Apache
+Arrow response format instead of XML. Arrow responses are smaller and
+much cheaper to parse, making listings of large containers several
+times faster. Combine with "list_parallelism" for the biggest gains.
+
+"Blob Listing with Apache Arrow" is in public preview at Microsoft and
+is only supported on flat namespace accounts. On accounts with a
+hierarchical namespace (ADLS Gen2), or where the feature is otherwise
+unavailable, the server returns XML and the listing transparently
+falls back to the normal XML path (logged at debug level).
+
+Properties:
+
+- Config:      use_arrow_list
+- Env Var:     RCLONE_AZUREBLOB_USE_ARROW_LIST
+- Type:        bool
+- Default:     false
+
+#### --azureblob-list-parallelism
+
+Number of parallel shards to list a directory with.
+
+If set greater than 1, the blob name keyspace of each directory is
+split into ranges which are listed concurrently using the Arrow
+startFrom/endBefore range parameters. This can dramatically speed up
+listing containers with millions of objects, for both recursive
+(ListR) and single directory listings. Speed keeps improving up to a
+parallelism of around 30.
+
+This has no effect unless "use_arrow_list" is also set, as Arrow is the
+only listing path that supports server-side name ranges. If the
+account does not support range listing (e.g. it has a hierarchical
+namespace) the listing falls back to sequential. The default of 0 (or
+1) lists sequentially.
+
+Properties:
+
+- Config:      list_parallelism
+- Env Var:     RCLONE_AZUREBLOB_LIST_PARALLELISM
+- Type:        int
+- Default:     0
+
 #### --azureblob-access-tier
 
 Access tier of blob: hot, cool, cold or archive.
@@ -1022,6 +1068,9 @@ creates an empty object ending with "/", to persist the folder.
 
 This object also has the metadata "hdi_isfolder = true" to conform to
 the Microsoft standard.
+
+This is not needed on storage accounts with a hierarchical namespace
+(see the hns option) as these always support empty directories.
  
 
 Properties:
@@ -1030,6 +1079,24 @@ Properties:
 - Env Var:     RCLONE_AZUREBLOB_DIRECTORY_MARKERS
 - Type:        bool
 - Default:     false
+
+#### --azureblob-hns
+
+Set if the storage account has a hierarchical namespace.
+
+Storage accounts with hierarchical namespace enabled (Azure Data Lake
+Storage Gen2) have real directories which can be empty.
+
+If this is unset then rclone will read it from the storage account
+and save it in the config file.
+
+
+Properties:
+
+- Config:      hns
+- Env Var:     RCLONE_AZUREBLOB_HNS
+- Type:        Tristate
+- Default:     unset
 
 #### --azureblob-no-check-container
 

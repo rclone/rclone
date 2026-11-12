@@ -124,7 +124,19 @@ func (v vfsHandler) Filecmd(r *sftp.Request) (err error) {
 		if err != nil {
 			return err
 		}
-	case "Rmdir", "Remove":
+	case "Rmdir":
+		node, err := v.Stat(r.Filepath)
+		if err != nil {
+			return err
+		}
+		if !node.IsDir() {
+			return syscall.ENOTDIR
+		}
+		err = node.Remove()
+		if err != nil {
+			return err
+		}
+	case "Remove":
 		err := v.Remove(r.Filepath)
 		if err != nil {
 			return err
