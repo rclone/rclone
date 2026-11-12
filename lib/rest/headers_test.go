@@ -40,6 +40,8 @@ func TestParseSizeFromHeaders(t *testing.T) {
 		"", "bytes */0", 0,
 	}, {
 		"0", "bytes */42", 42,
+	}, {
+		"", "bytes 0-1/+42", -1,
 	}}
 	for _, testCase := range testCases {
 		headers := make(http.Header, 2)
@@ -50,6 +52,35 @@ func TestParseSizeFromHeaders(t *testing.T) {
 			headers.Set("Content-Range", testCase.ContentRange)
 		}
 		assert.Equalf(t, testCase.Size, ParseSizeFromHeaders(headers), "%+v", testCase)
+	}
+}
+
+func TestParseContentRange(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		want    ContentRange
+		wantErr bool
+	}{
+		{in: "bytes 2-4/10", want: ContentRange{Start: 2, End: 4, Size: 10}},
+		{in: "bytes 2-4/*", want: ContentRange{Start: 2, End: 4, Size: -1}},
+		{in: "bytes 0-0/1", want: ContentRange{Start: 0, End: 0, Size: 1}},
+		{in: "bytes +2-4/10", wantErr: true},
+		{in: "bytes 2-+4/10", wantErr: true},
+		{in: "bytes 2-4/+10", wantErr: true},
+		{in: "bytes 2-4/-10", wantErr: true},
+		{in: "bytes -2-4/10", wantErr: true},
+		{in: "bytes 2-/10", wantErr: true},
+		{in: "bytes 4-2/10", wantErr: true},
+		{in: "bytes 2-10/10", wantErr: true},
+		{in: "bytes */10", wantErr: true},
+	} {
+		got, err := ParseContentRange(test.in)
+		if test.wantErr {
+			assert.Error(t, err, test.in)
+			continue
+		}
+		assert.NoError(t, err, test.in)
+		assert.Equal(t, test.want, got, test.in)
 	}
 }
 
