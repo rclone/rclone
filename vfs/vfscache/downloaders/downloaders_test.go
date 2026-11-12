@@ -167,7 +167,7 @@ func TestDownloaders(t *testing.T) {
 		defer cancel(dls)
 
 		dls.mu.Lock()
-		dls.errorCount = dls.opt.MaxDownloadErrors + 1
+		dls.errorCount = dls.opt.DownloaderMaxErrors + 1
 		dls.lastErr = fmt.Errorf("vfs reader: failed to write to cache file: %w", errors.New("no space left on device"))
 		// A waiter for a range that isn't downloaded yet, so kickWaiters
 		// doesn't dispatch it immediately and reaches the errorCount check.
@@ -217,10 +217,10 @@ func TestDownloaders(t *testing.T) {
 			dl.mu.Lock()
 			defer dl.mu.Unlock()
 			return dl.stop
-		}, 2*time.Second, 10*time.Millisecond, "an idle downloader should stop after --vfs-downloader-idle-time")
+		}, 2*time.Second, 10*time.Millisecond, "an idle downloader should stop after --vfs-cache-downloader-idle-time")
 	})
 
-	t.Run("MaxDownloadErrors", func(t *testing.T) {
+	t.Run("DownloaderMaxErrors", func(t *testing.T) {
 		for _, test := range []struct {
 			name      string
 			maxErrors int
@@ -235,7 +235,7 @@ func TestDownloaders(t *testing.T) {
 					size: size,
 				}
 				opt := vfscommon.Opt
-				opt.MaxDownloadErrors = test.maxErrors
+				opt.DownloaderMaxErrors = test.maxErrors
 				dls := New(ctx, item, &opt, remote, src)
 				defer cancel(dls)
 

@@ -428,13 +428,13 @@ func (dls *Downloaders) kickWaiters() (err error) {
 		}
 	}
 	if fserrors.IsErrNoSpace(dls.lastErr) {
-		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, dls.opt.MaxDownloadErrors, dls.lastErr)
+		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, dls.opt.DownloaderMaxErrors, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
 
-	if dls.errorCount > dls.opt.MaxDownloadErrors {
-		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, dls.opt.MaxDownloadErrors, dls.lastErr)
+	if dls.errorCount > dls.opt.DownloaderMaxErrors {
+		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, dls.opt.DownloaderMaxErrors, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
