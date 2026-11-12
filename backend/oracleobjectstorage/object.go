@@ -342,6 +342,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		ObjectName:    new(bucketPath),
 	}
 	o.applyGetObjectOptions(&req, options...)
+	if req.Range != nil {
+		// Parallel range reads must not overwrite the shared object metadata.
+		copy := *o
+		o = &copy
+	}
 	useBYOKGetObject(o.fs, &req)
 	var resp objectstorage.GetObjectResponse
 	err := o.fs.pacer.Call(func() (bool, error) {

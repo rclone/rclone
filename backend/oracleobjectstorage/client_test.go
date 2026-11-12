@@ -14,9 +14,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/stretchr/testify/assert"
@@ -132,4 +135,38 @@ func TestShouldRetryServiceError(t *testing.T) {
 		assert.Equal(t, test.want, retry, test.code)
 		assert.Equal(t, error(err), gotErr)
 	}
+}
+
+func TestConcurrentRangeOpen(t *testing.T) {
+	ctx := context.Background()
+	data := strings.Repeat("0123456789", 100)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeContent(w, r, "file", time.Unix(1000, 0), strings.NewReader(data))
+	}))
+	defer srv.Close()
+	f, err := NewFs(ctx, "TestOOSRanges", "bucket", configmap.Simple{
+		"provider": noAuth, "namespace": "test", "endpoint": srv.URL,
+	})
+	require.NoError(t, err)
+	obj, err := f.NewObject(ctx, "file")
+	require.NoError(t, err)
+	require.Equal(t, int64(len(data)), obj.Size())
+	var wg sync.WaitGroup
+	for i := range 8 {
+		wg.Go(func() {
+			for range 10 {
+				start := int64(i * 100)
+				rc, err := obj.Open(ctx, &fs.RangeOption{Start: start, End: start + 99})
+				if !assert.NoError(t, err) {
+					return
+				}
+				body, err := io.ReadAll(rc)
+				assert.NoError(t, err)
+				assert.NoError(t, rc.Close())
+				assert.Equal(t, data[start:start+100], string(body))
+				assert.Equal(t, int64(len(data)), obj.Size())
+			}
+		})
+	}
+	wg.Wait()
 }
