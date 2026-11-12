@@ -171,6 +171,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="kDrive" home="https://www.infomaniak.com/en/ksuite/kdrive" config="/kdrive/" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
+{{< provider name="Leviia Next" home="https://www.leviia.com/" config="/webdav/#leviia-next-and-siimply" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
 {{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-cloud" >}}
 {{< provider name="Linkbox" home="https://linkbox.to/" config="/linkbox/" >}}
@@ -222,6 +223,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" config="/sftp/" >}}
 {{< provider name="Shade" home="https://shade.inc" config="/shade/" >}}
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
+{{< provider name="Siimply by Leviia" home="https://www.siimply.cloud/" config="/webdav/#leviia-next-and-siimply" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
 {{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
