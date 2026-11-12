@@ -41,6 +41,16 @@ func TestLockfileIsExpired_UnreadableWithoutMaxLock(t *testing.T) {
 	assert.False(t, b.lockFileIsExpired(), "unreadable lockfile without --max-lock should not be treated as expired")
 }
 
+func TestLockfileIsExpired_EmptyWithMaxLock(t *testing.T) {
+	b := newTestLockfileBisyncRun(t, "", fs.Duration(5*time.Minute))
+	assert.True(t, b.lockFileIsExpired(), "empty lockfile with --max-lock set should be treated as expired")
+}
+
+func TestLockfileIsExpired_EmptyWithoutMaxLock(t *testing.T) {
+	b := newTestLockfileBisyncRun(t, "", basicallyforever)
+	assert.False(t, b.lockFileIsExpired(), "empty lockfile without --max-lock should not be treated as expired")
+}
+
 func TestLockfileIsExpired_ValidExpired(t *testing.T) {
 	data := struct {
 		Session     string
