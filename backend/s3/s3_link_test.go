@@ -1,8 +1,10 @@
 package s3
 
 import (
+	"bytes"
 	"context"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -224,6 +226,87 @@ func TestPublicLink(t *testing.T) {
 	assert.ErrorIs(t, err, fs.ErrorCantShareDirectories)
 	_, err = f.PublicLink(context.Background(), "missing", fs.DurationOff, false)
 	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
+func newAnonymousLinkTestFs(t *testing.T) *Fs {
+	t.Helper()
+	f := newLinkTestFs(t)
+	f.opt.AccessKeyID = ""
+	f.opt.SecretAccessKey = ""
+	f.opt.SessionToken = ""
+	c, _, err := s3Connection(f.ctx, &f.opt, getClient(f.ctx, &f.opt))
+	require.NoError(t, err)
+	f.c = c
+	return f
+}
+
+func TestCommandLinkAnonymous(t *testing.T) {
+	f := newAnonymousLinkTestFs(t)
+	_, err := f.Command(context.Background(), "link", []string{"file"}, nil)
+	require.NoError(t, err)
+	for _, key := range []string{
+		"expire",
+		"response-cache-control",
+		"response-content-disposition",
+		"response-content-encoding",
+		"response-content-language",
+		"response-content-type",
+		"response-expires",
+	} {
+		t.Run(key, func(t *testing.T) {
+			value := "value"
+			switch key {
+			case "expire":
+				value = "1h"
+			case "response-expires":
+				value = "Thu, 01 Jan 1970 00:00:00 GMT"
+			}
+			_, err := f.Command(context.Background(), "link", []string{"file"}, map[string]string{key: value})
+			assert.ErrorContains(t, err, "anonymous")
+		})
+	}
+}
+
+func TestPublicLinkAnonymous(t *testing.T) {
+	f := newAnonymousLinkTestFs(t)
+	remote := "dir/a file +&?%☃.txt"
+	link, err := f.PublicLink(context.Background(), remote, fs.Duration(time.Hour), false)
+	require.NoError(t, err)
+	u, err := url.Parse(link)
+	require.NoError(t, err)
+	assert.Equal(t, f.opt.Endpoint, u.Scheme+"://"+u.Host)
+	assert.Equal(t, "/bucket/prefix/dir/a%20file%20%2B%26%3F%25%E2%98%83.txt", u.EscapedPath())
+	for key := range u.Query() {
+		assert.False(t, strings.HasPrefix(strings.ToLower(key), "x-amz-"), key)
+	}
+}
+
+func TestPublicLinkExpiryNotice(t *testing.T) {
+	var logs bytes.Buffer
+	fs.SetLogger(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	ci := fs.GetConfig(context.Background())
+	oldLevel := ci.LogLevel
+	ci.LogLevel = fs.LogLevelDebug
+	t.Cleanup(func() {
+		ci.LogLevel = oldLevel
+		fs.SetLogger(slog.Default().Handler())
+	})
+	_, err := newLinkTestFs(t).PublicLink(context.Background(), "file", fs.DurationOff, false)
+	require.NoError(t, err)
+	assert.Contains(t, logs.String(), "Reducing expiry")
+	assert.NotContains(t, logs.String(), "won't expire")
+
+	f := newAnonymousLinkTestFs(t)
+	logs.Reset()
+	_, err = f.PublicLink(context.Background(), "file", fs.DurationOff, false)
+	require.NoError(t, err)
+	assert.NotContains(t, logs.String(), "Reducing expiry")
+	assert.NotContains(t, logs.String(), "won't expire")
+
+	logs.Reset()
+	_, err = f.PublicLink(context.Background(), "file", fs.Duration(time.Hour), false)
+	require.NoError(t, err)
+	assert.Contains(t, logs.String(), "won't expire")
 }
 
 func TestPublicLinkRequestFixups(t *testing.T) {
