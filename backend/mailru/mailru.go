@@ -774,6 +774,16 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 			fs.Debugf(f, "Excluding path %q from list: %v", item.Home, err)
 		}
 	}
+
+	// The server returns at most 8000 items per request whatever the limit
+	received := len(info.Body.List)
+	if received > 0 && received < limit && offset+received < info.Body.Count.Files+info.Body.Count.Folders {
+		more, err := f.listM1(ctx, dirPath, offset+received, limit-received)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, more...)
+	}
 	return entries, nil
 }
 
