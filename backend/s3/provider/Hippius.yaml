@@ -1,0 +1,8 @@
+name: Hippius
+description: Hippius S3
+region:
+  decentralized: Hippius decentralized storage network
+endpoint:
+  s3.hippius.com: Hippius S3 endpoint
+quirks:
+  force_path_style: true
