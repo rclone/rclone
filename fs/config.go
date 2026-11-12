@@ -517,7 +517,7 @@ var ConfigOptionsInfo = Options{{
 	Groups:  "Config",
 }, {
 	Name:    "disable_http2",
-	Default: false,
+	Default: true,
 	Help:    "Disable HTTP/2 in the global transport",
 	Groups:  "Networking",
 }, {
