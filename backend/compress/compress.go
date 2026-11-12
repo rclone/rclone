@@ -44,6 +44,8 @@ const (
 	heuristicBytes      = 1048576
 	minCompressionRatio = 1.1
 
+	defaultCompressionLevel = sgzip.DefaultCompression
+
 	gzFileExt           = ".gz"
 	zstdFileExt         = ".zst"
 	metaFileExt         = ".json"
@@ -107,8 +109,11 @@ ZSTD (levels 0 to 4):
  
 Notes:
 - Choose GZIP for wide compatibility; ZSTD for better speed/ratio tradeoffs.
-- Negative gzip levels: -2 = Huffman-only, -1 = default (≈ level 5).`,
-			Required: true,
+- Negative gzip levels: -2 = Huffman-only, -1 = default (≈ level 5).
+- The default level is -1 which selects the default level of the
+  compression mode, equivalent to level 5 for gzip and level 2 for zstd.`,
+			Default:  defaultCompressionLevel,
+			Advanced: true,
 		}, {
 			Name: "ram_cache_limit",
 			Help: `Some remotes don't allow the upload of files with unknown size.
@@ -225,9 +230,17 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 	switch compressionMode {
 	case Gzip:
+		if err := validateGzipLevel(opt.CompressionLevel); err != nil {
+			return nil, err
+		}
 		modeHandler = &gzipModeHandler{}
 	case Zstd:
-		modeHandler = &zstdModeHandler{}
+		level, err := resolveZstdLevel(opt.CompressionLevel)
+		if err != nil {
+			return nil, err
+		}
+		opt.CompressionLevel = level
+		modeHandler = &zstdModeHandler{level: level}
 	case Uncompressed:
 		modeHandler = &uncompressedModeHandler{}
 	default:

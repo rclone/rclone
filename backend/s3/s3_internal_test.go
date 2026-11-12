@@ -983,3 +983,9 @@ func TestSetQuirksNoCheckBucket(t *testing.T) {
 	setQuirks(opt, loadProvider("AWS"))
 	assert.False(t, opt.NoCheckBucket)
 }
+
+func TestLoadProviderByListedName(t *testing.T) {
+	for name := range loadProviders() {
+		assert.NotNil(t, loadProvider(name), name)
+	}
+}

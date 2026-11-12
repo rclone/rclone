@@ -3,29 +3,36 @@
 set -e
 
 # environment variables passed on docker-compose
-export NAME=seafile7
+export NAME=seafile
 export MYSQL_ROOT_PASSWORD=pixenij4zacoguq0kopamid6
 export SEAFILE_ADMIN_EMAIL=seafile@rclone.org
 export SEAFILE_ADMIN_PASSWORD=pixenij4zacoguq0kopamid6
 export SEAFILE_IP=127.0.0.1
 export SEAFILE_PORT=8087
 export SEAFILE_TEST_DATA=${SEAFILE_TEST_DATA:-/tmp/seafile-test-data}
-export SEAFILE_VERSION=latest
+# Seafile 12 and later are not published under the `latest` tag (that stops at 11.x)
+export SEAFILE_VERSION=${SEAFILE_VERSION:-13.0-latest}
+# Seafile 12 and later need a JWT key (only used by this throwaway test server)
+export SEAFILE_JWT_PRIVATE_KEY=ngirojohevaqaxuyobolaxakopelicok
 
 # make sure the data directory exists
 mkdir -p ${SEAFILE_TEST_DATA}/${NAME}
 
-# docker-compose project directory
+# docker compose project directory
 COMPOSE_DIR=$(dirname "$0")/seafile
 
+compose() {
+    docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml "$@"
+}
+
 wait_for_seafile() {
-    seafile_endpoint="http://${SEAFILE_IP}:${SEAFILE_PORT}/"
+    # the web server answers before Seahub has been initialised, so wait for the API to respond
+    seafile_endpoint="http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/ping/"
     wait_seconds=1
     echo -n "Waiting for Seafile server to start"
-    for iterations in `seq 1 60`;
+    for iterations in `seq 1 180`;
     do
-      http_code=$(curl -s -o /dev/null -L -w '%{http_code}' "$seafile_endpoint" || true;)
-      if [ "$http_code" -eq 200 ]; then
+      if curl -s -L "$seafile_endpoint" | grep -q pong; then
         echo
         break
       fi
@@ -35,7 +42,7 @@ wait_for_seafile() {
 }
 
 start() {
-    docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
+    compose up -d
 
     wait_for_seafile
 
@@ -43,8 +50,8 @@ start() {
     # to 60/minute. Concurrent test runs exceed that so raise it.
     # seahub_settings.py is only created on first start.
     settings=/shared/seafile/conf/seahub_settings.py
-    if ! docker exec ${NAME}_seafile_1 grep -q DEFAULT_THROTTLE_RATES $settings; then
-        docker exec -i ${NAME}_seafile_1 sh -c "cat >> $settings" <<'EOF'
+    if ! compose exec -T seafile grep -q DEFAULT_THROTTLE_RATES $settings; then
+        compose exec -T seafile sh -c "cat >> $settings" <<'EOF'
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
@@ -58,7 +65,14 @@ REST_FRAMEWORK = {
     'UNICODE_JSON': False,
 }
 EOF
-        docker exec ${NAME}_seafile_1 /opt/seafile/seafile-server-latest/seahub.sh restart >/dev/null
+        # Seahub may still be starting up so retry if the restart fails
+        for iterations in `seq 1 10`;
+        do
+          if compose exec -T seafile /opt/seafile/seafile-server-latest/seahub.sh restart >/dev/null; then
+            break
+          fi
+          sleep 3
+        done
         wait_for_seafile
     fi
 
@@ -81,12 +95,12 @@ EOF
 
 stop() {
     if status ; then
-        docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml down
+        compose down
     fi
 }
 
 status() {
-    if docker ps --format "{{.Names}}" | grep ^${NAME}_seafile_1$ >/dev/null ; then
+    if [ -n "$(compose ps --status running --quiet 2>/dev/null)" ] ; then
         echo "$NAME running"
     else
         echo "$NAME not running"

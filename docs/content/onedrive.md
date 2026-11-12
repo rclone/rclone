@@ -1433,7 +1433,7 @@ error something like this:
 ERROR : 20230203_123826234_iOS.heic: ReadFileHandle.Read error: low level retry 1/10: unexpected EOF
 ```
 
-or like this when using `--cache-mode=full`:
+or like this when using `--vfs-cache-mode=full`:
 
 ```text
 INFO  : 20230203_123826234_iOS.heic: vfs cache: downloader: error count now 1: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:

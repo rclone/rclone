@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/buengese/sgzip"
@@ -15,6 +16,15 @@ import (
 	"github.com/rclone/rclone/fs/chunkedreader"
 	"github.com/rclone/rclone/fs/hash"
 )
+
+// validateGzipLevel checks the compression level is in the range
+// supported by sgzip.
+func validateGzipLevel(level int) error {
+	if level < sgzip.ConstantCompression || level > sgzip.BestCompression {
+		return fmt.Errorf("invalid gzip compression level %d: must be between %d and %d", level, sgzip.ConstantCompression, sgzip.BestCompression)
+	}
+	return nil
+}
 
 // gzipModeHandler implements compressionModeHandler for gzip
 type gzipModeHandler struct{}
@@ -107,10 +117,11 @@ func (g *gzipModeHandler) putCompress(
 	// Compress the file
 	pipeReader, pipeWriter := io.Pipe()
 
-	resultsGzip := make(chan compressionResult[sgzip.GzipMetadata])
+	resultsGzip := make(chan compressionResult[sgzip.GzipMetadata], 1)
 	go func() {
 		gz, err := sgzip.NewWriterLevel(pipeWriter, f.opt.CompressionLevel)
 		if err != nil {
+			_ = pipeWriter.CloseWithError(err)
 			resultsGzip <- compressionResult[sgzip.GzipMetadata]{err: err, meta: sgzip.GzipMetadata{}}
 			close(resultsGzip)
 			return
@@ -150,6 +161,9 @@ func (g *gzipModeHandler) putCompress(
 	// Transfer the data
 	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
 	if err != nil {
+		// Close the pipe reader so the compression goroutine doesn't
+		// block writing to it.
+		_ = pipeReader.CloseWithError(err)
 		if o != nil {
 			if removeErr := o.Remove(ctx); removeErr != nil {
 				fs.Errorf(o, "Failed to remove partially transferred object: %v", removeErr)
