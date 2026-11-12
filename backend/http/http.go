@@ -15,8 +15,6 @@ import (
 	"net/textproto"
 	"net/url"
 	"path"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -140,11 +138,9 @@ listing to find its size and modification time. If the server shows
 these in its listing, this option uses them instead, which is much
 faster for directories with many files.
 
-This works with the nginx directory listing, which is HTML by default
-(autoindex on) or JSON (autoindex_format json). The HTML listing
-shows times to the minute in UTC unless autoindex_localtime is on, so
-use --modify-window 1m with it. The JSON listing shows times to the
-second.
+This only works when the server returns its listing as JSON in the
+format used by nginx (autoindex_format json), which shows times to the
+second. HTML listings are not used for this.
 
 Files whose size and time are not in the listing still get a HEAD
 request. Files found this way have no Content-Type or other header
@@ -521,31 +517,6 @@ func (e listingEntry) hasInfo() bool {
 	return e.size >= 0 && !e.modTime.IsZero()
 }
 
-// nginxInfo matches the text after a link in an nginx HTML listing: the modification
-// time to the minute in UTC and the size in bytes, or "-" for a directory
-var nginxInfo = regexp.MustCompile(`^\s+(\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2})\s+(\d+|-)\s*(
-|$)`)
-
-// nginxInfoFromText reads the size and modification time from the text after a link
-func nginxInfoFromText(text string) (size int64, modTime time.Time) {
-	m := nginxInfo.FindStringSubmatch(text)
-	if m == nil {
-		return -1, time.Time{}
-	}
-	modTime, err := time.Parse("02-Jan-2006 15:04", m[1])
-	if err != nil {
-		return -1, time.Time{}
-	}
-	if m[2] == "-" {
-		return -1, modTime
-	}
-	size, err = strconv.ParseInt(m[2], 10, 64)
-	if err != nil {
-		return -1, time.Time{}
-	}
-	return size, modTime
-}
-
 // Parse turns HTML for a directory into entries
 // base should be the base URL to resolve any relative names from
 func parse(base *url.URL, in io.Reader) (entries []listingEntry, err error) {
@@ -564,11 +535,7 @@ func parse(base *url.URL, in io.Reader) (entries []listingEntry, err error) {
 					name, err := parseName(base, a.Val)
 					if err == nil {
 						if _, found := seen[name]; !found {
-							entry := listingEntry{name: name, size: -1}
-							if next := n.NextSibling; next != nil && next.Type == html.TextNode {
-								entry.size, entry.modTime = nginxInfoFromText(next.Data)
-							}
-							entries = append(entries, entry)
+							entries = append(entries, listingEntry{name: name, size: -1})
 							seen[name] = struct{}{}
 						}
 					}
