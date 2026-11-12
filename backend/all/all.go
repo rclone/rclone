@@ -26,6 +26,7 @@ import (
 	_ "github.com/rclone/rclone/backend/filen"
 	_ "github.com/rclone/rclone/backend/filescom"
 	_ "github.com/rclone/rclone/backend/ftp"
+	_ "github.com/rclone/rclone/backend/funambol"
 	_ "github.com/rclone/rclone/backend/gofile"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
 	_ "github.com/rclone/rclone/backend/googlephotos"
