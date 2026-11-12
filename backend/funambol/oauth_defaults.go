@@ -10,8 +10,6 @@ const (
 
 // These are the application credentials of the Movistar Cloud Windows
 // desktop client, as used by https://github.com/uniextra/MovistarWebDAVProxy.
-//
-// TODO: confirm them against the official Windows installer.
 const (
 	movistarOAuthClientID              = "b99e5095-7a36-42c1-83b6-6f05d0f13ea1"
 	movistarOAuthEncryptedClientSecret = "V3BskIMOxPtCKgkc0HEcJyfoQd1ksnMccI8tTNYz_EtpwyPUoh6YnBYFpGjGFKPZ2Bf8Sw"
