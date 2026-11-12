@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/cache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -53,6 +54,21 @@ var (
 	createLibraryMutex  sync.Mutex // Mutex to protect library creation
 )
 
+// The Go fileserver of Seafile parses at most 1000 multipart parts per
+// request, and an upload request uses 4 of them for its fields, so keep
+// well below that.
+var defaultBatcherOptions = batcher.Options{
+	MaxBatchSize:          500,
+	DefaultTimeoutSync:    500 * time.Millisecond,
+	DefaultTimeoutAsync:   10 * time.Second,
+	DefaultBatchSizeAsync: 100,
+	DefaultMode:           "off",
+}
+
+// batchMaxFileSize is the largest file uploaded in a batch. Batched files
+// are held in memory until the batch is sent.
+const batchMaxFileSize = 1 * fs.Mebi
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -60,7 +76,7 @@ func init() {
 		Description: "seafile",
 		NewFs:       NewFs,
 		Config:      Config,
-		Options: []fs.Option{{
+		Options: append([]fs.Option{{
 			Name:     configURL,
 			Help:     "URL of seafile host to connect to.",
 			Required: true,
@@ -114,7 +130,7 @@ func init() {
 				encoder.EncodeDoubleQuote |
 				encoder.EncodeInvalidUtf8 |
 				encoder.EncodeDot),
-		}},
+		}}, defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/seafile/#batch-mode)\n\n")...),
 	})
 }
 
@@ -129,6 +145,9 @@ type Options struct {
 	LibraryKey    string               `config:"library_key"`
 	CreateLibrary bool                 `config:"create_library"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
+	BatchMode     string               `config:"batch_mode"`
+	BatchSize     int                  `config:"batch_size"`
+	BatchTimeout  fs.Duration          `config:"batch_timeout"`
 }
 
 // Fs represents a remote seafile
@@ -152,6 +171,8 @@ type Fs struct {
 	moveDirNotAvailable bool         // Version < 7.0 don't have an API to move a directory
 	uploadModTime       bool         // Version >= 12.0.4 accepts last_modify when uploading a file
 	renew               *Renew       // Renew an encrypted library token
+
+	batcher *batcher.Batcher[*batchItem, *api.FileDetail] // batches small file uploads
 }
 
 // minUploadModTimeVersion is the first server version which reads the
@@ -222,6 +243,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		BucketBased:             opt.LibraryName == "",
 	}).Fill(ctx, f)
+
+	batcherOptions := defaultBatcherOptions
+	batcherOptions.Mode = f.opt.BatchMode
+	if batcherOptions.Mode == "" {
+		// A config map without defaults leaves the option empty
+		batcherOptions.Mode = "off"
+	}
+	batcherOptions.Size = f.opt.BatchSize
+	batcherOptions.Timeout = time.Duration(f.opt.BatchTimeout)
+	f.batcher, err = batcher.New(ctx, f, f.commitBatch, batcherOptions)
+	if err != nil {
+		return nil, err
+	}
 
 	serverInfo, err := f.getServerInfo(ctx)
 	if err != nil {
@@ -424,6 +458,7 @@ func newClient(ctx context.Context) *http.Client {
 
 // Shutdown the Fs
 func (f *Fs) Shutdown(ctx context.Context) error {
+	f.batcher.Shutdown()
 	if f.renew == nil {
 		return nil
 	}
@@ -1370,6 +1405,74 @@ func (f *Fs) newObject(ctx context.Context, remote string, size int64, modTime t
 		modTime:       modTime,
 	}
 	return object
+}
+
+// batchItem is a file waiting in memory to be uploaded with a batch
+type batchItem struct {
+	libraryID string
+	filePath  string // path of the file in the library
+	data      []byte
+}
+
+// commitBatch uploads the files of a batch with one request per directory,
+// so each directory gets a single commit on the server.
+func (f *Fs) commitBatch(ctx context.Context, items []*batchItem, results []*api.FileDetail, errs []error) error {
+	type groupKey struct{ libraryID, dir string }
+	type group struct {
+		indexes []int
+		names   map[string]struct{}
+	}
+	var groups []*group
+	open := map[groupKey]*group{}
+	for i, item := range items {
+		dir, name := path.Split(item.filePath)
+		key := groupKey{item.libraryID, dir}
+		g := open[key]
+		if g != nil {
+			if _, dup := g.names[name]; dup {
+				// The same file twice in one request would be ambiguous
+				g = nil
+			}
+		}
+		if g == nil {
+			g = &group{names: map[string]struct{}{}}
+			open[key] = g
+			groups = append(groups, g)
+		}
+		g.indexes = append(g.indexes, i)
+		g.names[name] = struct{}{}
+	}
+	for _, g := range groups {
+		f.uploadGroup(ctx, items, g.indexes, results, errs)
+	}
+	return nil
+}
+
+// uploadGroup uploads the items given by indexes, which share a directory,
+// and sets their results or errors.
+func (f *Fs) uploadGroup(ctx context.Context, items []*batchItem, indexes []int, results []*api.FileDetail, errs []error) {
+	group := make([]*batchItem, len(indexes))
+	for j, i := range indexes {
+		group[j] = items[i]
+	}
+	dir, _ := path.Split(group[0].filePath)
+	uploaded, refused, err := f.uploadFiles(ctx, group[0].libraryID, dir, group)
+	if refused && len(group) > 1 {
+		// The server refuses the whole request if it refuses one file, for
+		// example for an invalid name, so give each file its own result
+		fs.Debugf(f, "Batch of %d files failed, uploading them one by one: %v", len(group), err)
+		for _, i := range indexes {
+			f.uploadGroup(ctx, items, []int{i}, results, errs)
+		}
+		return
+	}
+	for j, i := range indexes {
+		if err != nil {
+			errs[i] = err
+		} else {
+			results[i] = &uploaded[j]
+		}
+	}
 }
 
 // Check the interfaces are satisfied
