@@ -49,5 +49,11 @@ func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {
 	}
 	setTime("atime", stat.Atim)
 	setTime("mtime", stat.Mtim)
+	if o.fs.preservePOSIXProperties {
+		m.Set("nlink", fmt.Sprintf("%d", stat.Nlink))
+		m.Set("ino", fmt.Sprintf("%d", stat.Ino))
+		m.Set("dev", fmt.Sprintf("%d", stat.Dev))
+		setTime("ctime", stat.Ctim)
+	}
 	return nil
 }
