@@ -538,6 +538,10 @@ func TestFillInMissingSizes(t *testing.T) {
 			wantTotal: 20, wantFree: 5, wantUsed: 15,
 		},
 		{
+			total: 20, free: -1, used: 25,
+			wantTotal: 20, wantFree: 0, wantUsed: 25,
+		},
+		{
 			total: 20, free: -1, used: -1,
 			wantTotal: 20, wantFree: 20, wantUsed: 0,
 		},
