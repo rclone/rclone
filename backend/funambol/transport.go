@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"
@@ -34,7 +35,9 @@ func newSAPIClient(ctx context.Context, endpoint string) (*http.Client, error) {
 	if fs.GetConfig(ctx).DisableHTTP2 || u.Scheme != "https" {
 		return client, nil
 	}
-	var h2 *http2.Transport
+	// http.Transport only speaks HTTP/2 over a *tls.Conn, so the deprecated
+	// http2.Transport is still needed for uTLS connections.
+	var h2 *http2.Transport //nolint:staticcheck // see above
 	sapi := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
 		// ConfigureTransports carries HTTP/1 transport settings into HTTP/2,
 		// including response-header timeouts and disabled keep-alives.
@@ -46,14 +49,14 @@ func newSAPIClient(ctx context.Context, endpoint string) (*http.Client, error) {
 			DisableCompression:     t.DisableCompression,
 			MaxResponseHeaderBytes: t.MaxResponseHeaderBytes,
 		}
-		h2, err = http2.ConfigureTransports(settings)
+		h2, err = http2.ConfigureTransports(settings) //nolint:staticcheck // see above
 		if err != nil {
 			return
 		}
 		// uTLS dials new connections, so use HTTP/2's dialing pool instead of
 		// the no-dial pool installed for transparent net/http upgrades.
-		h2.ConnPool = nil
-		h2.TLSClientConfig = settings.TLSClientConfig
+		h2.ConnPool = nil                             //nolint:staticcheck // see above
+		h2.TLSClientConfig = settings.TLSClientConfig //nolint:staticcheck // see above
 		h2.DialTLSContext = func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
 			return dialSAPITLS(ctx, network, addr, cfg, t)
 		}
@@ -73,7 +76,7 @@ type sapiClientTransport struct {
 	base     http.RoundTripper
 	sapi     *fshttp.Transport
 	endpoint *url.URL
-	h2       *http2.Transport
+	h2       *http2.Transport //nolint:staticcheck // see newSAPIClient
 }
 
 // RoundTrip implements http.RoundTripper.
@@ -89,11 +92,11 @@ func (t *sapiClientTransport) RoundTrip(req *http.Request) (*http.Response, erro
 func (t *sapiClientTransport) CloseIdleConnections() {
 	t.base.(interface{ CloseIdleConnections() }).CloseIdleConnections()
 	t.sapi.CloseIdleConnections()
-	t.h2.CloseIdleConnections()
+	t.h2.CloseIdleConnections() //nolint:staticcheck // see newSAPIClient
 }
 
 type sapiHTTP2Transport struct {
-	h2        *http2.Transport
+	h2        *http2.Transport //nolint:staticcheck // see newSAPIClient
 	http1Only atomic.Bool
 }
 
@@ -102,16 +105,69 @@ func (t *sapiHTTP2Transport) RoundTrip(req *http.Request) (*http.Response, error
 	if t.http1Only.Load() {
 		return nil, http.ErrSkipAltProtocol
 	}
-	resp, err := t.h2.RoundTrip(req)
+	var body *heldBody
+	if req.Body != nil && req.Body != http.NoBody {
+		body = &heldBody{ReadCloser: req.Body, holding: true}
+		req = req.WithContext(req.Context())
+		req.Body = body
+	}
+	resp, err := t.h2.RoundTrip(req) //nolint:staticcheck // see newSAPIClient
 	if errors.Is(err, errSAPIHTTP1) {
 		// ALPN failed before any HTTP bytes or request body were sent.
+		// The body stays open, so net/http can send it over HTTP/1.1.
 		t.http1Only.Store(true)
 		return nil, http.ErrSkipAltProtocol
+	}
+	if body != nil {
+		body.release()
 	}
 	if err != nil && req.Body != nil {
 		_ = req.Body.Close()
 	}
 	return resp, err
+}
+
+// heldBody holds back a Close of a request body that was not read while
+// HTTP/2 tries a connection.  net/http can resend a body over HTTP/1.1 after
+// ErrSkipAltProtocol only if it was neither read nor closed.
+type heldBody struct {
+	io.ReadCloser
+	mu      sync.Mutex
+	holding bool // a Close before a Read is held back
+	read    bool
+	held    bool // a Close was held back
+}
+
+// Read implements io.Reader.
+func (b *heldBody) Read(p []byte) (int, error) {
+	b.mu.Lock()
+	b.read = true
+	b.mu.Unlock()
+	return b.ReadCloser.Read(p)
+}
+
+// Close implements io.Closer.
+func (b *heldBody) Close() error {
+	b.mu.Lock()
+	if b.holding && !b.read {
+		b.held = true
+		b.mu.Unlock()
+		return nil
+	}
+	b.mu.Unlock()
+	return b.ReadCloser.Close()
+}
+
+// release stops holding back Close and closes the body if a Close was held.
+func (b *heldBody) release() {
+	b.mu.Lock()
+	b.holding = false
+	held := b.held
+	b.held = false
+	b.mu.Unlock()
+	if held {
+		_ = b.ReadCloser.Close()
+	}
 }
 
 func dialSAPITLS(ctx context.Context, network, addr string, cfg *tls.Config, base *http.Transport) (net.Conn, error) {
@@ -165,7 +221,7 @@ func (c *sapiTLSConn) ConnectionState() tls.ConnectionState {
 	return tls.ConnectionState{
 		Version: s.Version, HandshakeComplete: s.HandshakeComplete, DidResume: s.DidResume,
 		CipherSuite: s.CipherSuite, NegotiatedProtocol: s.NegotiatedProtocol,
-		NegotiatedProtocolIsMutual: s.NegotiatedProtocolIsMutual, ServerName: s.ServerName,
+		ServerName:       s.ServerName,
 		PeerCertificates: s.PeerCertificates, VerifiedChains: s.VerifiedChains,
 		SignedCertificateTimestamps: s.SignedCertificateTimestamps, OCSPResponse: s.OCSPResponse,
 		TLSUnique: s.TLSUnique, ECHAccepted: s.ECHAccepted,
