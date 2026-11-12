@@ -356,32 +356,42 @@ type Album struct {
 
 // Photo represents a photo or video with its metadata
 type Photo struct {
-	ID          string
-	Filename    string
-	Size        int64
-	AssetDate   int64 // Unix timestamp in milliseconds
-	AddedDate   int64
-	Width       int
-	Height      int
-	IsFavorite  bool
-	IsHidden    bool
-	SmartAlbums []string // smart album names this photo belongs to (for delta sync routing)
-	ResourceKey string   // CloudKit field name for download (default: resOriginalRes)
+	ID             string
+	AssetID        string
+	SourceZone     string
+	SourceArea     string
+	SourceOwner    string
+	SourceZoneType string
+	Filename       string
+	Size           int64
+	AssetDate      int64 // Unix timestamp in milliseconds
+	AddedDate      int64
+	Width          int
+	Height         int
+	IsFavorite     bool
+	IsHidden       bool
+	SmartAlbums    []string // smart album names this photo belongs to (for delta sync routing)
+	ResourceKey    string   // CloudKit field name for download (default: resOriginalRes)
 }
 
 // companion creates a derivative Photo entry sharing metadata with the parent
 // Used for Live Photo MOV, edited versions, and RAW alternatives
 func (p *Photo) companion(id, filename, resourceKey string, size int64) *Photo {
 	return &Photo{
-		ID:          id,
-		Filename:    filename,
-		Size:        size,
-		AssetDate:   p.AssetDate,
-		AddedDate:   p.AddedDate,
-		IsFavorite:  p.IsFavorite,
-		IsHidden:    p.IsHidden,
-		ResourceKey: resourceKey,
-		SmartAlbums: p.SmartAlbums,
+		ID:             id,
+		AssetID:        p.AssetID,
+		SourceZone:     p.SourceZone,
+		SourceArea:     p.SourceArea,
+		SourceOwner:    p.SourceOwner,
+		SourceZoneType: p.SourceZoneType,
+		Filename:       filename,
+		Size:           size,
+		AssetDate:      p.AssetDate,
+		AddedDate:      p.AddedDate,
+		IsFavorite:     p.IsFavorite,
+		IsHidden:       p.IsHidden,
+		ResourceKey:    resourceKey,
+		SmartAlbums:    p.SmartAlbums,
 	}
 }
 
@@ -1808,7 +1818,11 @@ func deduplicateFilenames(photos []*Photo) {
 		}
 		ext := path.Ext(p.Filename)
 		base := strings.TrimSuffix(p.Filename, ext)
-		p.Filename = base + "_" + p.ID + ext
+		identity := p.ID
+		if p.AssetID != "" {
+			identity = p.AssetID
+		}
+		p.Filename = base + "_" + identity + ext
 	}
 }
 
@@ -2109,6 +2123,9 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 
 // GetPhotos retrieves photos from this album using parallel partitions with disk cache
 func (album *Album) GetPhotos(ctx context.Context) ([]*Photo, error) {
+	if album.lib != nil && customAlbum(album) {
+		return album.getMembershipPhotos(ctx)
+	}
 	// No library configured - return pre-populated cache (test path)
 	if album.lib == nil {
 		album.mu.Lock()
@@ -2258,6 +2275,10 @@ func (ps *PhotosService) resolveZone(zoneName string) (area string, zoneID map[s
 // "resOriginalVidComplRes" for Live Photo video, "resJPEGFullRes" for edited)
 func (ps *PhotosService) LookupDownloadURL(ctx context.Context, recordName, zone, resourceKey string) (string, error) {
 	area, zoneID := ps.resolveZone(zone)
+	return ps.lookupDownloadURL(ctx, recordName, area, zoneID, resourceKey)
+}
+
+func (ps *PhotosService) lookupDownloadURL(ctx context.Context, recordName, area string, zoneID map[string]any, resourceKey string) (string, error) {
 
 	query := map[string]any{
 		"records": []map[string]any{
