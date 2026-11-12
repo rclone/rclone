@@ -474,8 +474,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(childFolders) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+	for _, e := range childFolders {
+		if !recent.stale(e.UUID, id, e.PlainName) {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	var childFiles []folders.File
@@ -487,8 +489,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(childFiles) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+	for _, e := range childFiles {
+		if !recent.stale(e.UUID, id, joinNameExt(e.PlainName, e.Type)) {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	// Delete the directory
@@ -502,6 +506,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
+	recent.deleted(id)
 
 	f.dirCache.FlushDir(dir)
 	return nil
@@ -520,6 +525,9 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 		return "", false, err
 	}
 	for _, e := range entries {
+		if recent.stale(e.UUID, pathID, e.PlainName) {
+			continue
+		}
 		if f.opt.Encoding.ToStandardName(e.PlainName) == leaf {
 			return e.UUID, true, nil
 		}
@@ -592,6 +600,73 @@ func existenceCheck(name, ext string) files.FileExistenceCheck {
 	}
 }
 
+// staleWindow is how long the API may carry on returning an item from
+// where it was before this process moved or deleted it.
+const staleWindow = time.Minute
+
+// location is where this process last put an item. An empty parentUUID
+// means the item was deleted.
+type location struct {
+	parentUUID string
+	name       string // encoded name, including any extension
+	expires    time.Time
+}
+
+// recentChanges holds the files and folders this process has moved or
+// deleted recently, keyed by UUID.
+//
+// The API serves lookups and listings from read replicas which lag behind
+// writes, so an item can be returned from its old location for a while after
+// it was moved or deleted. Acting on such a stale entry can be destructive,
+// eg overwriting it would delete the file from where it was moved to.
+type recentChanges struct {
+	mu        sync.Mutex
+	items     map[string]location
+	lastPrune time.Time
+}
+
+// recent is shared by all the Fs in the process as UUIDs are global.
+var recent = recentChanges{items: map[string]location{}}
+
+// set records the new location of uuid, pruning expired entries.
+func (r *recentChanges) set(uuid string, loc location) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	now := time.Now()
+	if now.Sub(r.lastPrune) > staleWindow {
+		for k, v := range r.items {
+			if now.After(v.expires) {
+				delete(r.items, k)
+			}
+		}
+		r.lastPrune = now
+	}
+	loc.expires = now.Add(staleWindow)
+	r.items[uuid] = loc
+}
+
+// moved records that uuid was moved to name in parentUUID.
+func (r *recentChanges) moved(uuid, parentUUID, name string) {
+	r.set(uuid, location{parentUUID: parentUUID, name: name})
+}
+
+// deleted records that uuid was deleted.
+func (r *recentChanges) deleted(uuid string) {
+	r.set(uuid, location{})
+}
+
+// stale reports whether an API result saying uuid is called name in
+// parentUUID is out of date because of a change made by this process.
+func (r *recentChanges) stale(uuid, parentUUID, name string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	loc, ok := r.items[uuid]
+	if !ok || time.Now().After(loc.expires) {
+		return false
+	}
+	return loc.parentUUID != parentUUID || loc.name != name
+}
+
 // findFile looks up a single file by name within directoryID. Returns
 // (nil, nil) when the file does not exist; surfaces transport/API errors.
 func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
@@ -621,6 +696,10 @@ func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.F
 	var uuid string
 	for _, result := range checkResult.Files {
 		if !result.FileExists() || result.UUID == "" {
+			continue
+		}
+		if recent.stale(result.UUID, directoryID, joinNameExt(result.PlainName, result.Type)) {
+			fs.Debugf(f, "Ignoring stale lookup of %q (UUID: %s) which was moved or deleted", leaf, result.UUID)
 			continue
 		}
 		if joinNameExt(result.PlainName, result.Type) == encodedName {
@@ -682,6 +761,9 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return nil, err
 	}
 	for _, e := range foldersList {
+		if recent.stale(e.UUID, dirID, e.PlainName) {
+			continue
+		}
 		remote := path.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
@@ -698,6 +780,9 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := e.PlainName
 		if len(e.Type) > 0 {
 			remote += "." + e.Type
+		}
+		if recent.stale(e.UUID, dirID, remote) {
+			continue
 		}
 		remote = path.Join(dir, f.opt.Encoding.ToStandardName(remote))
 		out = append(out, newObjectWithFile(f, remote, &e))
@@ -771,6 +856,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	if err != nil {
 		return err
 	}
+	recent.deleted(dirID)
 	f.dirCache.FlushDir(remote)
 	return nil
 }
@@ -900,11 +986,18 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Move the file server-side
 	err = f.pacer.Call(func() (bool, error) {
 		err := files.MoveFile(ctx, f.cfg, srcObj.uuid, directoryID, newName, newType)
+		// The move is checked against lagging read replicas so it can
+		// fail with 404 if the destination directory was just created
+		// or 409 if a file at the destination was just deleted.
+		if err != nil && isStaleReadError(err, true) {
+			return true, err
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
 	}
+	recent.moved(srcObj.uuid, directoryID, joinNameExt(newName, newType))
 
 	dstObj := &Object{
 		f:       f,
@@ -940,11 +1033,17 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	encodedLeaf := f.opt.Encoding.FromStandardName(dstLeaf)
 	err = f.pacer.Call(func() (bool, error) {
 		err := folders.MoveFolder(ctx, f.cfg, srcID, dstDirectoryID, encodedLeaf)
+		// Moving a large folder can outlast the gateway timeout (520/502)
+		// yet still complete, in which case the retry reports this.
+		if err != nil && isConflictError(err) && strings.Contains(err.Error(), "already moved to that location") {
+			return false, nil
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return err
 	}
+	recent.moved(srcID, dstDirectoryID, encodedLeaf)
 
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
@@ -1124,6 +1223,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				backupName, backupType, backupUUID, err)
 			// Don't fail the upload just because backup deletion failed
 		} else {
+			recent.deleted(backupUUID)
 			fs.Debugf(o.f, "Successfully deleted backup file")
 		}
 	}
@@ -1229,8 +1329,13 @@ func (o *Object) restoreBackupFile(ctx context.Context, backupUUID, origName, or
 
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
-	return o.f.pacer.Call(func() (bool, error) {
+	err := o.f.pacer.Call(func() (bool, error) {
 		err := files.DeleteFile(ctx, o.f.cfg, o.uuid)
 		return o.f.shouldRetry(ctx, err)
 	})
+	if err != nil {
+		return err
+	}
+	recent.deleted(o.uuid)
+	return nil
 }

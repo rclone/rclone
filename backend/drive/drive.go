@@ -568,7 +568,7 @@ recommended usage is using the flag form --drive-size-as-quota when
 doing rclone ls/lsl/lsf/lsjson/etc only.
 
 If you do use this flag for syncing (not recommended) then you will
-need to use --ignore size also.`,
+need to use --ignore-size also.`,
 			Advanced: true,
 			Hide:     fs.OptionHideConfigurator,
 		}, {
@@ -2298,15 +2298,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		wg.Wait()
 		// if the input channel overflowed add the collected entries to the channel now
 		for len(overflow) > 0 {
-			mu.Lock()
-			// only fill half of the channel to prevent entries being put into overflow again
-			l := min(len(overflow), listRInputBuffer/2)
-			wg.Add(l)
-			for _, d := range overflow[:l] {
-				in <- d
+			if !refillListRInput(&mu, &in, &overflow, &wg) {
+				return
 			}
-			overflow = overflow[l:]
-			mu.Unlock()
 
 			// wait again for the completion of all directories
 			wg.Wait()
@@ -2352,6 +2346,25 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	}
 
 	return nil
+}
+
+// refillListRInput moves queued directory jobs back onto in.
+// It returns false when a listing error has already closed in.
+// Sending on that nil channel would block forever while holding mu.
+func refillListRInput(mu *sync.Mutex, in *chan listREntry, overflow *[]listREntry, wg *sync.WaitGroup) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	if *in == nil {
+		return false
+	}
+	// only fill half of the channel to prevent entries being put into overflow again
+	l := min(len(*overflow), listRInputBuffer/2)
+	wg.Add(l)
+	for _, d := range (*overflow)[:l] {
+		*in <- d
+	}
+	*overflow = (*overflow)[l:]
+	return true
 }
 
 const shortcutSeparator = '\t'
@@ -3895,6 +3908,10 @@ It copies the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone copyto). The ID and path pairs can be
 repeated.
 
+A path without a remote name, such as dir/file.txt, is a local path, so the
+file is copied to the local disk. To copy within the drive, include the
+remote, as in drive:dir/file.txt.
+
 The path should end with a / to indicate copy the file as named to
 this directory. If it doesn't end with a / then the last path
 component will be used as the file name.
@@ -3918,6 +3935,10 @@ rclone backend moveid drive: ID1 path1 ID2 path2
 
 It moves the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone moveto).
+
+A path without a remote name, such as dir/file.txt, is a local path, so the
+file is moved to the local disk and removed from the drive. To move within
+the drive, include the remote, as in drive:dir/file.txt.
 
 The path should end with a / to indicate move the file as named to
 this directory. If it doesn't end with a / then the last path

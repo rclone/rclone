@@ -314,6 +314,54 @@ func TestOpen(t *testing.T) {
 	}
 }
 
+func TestNoHeadMetadataDefaults(t *testing.T) {
+	tests := []struct {
+		name        string
+		size        string
+		modTime     string
+		wantSize    int64
+		wantModTime time.Time
+	}{
+		{
+			name:        "defaults",
+			wantSize:    -1,
+			wantModTime: timeUnset,
+		}, {
+			name:        "zero size",
+			size:        "0B",
+			wantSize:    0,
+			wantModTime: timeUnset,
+		}, {
+			name:        "configured metadata",
+			size:        "100B",
+			modTime:     "2024-08-05T07:36:07Z",
+			wantSize:    100,
+			wantModTime: time.Date(2024, 8, 5, 7, 36, 7, 0, time.UTC),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			m := prepareServer(t)
+			m.Set("no_head", "true")
+			if test.size != "" {
+				m.Set("no_head_size", test.size)
+			}
+			if test.modTime != "" {
+				m.Set("no_head_time", test.modTime)
+			}
+
+			f, err := NewFs(context.Background(), remoteName, "", m)
+			require.NoError(t, err)
+			o, err := f.NewObject(context.Background(), "four/under four.txt")
+			require.NoError(t, err)
+
+			assert.Equal(t, test.wantSize, o.Size())
+			assert.Equal(t, test.wantModTime, o.ModTime(context.Background()))
+		})
+	}
+}
+
 func TestMimeType(t *testing.T) {
 	f := prepare(t)
 
@@ -640,7 +688,7 @@ func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
 
 	// open makes a remote pointing at ts with or without headers
 	// and opens file.txt on it
-	open := func(t *testing.T, withHeaders bool) (io.ReadCloser, error) {
+	open := func(t *testing.T, withHeaders, allowDowngrade bool) (io.ReadCloser, error) {
 		configfile.Install()
 		m := configmap.Simple{
 			"type":    "http",
@@ -652,6 +700,7 @@ func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
 		}
 		ctx, ci := fs.AddConfig(context.Background())
 		ci.InsecureSkipVerify = true
+		ci.AllowHTTPSDowngrade = allowDowngrade
 		f, err := NewFs(ctx, remoteName, "", m)
 		require.NoError(t, err)
 
@@ -663,13 +712,25 @@ func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
 
 	t.Run("WithHeaders", func(t *testing.T) {
 		// Headers could leak so the downgrade must be refused
-		_, err := open(t, true)
+		_, err := open(t, true, false)
+		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	t.Run("WithHeadersAllowDowngrade", func(t *testing.T) {
+		// Headers could leak so the downgrade is refused even when allowed
+		_, err := open(t, true, true)
 		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
 	})
 
 	t.Run("WithoutHeaders", func(t *testing.T) {
-		// Nothing to leak so the downgrade is followed
-		fd, err := open(t, false)
+		// The transport refuses downgrades by default
+		_, err := open(t, false, false)
+		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	t.Run("WithoutHeadersAllowDowngrade", func(t *testing.T) {
+		// Nothing to leak so the downgrade is followed when allowed
+		fd, err := open(t, false, true)
 		require.NoError(t, err)
 		data, err := io.ReadAll(fd)
 		require.NoError(t, err)
@@ -759,4 +820,35 @@ func TestRedirectStripsHeadersOnHostChange(t *testing.T) {
 	for i := 0; i < len(headers); i += 2 {
 		assert.Empty(t, got.Values(headers[i]), "header %q leaked to redirect target", headers[i])
 	}
+}
+
+func TestRootCannotChangeHost(t *testing.T) {
+	// A root starting with "//" is a network-path reference under the
+	// URL standard. It must not be able to move the remote (and the
+	// configured headers) to a host other than the configured one.
+	var requests int
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer other.Close()
+
+	m := prepareServer(t)
+	otherHost := strings.TrimPrefix(other.URL, "http://")
+	for _, root := range []string{
+		"//" + otherHost + "/",
+		"//" + otherHost + "/one%.txt",
+		"//" + otherHost,
+		"//user:pass@" + otherHost + "/",
+	} {
+		f, err := NewFs(context.Background(), remoteName, root, m)
+		assert.ErrorContains(t, err, "must not change the scheme, host or user", root)
+		assert.Nil(t, f, root)
+	}
+	assert.Equal(t, 0, requests, "request sent to the other host")
+
+	// A same-origin absolute path must still work
+	f, err := NewFs(context.Background(), remoteName, "/", m)
+	require.NoError(t, err)
+	assert.Equal(t, m["url"]+"/", f.String())
 }

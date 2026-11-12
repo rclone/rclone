@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -144,6 +145,31 @@ func TestRemoteShellPathEncodesPathOverrideNames(t *testing.T) {
 
 	f.opt.PathOverride = "@/volume"
 	assert.Equal(t, "/volume/srv/root/dir/file\uFF1Aname", f.remoteShellPath("dir/file:name"))
+}
+
+func TestRemoteShellPathRelativePathOverrideLeadingDash(t *testing.T) {
+	f := &Fs{
+		absRoot: "/",
+		opt: Options{
+			Enc:          encoder.Display,
+			PathOverride: "@.",
+		},
+	}
+
+	assert.Equal(t, "./-file", f.remoteShellPath("-file"))
+	assert.Equal(t, "dir/-file", f.remoteShellPath("dir/-file"))
+	assert.Equal(t, "file", f.remoteShellPath("file"))
+
+	f.opt.PathOverride = "."
+	assert.Equal(t, "./-file", f.remoteShellPath("-file"))
+}
+
+func TestDefaultEncodingStandardizesControlCharacters(t *testing.T) {
+	ri, err := fs.Find("sftp")
+	require.NoError(t, err)
+	enc := ri.Options.Get(config.ConfigEncoding).Default.(encoder.MultiEncoder)
+	assert.Equal(t, "a␊b", enc.ToStandardName("a\nb"))
+	assert.Equal(t, "a\nb", enc.FromStandardName("a␊b"))
 }
 
 func TestParseHash(t *testing.T) {

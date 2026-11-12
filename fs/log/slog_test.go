@@ -140,6 +140,16 @@ func TestEnabled(t *testing.T) {
 	opts := &slog.HandlerOptions{Level: slog.LevelDebug}
 	h2 := NewOutputHandler(&bytes.Buffer{}, opts, 0)
 	assert.True(t, h2.Enabled(context.Background(), slog.LevelDebug))
+
+	// A log level in the config in the context which differs from
+	// the global one overrides the level of the handler
+	ctx, ci := fs.AddConfig(context.Background())
+	assert.False(t, h.Enabled(ctx, slog.LevelDebug))
+	ci.LogLevel = fs.LogLevelDebug
+	assert.True(t, h.Enabled(ctx, slog.LevelDebug))
+	ci.LogLevel = fs.LogLevelError
+	assert.False(t, h.Enabled(ctx, slog.LevelInfo))
+	assert.True(t, h.Enabled(ctx, slog.LevelError))
 }
 
 // Test clearFormatFlags and setFormatFlags bitwise ops.
@@ -343,6 +353,15 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 		for range iterations {
 			_ = h.WithAttrs(nil)
 			_ = h.WithGroup("g")
+		}
+	})
+
+	// Goroutine calling AddOutput alternating JSON and text
+	wg.Go(func() {
+		noop := func(_ slog.Level, _ string) {}
+		for j := range 20 {
+			h.AddOutput(j%2 == 0, noop)
+			time.Sleep(time.Millisecond)
 		}
 	})
 

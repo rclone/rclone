@@ -251,6 +251,7 @@ func (b *Batcher[Item, Result]) Shutdown() {
 		b.in <- request[Item, Result]{quit: true}
 		b.admitMu.Unlock()
 		b.wg.Wait()
+		fs.Infof(b.f, "Committing uploads - done")
 	})
 }
 

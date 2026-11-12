@@ -196,6 +196,25 @@ Rclone works fastest with large squashfs block sizes. For example:
 mksquashfs 100files 100files.sqfs -comp zstd -b 1M
 ```
 
+## Symlinks
+
+Symlinks stored in an archive are skipped unless the `-l/--links` flag
+is supplied, as they are on the other backends. With the flag they are
+listed with a `.rclonelink` suffix and read back as the path they point
+at, the same convention the [local](/local/#symlinks-junction-points)
+backend uses, so they can be copied back as symlinks:
+
+```
+$ rclone lsl --links :archive:/tmp/test.zip
+        5 2026-09-28 14:16:59.000000000 src/file.txt
+        8 2026-09-28 14:16:59.000000000 src/link.txt.rclonelink
+$ rclone cat --links :archive:/tmp/test.zip/src/link.txt.rclonelink
+file.txt
+$ rclone copy --links :archive:/tmp/test.zip /tmp/out
+$ ls -l /tmp/out/src/link.txt
+lrwxr-xr-x 1 user user 8 Sep 28 14:16 /tmp/out/src/link.txt -> file.txt
+```
+
 ## Limitations
 
 Files in the archive backend are read only. It isn't possible to

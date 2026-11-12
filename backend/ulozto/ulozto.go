@@ -113,6 +113,22 @@ type Fs struct {
 	pacer    *fs.Pacer          // pacer for API calls
 }
 
+// authHeaders are the request headers carrying the app and session
+// tokens which must not be forwarded when a redirect leaves the
+// original host.
+var authHeaders = []string{"X-Auth-Token", "X-User-Token"}
+
+// newClient makes the http client used for all uloz.to requests.
+//
+// Downloads carry the auth headers to whatever URL the API hands out,
+// so the client strips them on cross host redirects and refuses an
+// HTTPS to HTTP downgrade.
+func newClient(ctx context.Context) *http.Client {
+	client := fshttp.NewClient(ctx)
+	client.CheckRedirect = rest.StripHeadersOnCrossHostRedirectFn(authHeaders...)
+	return client
+}
+
 // NewFs constructs a Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -125,7 +141,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Strip leading and trailing slashes, see https://github.com/rclone/rclone/issues/7796 for details.
 	root = strings.Trim(root, "/")
 
-	client := fshttp.NewClient(ctx)
+	client := newClient(ctx)
 
 	f := &Fs{
 		name:  name,
@@ -860,7 +876,7 @@ type RenamingObjectInfoProxy struct {
 	remote   string
 }
 
-// Remote implements fs.ObjectInfo.Remote by delegating to the wrapped instance.
+// String implements fs.ObjectInfo.String by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) String() string {
 	return s.delegate.String()
 }

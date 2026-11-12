@@ -52,6 +52,7 @@ rclone bisync remote1:path1 remote2:path2 [flags]
       --force                                Bypass --max-delete safety check and run the sync. Consider using with --verbose
   -h, --help                                 help for bisync
       --ignore-listing-checksum              Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --max-delete-renames-aware             Exclude tracked renames from the --max-delete safety check (requires --track-renames)
       --max-lock Duration                    Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m) (default 0s)
       --no-cleanup                           Retain working files (useful for troubleshooting and testing).
       --no-slow-hash                         Ignore listing checksums only on backends where they are slow

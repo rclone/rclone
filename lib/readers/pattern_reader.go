@@ -5,13 +5,13 @@ import (
 	"io"
 )
 
-// This is the smallest prime less than 256
+// This is the largest prime less than 256.
 //
 // Using a prime here means we are less likely to hit repeating patterns
 const patternReaderModulo = 251
 
 // NewPatternReader creates a reader, that returns a deterministic byte pattern.
-// After length bytes are read
+// It returns io.EOF after length bytes have been read.
 func NewPatternReader(length int64) io.ReadSeeker {
 	return &patternReader{
 		length: length,

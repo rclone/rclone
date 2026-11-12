@@ -642,7 +642,7 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 			chunkReader *pool.RW
 			bytesRead   int64
 		)
-		chunkReader, bytesRead, readErr = readerForChunk(content, int64(chunkSize))
+		chunkReader, bytesRead, readErr = readerForChunk(content, int64(chunkSize), true)
 		if bytesRead < int64(chunkSize) {
 			startMoreTransfers = false
 		}
@@ -869,14 +869,23 @@ func unwrapAccounting(reader io.Reader) (unwrapped io.Reader, acc *accounting.Ac
 // along with the number of bytes that have been read from reader.
 // Reaching the end of reader early is not an error.
 //
-// Any accounting on reader is applied when the buffer is read instead,
-// so the upload is what gets accounted.
+// If accountUpload is set, any accounting on reader is applied
+// when the buffer is read instead, so the upload is what gets accounted.
+//
+// This must not be set for a buffer which creates or replaces a file
+// in a single request. Accounting can fail part way through the upload,
+// for example when --max-transfer is reached, and HiDrive keeps
+// what it has received of an aborted request as the file.
+//
 // The caller must Close the buffer when done with it.
-func readerForChunk(reader io.Reader, length int64) (chunkReader *pool.RW, bytesRead int64, err error) {
-	reader, acc := unwrapAccounting(reader)
+func readerForChunk(reader io.Reader, length int64, accountUpload bool) (chunkReader *pool.RW, bytesRead int64, err error) {
 	chunkReader = multipart.NewRW()
-	if acc != nil {
-		chunkReader.SetAccounting(acc.AccountRead)
+	if accountUpload {
+		var acc *accounting.Account
+		reader, acc = unwrapAccounting(reader)
+		if acc != nil {
+			chunkReader.SetAccounting(acc.AccountRead)
+		}
 	}
 
 	bytesRead, err = io.CopyN(chunkReader, reader, length)

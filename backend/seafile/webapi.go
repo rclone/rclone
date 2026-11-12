@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/backend/seafile/api"
 	"github.com/rclone/rclone/fs"
@@ -679,7 +680,7 @@ func (f *Fs) getUploadLink(ctx context.Context, libraryID string) (string, error
 	return result, nil
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath string) (*api.FileDetail, error) {
+func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath string, modTime time.Time) (*api.FileDetail, error) {
 	// API Documentation
 	// https://download.seafile.com/published/web-api/v2.1/file-upload.md
 	fileDir, filename := path.Split(filePath)
@@ -689,10 +690,15 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 		"need_idx_progress": {"true"},
 		"replace":           {"1"},
 	}
+	if f.uploadModTime && !modTime.IsZero() {
+		parameters.Set("last_modify", modTime.UTC().Format(time.RFC3339))
+	}
 	formReader, contentType, _, err := rest.MultipartUpload(ctx, in, parameters, "file", f.opt.Enc.FromStandardName(filename), "application/octet-stream")
 	if err != nil {
 		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
+	// Stop the form writer reading in if the request fails before sending it all
+	defer func() { _ = formReader.Close() }()
 
 	opts := rest.Opts{
 		Method:      "POST",

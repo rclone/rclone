@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -49,6 +50,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Some times used in the tests
@@ -427,6 +429,33 @@ func TestDelete(t *testing.T) {
 	r.CheckRemoteItems(t, file3)
 }
 
+// Check Delete doesn't hang when a fatal error stops the deletions
+// before all the objects have been sent to the deleters
+func TestDeleteFatalError(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	// More files than the deleters' channel can hold
+	for i := range 20 {
+		r.WriteObject(ctx, fmt.Sprintf("file%d", i), "x", t1)
+	}
+	// Set after writing the files as some backends (eg chunker) delete while uploading
+	ci.MaxDelete = 1
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Delete(ctx, r.Fremote)
+	}()
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.True(t, fserrors.IsFatalError(err), err)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Delete didn't return - deadlocked sending to the deleters")
+	}
+}
+
 func isChunker(f fs.Fs) bool {
 	return strings.HasPrefix(f.Name(), "TestChunker")
 }
@@ -540,6 +569,54 @@ func TestRetry(t *testing.T) {
 
 }
 
+// Check the wait for a Retry-After error can be interrupted
+func TestRetryAfterContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	retryAfter := pacer.RetryAfterError(errors.New("BANG"), time.Hour)
+	calls := 0
+	fn := func() error {
+		calls++
+		go cancel()
+		return retryAfter
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Retry(ctx, nil, 5, fn)
+	}()
+	select {
+	case err := <-done:
+		// The error from the call is returned, not the context error
+		assert.Equal(t, retryAfter, err)
+		assert.Equal(t, 1, calls)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Retry didn't return - still sleeping for the Retry-After")
+	}
+}
+
+// Check we don't wait for a Retry-After error on the last try
+func TestRetryAfterLastTry(t *testing.T) {
+	ctx := context.Background()
+	retryAfter := pacer.RetryAfterError(errors.New("BANG"), time.Hour)
+	calls := 0
+	fn := func() error {
+		calls++
+		return retryAfter
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Retry(ctx, nil, 1, fn)
+	}()
+	select {
+	case err := <-done:
+		assert.Equal(t, retryAfter, err)
+		assert.Equal(t, 1, calls)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Retry didn't return - slept for the Retry-After on the last try")
+	}
+}
+
 func TestCat(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -559,6 +636,8 @@ func TestCat(t *testing.T) {
 		{0, 5, "", "ABCDE", "01234"},
 		{-3, -1, "", "HIJ", "678"},
 		{1, 3, "", "BCD", "123"},
+		{-10, 3, "", "ABC", "012"},
+		{-12, 5, "", "ABCDE", "01234"},
 		{0, -1, "\n", "ABCDEFGHIJ", "012345678"},
 	} {
 		var buf bytes.Buffer
@@ -1007,6 +1086,25 @@ func TestMoveFileWithIgnoreExisting(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 }
 
+func TestMoveFileImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	ci.Immutable = true
+
+	file1 := r.WriteObject(ctx, "existing", "potato", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Should fail with ErrorImmutableModified and leave the source in place
+	file2 := r.WriteFile("existing", "tomatoes", t2)
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckLocalItems(t, file2)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestCaseInsensitiveMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1040,6 +1138,75 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t)
 	r.CheckRemoteItems(t, file2Capitalized)
+}
+
+func TestMoveOntoItself(t *testing.T) {
+	ctx := context.Background()
+	for _, viaSubdir := range []bool{false, true} {
+		for _, disableMove := range []bool{false, true} {
+			t.Run(fmt.Sprintf("viaSubdir=%v,disableMove=%v", viaSubdir, disableMove), func(t *testing.T) {
+				r := fstest.NewRunIndividual(t)
+				file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
+				src := fstest.NewObject(ctx, t, r.Fremote, file1.Path)
+
+				var err error
+				fdst, remote := r.Fremote, src.Remote()
+				if viaSubdir {
+					fdst, err = fs.NewFs(ctx, fspath.JoinRootPath(fs.ConfigStringFull(r.Fremote), "sub"))
+					require.NoError(t, err)
+					remote = "file1"
+				}
+				if disableMove {
+					fdst.Features().Disable("Move")
+				}
+				_, err = operations.Move(ctx, fdst, nil, remote, src)
+				require.NoError(t, err)
+				r.CheckRemoteItems(t, file1)
+			})
+		}
+	}
+}
+
+func TestMoveUnicodeEquivalentWithoutServerSideMove(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRunIndividual(t)
+	r.Fremote.Features().Disable("Move")
+
+	nfd := norm.NFD.String("sub/équivalent.txt")
+	nfc := norm.NFC.String("sub/équivalent.txt")
+	file1 := fstest.NewItem(nfd, "file1 contents", t1)
+	_, err := r.Fremote.Put(ctx, bytes.NewBufferString("file1 contents"), object.NewStaticObjectInfo(nfd, t1, file1.Size, true, nil, nil))
+	if err != nil {
+		t.Skipf("remote can't store an NFD name: %v", err)
+	}
+	src, err := r.Fremote.NewObject(ctx, nfd)
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		t.Skip("remote doesn't keep an NFD name as written")
+	}
+	require.NoError(t, err)
+
+	_, err = operations.Move(ctx, r.Fremote, nil, nfc, src)
+	require.NoError(t, err)
+	file1.Path = nfc
+	r.CheckRemoteItems(t, file1)
+}
+
+func TestCaseInsensitiveMoveWithoutServerSideMove(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRunIndividual(t)
+	if !r.Fremote.Features().CaseInsensitive {
+		t.Skip("remote is case sensitive")
+	}
+	r.Fremote.Features().Disable("Move")
+
+	file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
+	src, err := r.Fremote.NewObject(ctx, "sub/file1")
+	require.NoError(t, err)
+
+	_, err = operations.Move(ctx, r.Fremote, nil, "sub/File1", src)
+	require.NoError(t, err)
+	file1.Path = "sub/File1"
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
@@ -1107,7 +1274,7 @@ func (i *testFsInfo) Precision() time.Duration { return i.precision }
 // Returns the supported hash types of the filesystem
 func (i *testFsInfo) Hashes() hash.Set { return i.hashes }
 
-// Returns the supported hash types of the filesystem
+// Features returns the optional features of this Fs.
 func (i *testFsInfo) Features() *fs.Features { return &i.features }
 
 func TestSameConfig(t *testing.T) {
@@ -1377,6 +1544,90 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "a|encryptedFileName", list.Format(item0))
 	assert.Equal(t, "subdir/|encryptedDirName/", list.Format(item1))
 
+}
+
+// noDirMoveFs wraps an Fs removing DirMove so operations.DirMove has
+// to move the objects one by one, and allows Move to be made to fail.
+type noDirMoveFs struct {
+	fs.Fs
+	features *fs.Features
+	moveCtxs chan context.Context
+}
+
+func (f *noDirMoveFs) Features() *fs.Features { return f.features }
+
+func newNoDirMoveFs(t *testing.T, wrapped fs.Fs, failOn string) *noDirMoveFs {
+	// This tests the core DirMove logic, and on other backends the
+	// objects may not belong to wrapped or there may be no Move.
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
+	move := wrapped.Features().Move
+	require.NotNil(t, move, "the test needs a backend with Move")
+	f := &noDirMoveFs{
+		Fs:       wrapped,
+		moveCtxs: make(chan context.Context, 100),
+	}
+	features := *wrapped.Features()
+	features.DirMove = nil
+	features.Move = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.moveCtxs <- ctx
+		if src.Remote() == failOn {
+			return nil, errors.New("boom")
+		}
+		return move(ctx, src, remote)
+	}
+	f.features = &features
+	return f
+}
+
+// Check DirMove doesn't hang when moving the objects one by one and
+// one of the moves fails
+func TestDirMoveMoveError(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	// More files than the renames channel can hold
+	for i := range 20 {
+		r.WriteObject(ctx, fmt.Sprintf("A/file%d", i), "x", t1)
+	}
+	f := newNoDirMoveFs(t, r.Fremote, "A/file0")
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.DirMove(ctx, f, "A", "B")
+	}()
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "boom")
+	case <-time.After(30 * time.Second):
+		t.Fatal("DirMove didn't return - deadlocked sending to the movers")
+	}
+}
+
+// Check the objects moved one by one by DirMove are moved with the
+// caller's context
+func TestDirMoveContext(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	r.WriteObject(ctx, "A/one", "one", t1)
+	r.WriteObject(ctx, "A/two", "two", t1)
+	f := newNoDirMoveFs(t, r.Fremote, "")
+
+	require.NoError(t, operations.DirMove(accounting.WithStatsGroup(ctx, "test-dirmove"), f, "A", "B"))
+	close(f.moveCtxs)
+	moves := 0
+	for moveCtx := range f.moveCtxs {
+		group, ok := accounting.StatsGroupFromContext(moveCtx)
+		assert.True(t, ok, "move wasn't passed the caller's context")
+		assert.Equal(t, "test-dirmove", group)
+		moves++
+	}
+	assert.Equal(t, 2, moves)
 }
 
 func TestDirMove(t *testing.T) {
@@ -2168,3 +2419,32 @@ func TestRemoveExisting(t *testing.T) {
 	cleanup(&returnedError)
 	r.CheckRemoteItems(t)
 }
+
+func TestRcatInputFailurePreservesDestination(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(root+"/target", []byte("original"), 0600))
+	f, err := fs.NewFs(ctx, root)
+	require.NoError(t, err)
+	calls := 0
+	original := f.Features().PutStream
+	f.Features().PutStream = func(ctx context.Context, in io.Reader, src fs.ObjectInfo, opts ...fs.OpenOption) (fs.Object, error) {
+		calls++
+		return original(ctx, in, src, opts...)
+	}
+	inputErr := errors.New("source interrupted")
+	for _, name := range []string{"target", "missing"} {
+		_, err = operations.Rcat(ctx, f, name, io.NopCloser(io.MultiReader(strings.NewReader("prefix"), rcatFailedInput{inputErr})), time.Now(), nil)
+		require.ErrorIs(t, err, inputErr)
+		require.Zero(t, calls)
+		b, readErr := os.ReadFile(root + "/target")
+		require.NoError(t, readErr)
+		require.Equal(t, "original", string(b))
+		_, statErr := os.Stat(root + "/missing")
+		require.True(t, os.IsNotExist(statErr))
+	}
+}
+
+type rcatFailedInput struct{ err error }
+
+func (r rcatFailedInput) Read([]byte) (int, error) { return 0, r.err }

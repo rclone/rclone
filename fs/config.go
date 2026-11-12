@@ -43,6 +43,22 @@ var (
 	// implementation from the fs
 	CountError = func(ctx context.Context, err error) error { return err }
 
+	// StatsGroupFromContext returns the stats group from ctx if set.
+	//
+	// This is used to attribute logs to stats groups.
+	//
+	// This is a function pointer to decouple the accounting
+	// implementation from the fs
+	StatsGroupFromContext = func(ctx context.Context) (string, bool) { return "", false }
+
+	// JobIDFromContext returns the ID of the rc job in ctx if set.
+	//
+	// This is used to attribute logs to the rc job which made them.
+	//
+	// This is a function pointer to decouple the rc jobs
+	// implementation from the fs
+	JobIDFromContext = func(ctx context.Context) (int64, bool) { return 0, false }
+
 	// ConfigProvider is the config key used for provider options
 	ConfigProvider = "provider"
 
@@ -130,6 +146,11 @@ var ConfigOptionsInfo = Options{{
 	Name:    "no_check_certificate",
 	Default: false,
 	Help:    "Do not verify the server SSL certificate (insecure)",
+	Groups:  "Networking",
+}, {
+	Name:    "allow_https_downgrade",
+	Default: false,
+	Help:    "Follow redirects from HTTPS to HTTP (insecure)",
 	Groups:  "Networking",
 }, {
 	Name:    "ask_password",
@@ -589,6 +610,7 @@ type ConfigInfo struct {
 	ExpectContinueTimeout      Duration          `config:"expect_continue_timeout"`
 	Dump                       DumpFlags         `config:"dump"`
 	InsecureSkipVerify         bool              `config:"no_check_certificate"` // Skip server certificate verification
+	AllowHTTPSDowngrade        bool              `config:"allow_https_downgrade"`
 	DeleteMode                 DeleteMode        `config:"delete_mode"`
 	MaxDelete                  int64             `config:"max_delete"`
 	MaxDeleteSize              SizeSuffix        `config:"max_delete_size"`

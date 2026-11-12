@@ -153,7 +153,7 @@ func (lrw *loggingResponseWriter) logRequest(code int, err any) {
 		err = ""
 	}
 
-	fs.LogLevelPrintf(level, lrw.request.URL, "%s %s %d %s %s",
+	fs.LogLevelPrintf(level, lrw.request.URL.Path, "%s %s %d %s %s",
 		lrw.request.RemoteAddr, lrw.request.Method, code,
 		lrw.request.Header.Get("SOAPACTION"), err)
 }

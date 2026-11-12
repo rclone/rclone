@@ -128,19 +128,23 @@ Repeat for `MD5SUMS` and `SHA1SUMS` if desired.
 Now that we know the signatures on the hashes are OK we can verify the
 binaries match the hashes, completing the verification.
 
+Extract the signed data with:
+
 ```console
-$ sha256sum -c SHA256SUMS 2>&1 | grep OK
+$ gpg --output SHA256SUMS.signed --decrypt SHA256SUMS
+```
+
+Then check the binaries:
+
+```console
+$ sha256sum -c --ignore-missing SHA256SUMS.signed
 rclone-v1.63.1-windows-amd64.zip: OK
 ```
 
 Or do the check with rclone
 
 ```console
-$ rclone hashsum sha256 -C SHA256SUMS rclone-v1.63.1-windows-amd64.zip 
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 0
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 1
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 49
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: 4 warning(s) suppressed...
+$ rclone hashsum sha256 -C SHA256SUMS.signed rclone-v1.63.1-windows-amd64.zip
 = rclone-v1.63.1-windows-amd64.zip
 2023/09/11 10:53:58 NOTICE: Local file system at /tmp/check: 0 differences found
 2023/09/11 10:53:58 NOTICE: Local file system at /tmp/check: 1 matching files

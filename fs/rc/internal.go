@@ -305,15 +305,14 @@ func init() {
 
 // Terminates app
 func rcQuit(ctx context.Context, in Params) (out Params, err error) {
-	code, err := in.GetInt64("exitCode")
+	exitCode, err := in.GetInt("exitCode")
 
 	if IsErrParamInvalid(err) {
 		return nil, err
 	}
 	if IsErrParamNotFound(err) {
-		code = 0
+		exitCode = 0
 	}
-	exitCode := int(code)
 
 	go func(exitCode int) {
 		time.Sleep(time.Millisecond * 1500)
@@ -353,11 +352,11 @@ Results:
 }
 
 func rcSetMutexProfileFraction(ctx context.Context, in Params) (out Params, err error) {
-	rate, err := in.GetInt64("rate")
+	rate, err := in.GetInt("rate")
 	if err != nil {
 		return nil, err
 	}
-	previousRate := runtime.SetMutexProfileFraction(int(rate))
+	previousRate := runtime.SetMutexProfileFraction(rate)
 	out = make(Params)
 	out["previousRate"] = previousRate
 	return out, nil
@@ -388,11 +387,11 @@ Parameters:
 }
 
 func rcSetBlockProfileRate(ctx context.Context, in Params) (out Params, err error) {
-	rate, err := in.GetInt64("rate")
+	rate, err := in.GetInt("rate")
 	if err != nil {
 		return nil, err
 	}
-	runtime.SetBlockProfileRate(int(rate))
+	runtime.SetBlockProfileRate(rate)
 	return nil, nil
 }
 
@@ -471,11 +470,11 @@ Parameters:
 }
 
 func rcSetGCPercent(ctx context.Context, in Params) (out Params, err error) {
-	gcPercent, err := in.GetInt64("gc-percent")
+	gcPercent, err := in.GetInt("gc-percent")
 	if err != nil {
 		return nil, err
 	}
-	oldGCPercent := debug.SetGCPercent(int(gcPercent))
+	oldGCPercent := debug.SetGCPercent(gcPercent)
 	out = Params{
 		"existing-gc-percent": oldGCPercent,
 	}

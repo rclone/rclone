@@ -41,6 +41,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -56,6 +57,7 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
+	defaultTenantAPIVersion     = "v2.0"
 	// maxSinglePartSize is the size at which Graph stops accepting an upload in a
 	// single request (PUT /items/{id}/content). Microsoft documents this as
 	// "250 MB", see
@@ -166,7 +168,7 @@ See: https://github.com/rclone/rclone/issues/1716
 			Name: "tenant_url",
 			Help: `The tenant URL for non-admin OneDrive access.
 
-Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+Set this to your SharePoint tenant URL to use the SharePoint API
 endpoint instead of the standard Microsoft Graph API. This allows
 accessing business OneDrive without admin consent.
 
@@ -176,6 +178,16 @@ for "driveAccessToken" in the network requests. Look for the
 
 Example: https://your-tenant.sharepoint.com/_api`,
 			Default:  "",
+			Advanced: true,
+		}, {
+			Name: "tenant_api_version",
+			Help: `The SharePoint API version to use with tenant_url.
+
+Set this to the SharePoint API version matching the browser-extracted
+access token. For example, use v2.1 with a driveAccessTokenV21 token.
+
+This only applies when tenant_url is set.`,
+			Default:  defaultTenantAPIVersion,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -283,16 +295,13 @@ cases, rclone will fall back to normal copy (which will be slightly slower).`,
 			Default: false,
 			Help: `Remove all versions on modifying operations.
 
-Onedrive for business creates versions when rclone uploads new files
+Onedrive creates versions when rclone uploads new files
 overwriting an existing one and when it sets the modification time.
 
 These versions take up space out of the quota.
 
 This flag checks for versions after file upload and setting
 modification time and removes all but the last version.
-
-**NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
 `,
 			Advanced: true,
 		}, {
@@ -331,14 +340,18 @@ This works with OneDrive for Business, SharePoint document libraries, and OneDri
 				Help:  "Creates a read-write link to the item.",
 			}, {
 				Value: "embed",
-				Help:  "Creates an embeddable link to the item.",
+				Help:  "Creates an embeddable link to the item.\nOnly available in OneDrive personal.",
 			}},
 		}, {
 			Name:    "link_password",
 			Default: "",
 			Help: `Set the password for links created by the link command.
 
-At the time of writing this only works with OneDrive personal paid accounts.
+At the time of writing this works with OneDrive for Business and
+OneDrive personal paid accounts.
+
+OneDrive personal free accounts can't set a password or an expiry time
+(with --expire) on links.
 `,
 			Advanced:  true,
 			Sensitive: true,
@@ -426,21 +439,12 @@ Setting this flag speeds up these things greatly:
     rclone size onedrive:
     rclone rc vfs/refresh recursive=true
 
-**However** the delta listing API **only** works at the root of the
-drive. If you use it not at the root then it recurses from the root
-and discards all the data that is not under the directory you asked
-for. So it will be correct but may not be very efficient.
-
-This is why this flag is not set as the default.
-
-As a rule of thumb if nearly all of your data is under rclone's root
-directory (the |root/directory| in |onedrive:root/directory|) then
-using this flag will be a big performance win. If your data is
-mostly not under the root then using this flag will be a big
-performance loss.
-
-It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using rclone |rc vfs/refresh|.
+Rclone asks for the delta listing of the directory being listed. If
+the drive only supports delta listings at the root of the drive (as
+some older OneDrive for Business and SharePoint drives do) then
+rclone lists from the root and discards all the data that is not
+under the directory you asked for. So it will be correct but may not
+be very efficient.
 `, "|", "`"),
 			Advanced: true,
 		}, {
@@ -509,10 +513,18 @@ func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	// Check if tenant_url is provided for non-admin mode
 	tenantURL, _ := m.Get("tenant_url")
 	if tenantURL != "" {
-		graphURL = tenantURL + "/v2.0"
+		tenantAPIVersion, _ := m.Get("tenant_api_version")
+		graphURL = tenantAPIEndpoint(tenantURL, tenantAPIVersion)
 	}
 
 	return region, graphURL
+}
+
+func tenantAPIEndpoint(tenantURL, tenantAPIVersion string) string {
+	if tenantAPIVersion == "" {
+		tenantAPIVersion = defaultTenantAPIVersion
+	}
+	return strings.TrimRight(tenantURL, "/") + "/" + strings.TrimLeft(tenantAPIVersion, "/")
 }
 
 // Config for chooseDrive
@@ -808,6 +820,7 @@ type Options struct {
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	TenantURL               string               `config:"tenant_url"`
+	TenantAPIVersion        string               `config:"tenant_api_version"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
@@ -832,19 +845,33 @@ type Options struct {
 
 // Fs represents a remote OneDrive
 type Fs struct {
-	name         string             // name of this remote
-	root         string             // the path we are working on
-	opt          Options            // parsed options
-	ci           *fs.ConfigInfo     // global config
-	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the OneDrive server
-	unAuth       *rest.Client       // no authentication connection to the OneDrive server
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *fs.Pacer          // pacer for API calls
-	tokenRenewer *oauthutil.Renew   // renew the token on expiry
-	driveID      string             // ID to use for querying Microsoft Graph
-	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
-	hashType     hash.Type          // type of the hash we are using
+	name         string                 // name of this remote
+	root         string                 // the path we are working on
+	opt          Options                // parsed options
+	ci           *fs.ConfigInfo         // global config
+	features     *fs.Features           // optional features
+	srv          *rest.Client           // the connection to the OneDrive server
+	unAuth       *rest.Client           // no authentication connection to the OneDrive server
+	dirCache     *dircache.DirCache     // Map of directory path to directory id
+	pacer        *fs.Pacer              // pacer for API calls
+	tokenRenewer *oauthutil.Renew       // renew the token on expiry
+	tokenSource  *oauthutil.TokenSource // source of the API token
+	sharePoint   *sharePointClients     // authenticated clients for SharePoint hosts
+	driveID      string                 // ID to use for querying Microsoft Graph
+	driveType    string                 // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
+	hashType     hash.Type              // type of the hash we are using
+}
+
+// sharePointClients holds the clients authenticated for SharePoint hosts
+type sharePointClients struct {
+	mu    sync.Mutex
+	hosts map[string]sharePointAuth
+}
+
+// sharePointAuth is a client authenticated for a SharePoint host
+type sharePointAuth struct {
+	client      *rest.Client
+	tokenSource oauth2.TokenSource
 }
 
 // Object describes a OneDrive object
@@ -1064,6 +1091,154 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// errPreauthRetired explains an authentication failure on a URL which
+// SharePoint used to return pre-authenticated.
+var errPreauthRetired = errors.New("SharePoint refused to authenticate a request - Microsoft is retiring pre-authenticated (tempauth) URLs, see https://rclone.org/onedrive/#pre-authenticated-urls")
+
+// sharePointDomains are the domains of SharePoint Online in the
+// different Microsoft clouds
+var sharePointDomains = []string{".sharepoint.com", ".sharepoint.us", ".sharepoint-mil.us", ".sharepoint.cn", ".sharepoint.de"}
+
+// stripTempauth removes the tempauth parameter from the URLs the API
+// returns, which simulates the retirement of pre-authenticated URLs
+// in tests.
+var stripTempauth = false
+
+// returnedURL processes a URL returned by the API before use
+func returnedURL(rawURL string) string {
+	if !stripTempauth {
+		return rawURL
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	q := u.Query()
+	q.Del("tempauth")
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+// urlAuth says how a URL returned by the API is authenticated
+type urlAuth int
+
+const (
+	urlAuthNone       urlAuth = iota // call without authentication
+	urlAuthAPI                       // call with the API token
+	urlAuthSharePoint                // call with a token for the SharePoint host
+)
+
+// apiHost returns the host the API calls made with f.srv go to.
+func (f *Fs) apiHost() string {
+	endpoint := graphAPIEndpoint[f.opt.Region]
+	if f.opt.TenantURL != "" {
+		endpoint = f.opt.TenantURL
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil || u.Scheme != "https" {
+		return ""
+	}
+	return u.Host
+}
+
+// urlAuthFor returns how to authenticate a URL returned by the API,
+// such as an upload session or an async job monitor.
+//
+// Pre-authenticated URLs fail if they are sent an Authorization
+// header and tokens must not be sent to other hosts, so only HTTPS
+// URLs without tempauth on the API host or a SharePoint host are
+// authenticated.
+func (f *Fs) urlAuthFor(rawURL string) urlAuth {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Scheme != "https" || u.Query().Has("tempauth") {
+		return urlAuthNone
+	}
+	if apiHost := f.apiHost(); apiHost != "" && strings.EqualFold(u.Host, apiHost) {
+		return urlAuthAPI
+	}
+	if isSharePointHost(u.Hostname()) {
+		return urlAuthSharePoint
+	}
+	return urlAuthNone
+}
+
+// isSharePointHost returns true if host is in a SharePoint Online domain.
+func isSharePointHost(host string) bool {
+	host = strings.ToLower(host)
+	for _, domain := range sharePointDomains {
+		if strings.HasSuffix(host, domain) {
+			return true
+		}
+	}
+	return false
+}
+
+// checkSharePointRedirect stops the SharePoint token being sent to a
+// host which isn't SharePoint, as the token is added to every request
+// the client makes.
+func checkSharePointRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if req.URL.Scheme != "https" || !isSharePointHost(req.URL.Hostname()) {
+		return fmt.Errorf("refusing to send a SharePoint token on a redirect to %s://%s", req.URL.Scheme, req.URL.Host)
+	}
+	return nil
+}
+
+// clientForURL returns the client to call a URL returned by the API with.
+func (f *Fs) clientForURL(ctx context.Context, rawURL string) (*rest.Client, error) {
+	switch f.urlAuthFor(rawURL) {
+	case urlAuthAPI:
+		return f.srv, nil
+	case urlAuthSharePoint:
+		u, _ := url.Parse(rawURL)
+		return f.sharePointClient(ctx, u.Host)
+	}
+	return f.unAuth, nil
+}
+
+// sharePointClient returns a client authenticated for the SharePoint
+// host, which upload session and async job monitor URLs need once
+// they are no longer pre-authenticated.
+//
+// The token is got from the existing credentials, which Entra ID
+// allows for SharePoint as the user has consented to the Graph file
+// scopes.
+func (f *Fs) sharePointClient(ctx context.Context, host string) (*rest.Client, error) {
+	if f.tokenSource == nil || f.sharePoint == nil {
+		return nil, fmt.Errorf("%w: no credentials to get a SharePoint token with", errPreauthRetired)
+	}
+	host = strings.ToLower(host)
+	f.sharePoint.mu.Lock()
+	defer f.sharePoint.mu.Unlock()
+	sp, ok := f.sharePoint.hosts[host]
+	if !ok {
+		tokenSource := f.tokenSource.ScopedTokenSource([]string{"https://" + host + "/.default"})
+		client := oauth2.NewClient(oauthutil.Context(ctx, fshttp.NewClient(ctx)), tokenSource)
+		client.CheckRedirect = checkSharePointRedirect
+		sp = sharePointAuth{client: rest.NewClient(client), tokenSource: tokenSource}
+		f.sharePoint.hosts[host] = sp
+		fs.Debugf(f, "Using a SharePoint token for %s", host)
+	}
+	// Get the token now so failures are reported before the client is used
+	if _, err := sp.tokenSource.Token(); err != nil {
+		return nil, fmt.Errorf("%w: failed to get a SharePoint token: %w", errPreauthRetired, err)
+	}
+	return sp.client, nil
+}
+
+// checkPreauthRetired adds an explanation to a 401 error from a URL
+// returned by the API which needs a SharePoint token, as these were
+// pre-authenticated until Microsoft retired them.
+func (f *Fs) checkPreauthRetired(rawURL string, resp *http.Response, err error) error {
+	if err == nil || resp == nil || resp.StatusCode != http.StatusUnauthorized ||
+		f.driveType == driveTypePersonal || errors.Is(err, errPreauthRetired) || f.urlAuthFor(rawURL) != urlAuthSharePoint {
+		return err
+	}
+	return fmt.Errorf("%w: %w", errPreauthRetired, err)
+}
+
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	const minChunkSize = fs.SizeSuffixBase
 	if cs%chunkSizeMultiple != 0 {
@@ -1115,7 +1290,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
 
 	if opt.TenantURL != "" {
-		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
+		rootURL = tenantAPIEndpoint(opt.TenantURL, opt.TenantAPIVersion) + "/drives/" + opt.DriveID
 	}
 
 	oauthConfig, err := makeOauthConfig(ctx, opt)
@@ -1132,16 +1307,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
-		name:      name,
-		root:      root,
-		opt:       *opt,
-		ci:        ci,
-		driveID:   opt.DriveID,
-		driveType: opt.DriveType,
-		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
-		unAuth:    rest.NewClient(client).SetRoot(rootURL),
-		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		hashType:  QuickXorHashType,
+		name:        name,
+		root:        root,
+		opt:         *opt,
+		ci:          ci,
+		driveID:     opt.DriveID,
+		driveType:   opt.DriveType,
+		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
+		tokenSource: ts,
+		sharePoint:  &sharePointClients{hosts: make(map[string]sharePointAuth)},
+		unAuth:      rest.NewClient(client).SetRoot(rootURL),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		hashType:    QuickXorHashType,
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:          true,
@@ -1402,6 +1579,8 @@ func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (en
 		id := info.GetID()
 		f.dirCache.Put(remote, id)
 		d := f.newDir(id, remote)
+		// OneDrive reports the total size of a folder's contents
+		d.size = info.GetSize()
 		d.items = folder.ChildCount
 		f.setSystemMetadata(info, d.meta, remote, dirMimeType)
 		entry = d
@@ -1490,10 +1669,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 
-	// ListR only works at the root of a onedrive, not on a folder
-	// So we have to filter things outside of the root which is
-	// inefficient.
-
 	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
@@ -1569,17 +1744,26 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return nil
 	}
 
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/root/delta",
-		Parameters: map[string][]string{
-			// "token": {token},
+	listDelta := func(opts rest.Opts) error {
+		opts.Parameters = url.Values{
 			"$top": {fmt.Sprintf("%d", f.opt.ListChunk)},
-		},
+		}
+		var result api.DeltaResponse
+		return f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
 	}
 
-	var result api.DeltaResponse
-	err = f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
+	err = listDelta(f.newOptsCall(directoryID, "GET", "/delta"))
+	// Some drives only support delta listings at the root of the
+	// drive, in which case list the whole drive and filter out the
+	// items outside dir.
+	var apiErr *api.Error
+	if err != nil && len(seen) == 0 && errors.As(err, &apiErr) {
+		fs.Debugf(f, "Delta listing of directory failed, listing from the root of the drive instead: %v", err)
+		err = listDelta(rest.Opts{
+			Method: "GET",
+			Path:   "/root/delta",
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -1706,10 +1890,24 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		var resp *http.Response
 		var err error
 		var body []byte
+		var redirected bool
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = http.Get(location)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, location, nil)
+			if err != nil {
+				return false, err
+			}
+			client, err := f.clientForURL(ctx, location)
+			if err != nil {
+				return false, err
+			}
+			resp, err = client.Do(req)
 			if err != nil {
 				return fserrors.ShouldRetry(err), err
+			}
+			redirected = resp.Request.URL.String() != req.URL.String()
+			if resp.StatusCode == http.StatusUnauthorized {
+				_ = resp.Body.Close()
+				return false, f.checkPreauthRetired(location, resp, fmt.Errorf("async job monitor: HTTP error %s", resp.Status))
 			}
 			body, err = rest.ReadBody(resp)
 			return fserrors.ShouldRetry(err), err
@@ -1722,6 +1920,11 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		err = json.Unmarshal(body, &status)
 		if err != nil {
 			return fmt.Errorf("async status result not JSON: %q: %w", body, err)
+		}
+		// An authenticated monitor redirects to the new item when the
+		// job has finished instead of returning its status
+		if status.Status == "" && redirected {
+			status.Status = "completed"
 		}
 
 		switch status.Status {
@@ -1822,7 +2025,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	}
 
 	// read location header
-	location := resp.Header.Get("Location")
+	location := returnedURL(resp.Header.Get("Location"))
 	if location == "" {
 		return nil, errors.New("didn't receive location header in copy response")
 	}
@@ -1831,6 +2034,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	err = f.waitForJob(ctx, location, dstObj)
 	if err == errAsyncJobAccessDenied {
 		fs.Debugf(src, "Server-side copy failed - file not shared between drives")
+		return nil, fs.ErrorCantCopy
+	}
+	if errors.Is(err, errPreauthRetired) {
+		fs.Debugf(src, "Server-side copy can't be monitored - copying another way: %v", err)
 		return nil, fs.ErrorCantCopy
 	}
 	if err != nil {
@@ -2507,16 +2714,23 @@ func (o *Object) openContentPrefer(ctx context.Context, options ...fs.OpenOption
 	return o.openWithRedirect(ctx, &opts)
 }
 
-// openWithRedirect downloads via /content style endpoints that 302 to a preauthenticated URL.
+// openWithRedirect downloads via /content style endpoints that 302 to
+// a download URL, which is pre-authenticated or needs a SharePoint
+// token.
 func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.ReadCloser, err error) {
 	var resp *http.Response
-	// Make a note of the redirect target as we need to call it without Auth
+	// Make a note of the redirect target as it needs different auth
 	var redirectReq *http.Request
 	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 10 {
 			return errors.New("stopped after 10 redirects")
 		}
-		// Preauthenticated download URLs must not carry the Graph Authorization header.
+		if stripTempauth {
+			if u, err := url.Parse(returnedURL(req.URL.String())); err == nil {
+				req.URL = u
+			}
+		}
+		// Download URLs must not carry the Graph Authorization header.
 		req.Header.Del("Authorization")
 		// Keep Prefer on the redirect when forcing infected download; some SharePoint
 		// endpoints honor it only on the final download request.
@@ -2555,17 +2769,24 @@ func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.R
 		return nil, err
 	}
 	if redirectReq != nil {
+		redirectURL := redirectReq.URL.String()
+		var client *rest.Client
+		client, err = o.fs.clientForURL(ctx, redirectURL)
+		if err != nil {
+			return nil, err
+		}
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err = o.fs.unAuth.Do(redirectReq)
+			resp, err = client.Do(redirectReq)
 			if err != nil {
 				return shouldRetry(ctx, resp, err)
 			}
-			// unAuth.Do does not check status; treat non-2xx as failure so a malware
+			// Do does not check status; treat non-2xx as failure so a malware
 			// JSON body is not written out as file content.
 			if resp.StatusCode < 200 || resp.StatusCode > 299 {
 				body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 				_ = resp.Body.Close()
 				err = fmt.Errorf("HTTP error %d (%s) %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+				err = o.fs.checkPreauthRetired(redirectURL, resp, err)
 				if strings.Contains(string(body), "malwareDetected") || resp.Header.Get("X-Virus-Infected") != "" {
 					err = malwareDownloadError(o.fs.opt.AVOverride, err)
 				}
@@ -2587,7 +2808,19 @@ func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.R
 		// Overwrite size with actual size since size readings from Onedrive is unreliable.
 		o.size = resp.ContentLength
 	}
-	return resp.Body, err
+	return o.checkRange(resp, opts.Options)
+}
+
+// checkRange returns the body of a download, checking it is the range
+// requested in options.
+func (o *Object) checkRange(resp *http.Response, options []fs.OpenOption) (in io.ReadCloser, err error) {
+	// The size isn't passed as it is unreliable on OneDrive
+	err = rest.CheckContentRange(resp, options, -1)
+	if err != nil {
+		_ = resp.Body.Close()
+		return nil, err
+	}
+	return resp.Body, nil
 }
 
 // malwareDownloadError formats an error when the server blocks a malware-flagged file.
@@ -2627,12 +2860,16 @@ func (o *Object) getPosition(ctx context.Context, url string) (pos int64, err er
 	}
 	var info api.UploadFragmentResponse
 	var resp *http.Response
+	client, err := o.fs.clientForURL(ctx, url)
+	if err != nil {
+		return 0, err
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &info)
+		resp, err = client.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return 0, err
+		return 0, o.fs.checkPreauthRetired(url, resp, err)
 	}
 	if len(info.NextExpectedRanges) != 1 {
 		return 0, fmt.Errorf("bad number of ranges in upload position: %v", info.NextExpectedRanges)
@@ -2656,6 +2893,10 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 	var resp *http.Response
 	var body []byte
 	skip := int64(0)
+	client, err := o.fs.clientForURL(ctx, url)
+	if err != nil {
+		return nil, err
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		toSend := chunkSize - skip
 		opts := rest.Opts{
@@ -2667,7 +2908,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			Options:       options,
 		}
 		_, _ = chunk.Seek(skip, io.SeekStart)
-		resp, err = o.fs.unAuth.Call(ctx, &opts)
+		resp, err = client.Call(ctx, &opts)
 		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
 			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
 			pos, posErr := o.getPosition(ctx, url)
@@ -2706,7 +2947,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 		}
 		return false, nil
 	})
-	return info, err
+	return info, o.fs.checkPreauthRetired(url, resp, err)
 }
 
 // cancelUploadSession cancels an upload session
@@ -2717,11 +2958,15 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 		NoResponse: true,
 	}
 	var resp *http.Response
+	client, err := o.fs.clientForURL(ctx, url)
+	if err != nil {
+		return err
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.unAuth.Call(ctx, &opts)
+		resp, err = client.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
-	return
+	return o.fs.checkPreauthRetired(url, resp, err)
 }
 
 // uploadMultipart uploads a file using multipart upload
@@ -2739,7 +2984,20 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	if err != nil {
 		return nil, err
 	}
-	uploadURL := session.UploadURL
+	uploadURL := returnedURL(session.UploadURL)
+
+	// Check a session which needs SharePoint authentication can get it
+	// before reading any data, so it can be uploaded in a single part
+	// instead if it can't.
+	if o.fs.urlAuthFor(uploadURL) == urlAuthSharePoint {
+		if _, err = o.getPosition(ctx, uploadURL); err != nil {
+			if !errors.Is(err, errPreauthRetired) || size >= int64(maxSinglePartSize) {
+				return nil, err
+			}
+			fs.Debugf(o, "Uploading in a single part as the upload session can't be used: %v", err)
+			return o.uploadSinglepart(ctx, in, src, options...)
+		}
+	}
 
 	// Cancel the session if something went wrong
 	defer atexit.OnError(&err, func() {
@@ -2918,7 +3176,7 @@ func (o *Object) ID() string {
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
@@ -3086,9 +3344,15 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				}
 			case <-tickerC:
 				fs.Debugf(f, "Checking for changes on remote")
-				nextDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
+				var newDeltaToken string
+				newDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
 				if err != nil {
+					// Keep the token we already have: replacing it with the
+					// empty token from a failed poll would reset the delta
+					// listing to the start and lose every change in between.
 					fs.Infof(f, "Change notify listener failure: %s", err)
+				} else {
+					nextDeltaToken = newDeltaToken
 				}
 			}
 		}
@@ -3096,7 +3360,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 }
 
 func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken string, err error) {
-	delta, err := f.changeNotifyNextChange(ctx, "latest")
+	delta, err := f.changeNotifyNextChange(ctx, "latest", "")
 	if err != nil {
 		return
 	}
@@ -3108,18 +3372,37 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken str
 	return
 }
 
-func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta api.DeltaResponse, err error) {
-	opts := f.buildDriveDeltaOpts(token)
+// changeNotifyNextChange fetches one page of the drive delta listing.
+//
+// Pass the delta token to resume from in token, or the @odata.nextLink URL
+// returned by the previous page in nextLink. Exactly one of the two should
+// be set.
+func (f *Fs) changeNotifyNextChange(ctx context.Context, token, nextLink string) (delta api.DeltaResponse, err error) {
+	opts := f.buildDriveDeltaOpts(token, nextLink)
 
-	_, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
+	err = f.pacer.Call(func() (bool, error) {
+		var resp *http.Response
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
+		return shouldRetry(ctx, resp, err)
+	})
 
 	return
 }
 
-func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
+// buildDriveDeltaOpts builds the request for one page of the drive delta
+// listing. nextLink, when set, is the complete @odata.nextLink URL from the
+// previous page and is used as-is, overriding the drive root.
+func (f *Fs) buildDriveDeltaOpts(token, nextLink string) rest.Opts {
+	if nextLink != "" {
+		return rest.Opts{
+			Method:  "GET",
+			RootURL: nextLink,
+		}
+	}
+
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
@@ -3132,46 +3415,58 @@ func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 	}
 }
 
-func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (nextDeltaToken string, err error) {
-	delta, err := f.changeNotifyNextChange(ctx, deltaToken)
-	if err != nil {
-		return
-	}
-	parsedURL, err := url.Parse(delta.DeltaLink)
-	if err != nil {
-		return
-	}
-	nextDeltaToken = parsedURL.Query().Get("token")
-
-	for _, item := range delta.Value {
-		isDriveRootFolder := item.GetParentReference().ID == ""
-		if isDriveRootFolder {
-			continue
-		}
-
-		fullPath, err := getItemFullPath(&item)
+// changeNotifyRunner polls for changes and calls notifyFunc for each one.
+//
+// It walks every page of the change set and returns the token to resume from
+// next time. The returned token is only valid when err is nil: the caller
+// must keep the token it passed in on error, otherwise a failed poll would
+// reset the delta listing to the start and lose the changes in between.
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (string, error) {
+	token, nextLink := deltaToken, ""
+	for {
+		delta, err := f.changeNotifyNextChange(ctx, token, nextLink)
 		if err != nil {
-			fs.Errorf(f, "Could not get item full path: %s", err)
-			continue
+			return "", err
 		}
 
-		if fullPath == f.root {
-			continue
+		for _, item := range delta.Value {
+			isDriveRootFolder := item.GetParentReference().ID == ""
+			if isDriveRootFolder {
+				continue
+			}
+
+			fullPath, err := getItemFullPath(&item)
+			if err != nil {
+				fs.Errorf(f, "Could not get item full path: %s", err)
+				continue
+			}
+
+			if fullPath == f.root {
+				continue
+			}
+
+			relName, insideRoot := getRelativePathInsideBase(f.root, fullPath)
+			if !insideRoot {
+				continue
+			}
+
+			if item.GetFile() != nil {
+				notifyFunc(relName, fs.EntryObject)
+			} else if item.GetFolder() != nil {
+				notifyFunc(relName, fs.EntryDirectory)
+			}
 		}
 
-		relName, insideRoot := getRelativePathInsideBase(f.root, fullPath)
-		if !insideRoot {
-			continue
+		if delta.NextLink == "" {
+			// end of the change set - the deltaLink carries the resume token
+			parsedURL, err := url.Parse(delta.DeltaLink)
+			if err != nil {
+				return "", err
+			}
+			return parsedURL.Query().Get("token"), nil
 		}
-
-		if item.GetFile() != nil {
-			notifyFunc(relName, fs.EntryObject)
-		} else if item.GetFolder() != nil {
-			notifyFunc(relName, fs.EntryDirectory)
-		}
+		nextLink = delta.NextLink
 	}
-
-	return
 }
 
 func getItemFullPath(item *api.Item) (fullPath string, err error) {

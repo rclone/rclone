@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -205,7 +207,101 @@ func TestMiddlewareAuth(t *testing.T) {
 					testExpectRespBody(t, resp, expected)
 				}
 			})
+
+			// OPTIONS is not exempt from authentication: a handler
+			// may reveal information about the path in its answer
+			t.Run("NoCredsOPTIONS", func(t *testing.T) {
+				client := &http.Client{}
+				req, err := http.NewRequest("OPTIONS", url, nil)
+				require.NoError(t, err)
+
+				resp, err := client.Do(req)
+				require.NoError(t, err)
+				defer func() {
+					_ = resp.Body.Close()
+				}()
+
+				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "OPTIONS with no creds should return unauthorized")
+			})
+
+			// A CORS preflight is only exempt when CORS is enabled
+			// which it isn't for these servers
+			t.Run("NoCredsPreflight", func(t *testing.T) {
+				client := &http.Client{}
+				req, err := http.NewRequest("OPTIONS", url, nil)
+				require.NoError(t, err)
+				req.Header.Set("Origin", "http://test.rclone.org")
+				req.Header.Set("Access-Control-Request-Method", "GET")
+
+				resp, err := client.Do(req)
+				require.NoError(t, err)
+				defer func() {
+					_ = resp.Body.Close()
+				}()
+
+				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "preflight with no creds and no CORS should return unauthorized")
+			})
 		})
+	}
+}
+
+// authTime returns the average time handler takes to reject user with
+// a wrong password.
+//
+// It times many attempts with testing.Benchmark rather than timing them
+// one at a time as a single rejection can take less than the resolution
+// of the clock on Windows.
+func authTime(t *testing.T, handler http.Handler, user string) time.Duration {
+	t.Helper()
+	reject := func() int {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.SetBasicAuth(user, "definitely-wrong-password")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	require.Equal(t, http.StatusUnauthorized, reject())
+	result := testing.Benchmark(func(b *testing.B) {
+		for b.Loop() {
+			reject()
+		}
+	})
+	return time.Duration(result.NsPerOp())
+}
+
+// Rejecting an unknown user must take about as long as rejecting a
+// known user with a wrong password otherwise the timing reveals which
+// users exist.
+func TestMiddlewareAuthHtpasswdUnknownUserTiming(t *testing.T) {
+	handler := MiddlewareAuthHtpasswd("./testdata/.htpasswd", "test")(testEchoHandler([]byte("ok")))
+	known := authTime(t, handler, "bcrypt")
+	unknown := authTime(t, handler, "nosuchuser")
+	assert.Greater(t, unknown, known/4, "unknown user rejected in %v but known user in %v", unknown, known)
+}
+
+// As TestMiddlewareAuthHtpasswdUnknownUserTiming but for --user/--pass
+func TestMiddlewareAuthBasicUnknownUserTiming(t *testing.T) {
+	handler := MiddlewareAuthBasic("user", "pass", "test", "dlPL2MqE")(testEchoHandler([]byte("ok")))
+	known := authTime(t, handler, "user")
+	unknown := authTime(t, handler, "nosuchuser")
+	assert.Greater(t, unknown, known/4, "unknown user rejected in %v but known user in %v", unknown, known)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.SetBasicAuth("user", "pass")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+// An unknown user must never be authenticated by the decoy secret
+func TestMiddlewareAuthHtpasswdUnknownUser(t *testing.T) {
+	handler := MiddlewareAuthHtpasswd("./testdata/.htpasswd", "test")(testEchoHandler([]byte("ok")))
+	for _, pass := range []string{"", "bcrypt", "md5", "sha"} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.SetBasicAuth("nosuchuser", pass)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code, pass)
 	}
 }
 
@@ -541,7 +637,7 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 		auth AuthConfig
 	}{
 		{
-			name: "ServerWithAuth",
+			name: "Basic",
 			http: Config{
 				ListenAddr:  []string{"127.0.0.1:0"},
 				AllowOrigin: "http://test.rclone.org",
@@ -552,44 +648,121 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 				BasicPass: "test_pass",
 			},
 		},
+		{
+			name: "Custom",
+			http: Config{
+				ListenAddr:  []string{"127.0.0.1:0"},
+				AllowOrigin: "http://test.rclone.org",
+			},
+			auth: AuthConfig{
+				Realm: "test",
+				CustomAuthFn: func(r *http.Request, user, pass string) (value any, err error) {
+					if user == "test_user" && pass == "test_pass" {
+						return true, nil
+					}
+					return nil, errors.New("invalid credentials")
+				},
+			},
+		},
+		{
+			name: "UserFromHeader",
+			http: Config{
+				ListenAddr:  []string{"127.0.0.1:0"},
+				AllowOrigin: "http://test.rclone.org",
+			},
+			auth: AuthConfig{
+				Realm:          "test",
+				UserFromHeader: "X-Remote-User",
+			},
+		},
 	}
 
 	for _, ss := range authServers {
 		t.Run(ss.name, func(t *testing.T) {
-			s, err := NewServer(context.Background(), WithConfig(ss.http))
+			s, err := NewServer(context.Background(), WithConfig(ss.http), WithAuth(ss.auth))
 			require.NoError(t, err)
 			defer func() {
 				require.NoError(t, s.Shutdown())
 			}()
 
-			s.Router().Mount("/", testEmptyHandler())
+			s.Router().Mount("/", testEchoHandler([]byte("secret-page")))
 			s.Serve()
 
 			url := testGetServerURL(t, s)
 
-			client := &http.Client{}
-			req, err := http.NewRequest("OPTIONS", url, nil)
-			require.NoError(t, err)
-
-			resp, err := client.Do(req)
-			require.NoError(t, err)
-			defer func() {
-				_ = resp.Body.Close()
-			}()
-
-			require.Equal(t, http.StatusOK, resp.StatusCode, "OPTIONS should return ok even if not authenticated")
-
-			testExpectRespBody(t, resp, []byte{})
-
-			for _, key := range _testCORSHeaderKeys {
-				require.Contains(t, resp.Header, key, "CORS headers should be sent even if not authenticated")
+			doOPTIONS := func(t *testing.T, setup func(req *http.Request)) *http.Response {
+				req, err := http.NewRequest("OPTIONS", url, nil)
+				require.NoError(t, err)
+				if setup != nil {
+					setup(req)
+				}
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					_ = resp.Body.Close()
+				})
+				return resp
 			}
 
-			expectedOrigin := url
-			if ss.http.AllowOrigin != "" {
-				expectedOrigin = ss.http.AllowOrigin
+			preflight := func(req *http.Request) {
+				req.Header.Set("Origin", ss.http.AllowOrigin)
+				req.Header.Set("Access-Control-Request-Method", "GET")
 			}
-			require.Equal(t, expectedOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+
+			// checkPreflight checks resp was answered by the CORS
+			// middleware and never reached the handler behind it
+			checkPreflight := func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode, "preflight OPTIONS should return ok")
+				testExpectRespBody(t, resp, []byte{})
+				for _, key := range _testCORSHeaderKeys {
+					require.Contains(t, resp.Header, key, "CORS headers should be sent")
+				}
+				require.Equal(t, ss.http.AllowOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+			}
+
+			// A browser preflight can't carry credentials so it
+			// must succeed without them
+			t.Run("PreflightNoCreds", func(t *testing.T) {
+				checkPreflight(t, doOPTIONS(t, preflight))
+			})
+
+			// A proxy in front of the browser may stamp an
+			// Authorization header the server can't check onto the
+			// preflight, which mustn't stop it succeeding
+			t.Run("PreflightIgnoresAuthorization", func(t *testing.T) {
+				checkPreflight(t, doOPTIONS(t, func(req *http.Request) {
+					preflight(req)
+					req.Header.Set("Authorization", "Bearer not-checked-here")
+				}))
+				checkPreflight(t, doOPTIONS(t, func(req *http.Request) {
+					preflight(req)
+					req.SetBasicAuth("test_user", "wrong")
+				}))
+				checkPreflight(t, doOPTIONS(t, func(req *http.Request) {
+					preflight(req)
+					req.SetBasicAuth("test_user", "test_pass")
+				}))
+			})
+
+			// Any other OPTIONS is authenticated like any other
+			// request as the handler's answer may reveal
+			// information about the path
+			t.Run("OPTIONSNoCreds", func(t *testing.T) {
+				resp := doOPTIONS(t, nil)
+				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "OPTIONS with no creds should return unauthorized")
+			})
+
+			t.Run("OPTIONSGoodCreds", func(t *testing.T) {
+				resp := doOPTIONS(t, func(req *http.Request) {
+					if ss.auth.UserFromHeader != "" {
+						req.Header.Set(ss.auth.UserFromHeader, "test_user")
+					} else {
+						req.SetBasicAuth("test_user", "test_pass")
+					}
+				})
+				require.Equal(t, http.StatusOK, resp.StatusCode, "OPTIONS with good creds should return ok")
+				testExpectRespBody(t, resp, []byte("secret-page"))
+			})
 		})
 	}
 }
@@ -652,6 +825,39 @@ func TestMiddlewareResponseHeaders(t *testing.T) {
 			for key, vals := range ss.header {
 				require.Contains(t, resp.Header, key, "response should contain custom header")
 				require.Equal(t, vals, resp.Header.Values(key), "header value should match")
+			}
+		})
+	}
+}
+
+func TestParseAuthorization(t *testing.T) {
+	for _, test := range []struct {
+		header string
+		user   string
+		pass   string
+		ok     bool
+	}{
+		{"", "", "", false},
+		{"Basic dXNlcjpwYXNz", "user", "pass", true},
+		// The auth scheme is case-insensitive (RFC 7617 section 2, RFC 9110 section 11.1)
+		{"basic dXNlcjpwYXNz", "user", "pass", true},
+		{"BASIC dXNlcjpwYXNz", "user", "pass", true},
+		{"Basic dXNlcjo=", "user", "", true},
+		{"Basic dXNlcg==", "user", "", false},
+		{"Basic !!!", "", "", false},
+		{"Bearer dXNlcjpwYXNz", "", "", false},
+		{"Basicx dXNlcjpwYXNz", "", "", false},
+	} {
+		t.Run(test.header, func(t *testing.T) {
+			r := httptest.NewRequest("GET", "/", nil)
+			if test.header != "" {
+				r.Header.Set("Authorization", test.header)
+			}
+			user, pass, ok := parseAuthorization(r)
+			require.Equal(t, test.ok, ok)
+			if test.ok {
+				require.Equal(t, test.user, user)
+				require.Equal(t, test.pass, pass)
 			}
 		})
 	}

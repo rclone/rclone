@@ -95,6 +95,34 @@ func TestRc(t *testing.T) {
 		assert.Contains(t, remotes, "my-local")
 	})
 
+	t.Run("ListRemotes long", func(t *testing.T) {
+		assert.NoError(t, os.Setenv("RCLONE_CONFIG_MY-LOCAL_TYPE", "local"))
+		defer func() {
+			assert.NoError(t, os.Unsetenv("RCLONE_CONFIG_MY-LOCAL_TYPE"))
+		}()
+		call := rc.Calls.Get("config/listremotes")
+		assert.NotNil(t, call)
+		in := rc.Params{"long": true}
+		out, err := call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		require.NotNil(t, out)
+
+		var remotes []config.Remote
+		err = out.GetStruct("remotes", &remotes)
+		require.NoError(t, err)
+
+		assert.Contains(t, remotes, config.Remote{Name: testName, Type: "local", Source: "file"})
+		assert.Contains(t, remotes, config.Remote{Name: "my-local", Type: "local", Source: "environment"})
+	})
+
+	t.Run("ListRemotes long invalid", func(t *testing.T) {
+		call := rc.Calls.Get("config/listremotes")
+		assert.NotNil(t, call)
+		in := rc.Params{"long": "potato"}
+		_, err := call.Fn(context.Background(), in)
+		require.Error(t, err)
+	})
+
 	t.Run("Update", func(t *testing.T) {
 		call := rc.Calls.Get("config/update")
 		assert.NotNil(t, call)
@@ -178,6 +206,22 @@ func TestRc(t *testing.T) {
 		require.NotNil(t, out)
 
 		var remotes []string
+		err = out.GetStruct("remotes", &remotes)
+		require.NoError(t, err)
+
+		assert.NotNil(t, remotes)
+		assert.Empty(t, remotes)
+	})
+
+	t.Run("ListRemotes long empty not nil", func(t *testing.T) {
+		call := rc.Calls.Get("config/listremotes")
+		assert.NotNil(t, call)
+		in := rc.Params{"long": true}
+		out, err := call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		require.NotNil(t, out)
+
+		var remotes []config.Remote
 		err = out.GetStruct("remotes", &remotes)
 		require.NoError(t, err)
 

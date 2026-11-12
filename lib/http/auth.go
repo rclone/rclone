@@ -41,7 +41,19 @@ htpasswd -B htpasswd user
 htpasswd -B htpasswd anotherUser
 ` + "```" + `
 
+Use the same hash format and cost for every entry in the file. If the
+entries differ, the time taken to reject a wrong password can reveal
+which usernames exist.
+
 The password file can be updated while rclone is running.
+
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when ` + "`--{{ .Prefix }}allow-origin`" + `
+is set, which are answered without authentication as browsers never send
+credentials with them.
 
 Use ` + "`--{{ .Prefix }}realm`" + ` to set the authentication realm.
 

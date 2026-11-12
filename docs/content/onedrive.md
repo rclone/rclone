@@ -10,6 +10,10 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
+**Note**: OneDrive for Business and SharePoint users need rclone
+v1.76 or later from April 1, 2027 - see
+[Pre-authenticated URLs](#pre-authenticated-urls).
+
 ## Configuration
 
 The initial setup for OneDrive involves getting a token from
@@ -242,7 +246,7 @@ OneDrive files. Take care to safeguard these credentials.
 If you do not have admin access to your organization's OneDrive for
 Business, you can still connect by manually providing the SharePoint
 tenant URL and drive ID. This works by overriding the base API URL
-from the standard Microsoft Graph endpoint to the SharePoint v2.0
+from the standard Microsoft Graph endpoint to the SharePoint API
 endpoint.
 
 #### Steps to manually obtain credentials
@@ -256,6 +260,13 @@ endpoint.
    ".driveAccessToken": "access_token={access_token}"
    ```
 
+   In some guest access scenarios SharePoint may also expose a matching
+   v2.1 URL and token pair:
+   ```json
+   ".driveUrlV21": "{tenant_url}/v2.1/drives/{drive_id}",
+   ".driveAccessTokenV21": "access_token={access_token}"
+   ```
+
 #### Rclone configuration
 
 Use the extracted values to configure your remote:
@@ -267,6 +278,14 @@ drive_id = {drive_id}
 tenant_url = {tenant_url}
 drive_type = business
 ```
+
+If you use a v2.1 token, set the matching SharePoint API version:
+
+```ini
+tenant_api_version = v2.1
+```
+
+If `tenant_api_version` is omitted, rclone defaults to `v2.0`.
 
 Since the exact expiry time cannot be determined from web traffic,
 set the expiry to a future date. Note that the token will eventually
@@ -311,10 +330,11 @@ This can be useful with `rclone mount` and [rclone rc vfs/refresh
 recursive=true](/rc/#vfs-refresh)) to very quickly fill the mount with
 information about all the files.
 
-The API used for the recursive listing (`ListR`) only supports listing
-from the root of the drive. This will become increasingly inefficient
-the further away you get from the root as rclone will have to discard
-files outside of the directory you are using.
+Rclone asks for the delta listing of the directory being listed. Some
+drives only support delta listings from the root of the drive, in
+which case rclone lists the whole drive and discards the files outside
+of the directory you are using, which is increasingly inefficient the
+further away from the root you get.
 
 Some commands (like `rclone lsf -R`) will use `ListR` by default - you
 can turn this off with `--disable ListR` if you need to.
@@ -508,7 +528,7 @@ Properties:
 
 The tenant URL for non-admin OneDrive access.
 
-Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+Set this to your SharePoint tenant URL to use the SharePoint API
 endpoint instead of the standard Microsoft Graph API. This allows
 accessing business OneDrive without admin consent.
 
@@ -524,6 +544,22 @@ Properties:
 - Env Var:     RCLONE_ONEDRIVE_TENANT_URL
 - Type:        string
 - Required:    false
+
+#### --onedrive-tenant-api-version
+
+The SharePoint API version to use with tenant_url.
+
+Set this to the SharePoint API version matching the browser-extracted
+access token. For example, use v2.1 with a driveAccessTokenV21 token.
+
+This only applies when tenant_url is set.
+
+Properties:
+
+- Config:      tenant_api_version
+- Env Var:     RCLONE_ONEDRIVE_TENANT_API_VERSION
+- Type:        string
+- Default:     "v2.0"
 
 #### --onedrive-chunk-size
 
@@ -651,16 +687,13 @@ Properties:
 
 Remove all versions on modifying operations.
 
-Onedrive for business creates versions when rclone uploads new files
+Onedrive creates versions when rclone uploads new files
 overwriting an existing one and when it sets the modification time.
 
 These versions take up space out of the quota.
 
 This flag checks for versions after file upload and setting
 modification time and removes all but the last version.
-
-**NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
 
 
 Properties:
@@ -677,8 +710,7 @@ Permanently delete files on removal.
 Normally files will get sent to the recycle bin on deletion. Setting
 this flag causes them to be permanently deleted. Use with care.
 
-OneDrive personal accounts do not support the permanentDelete API,
-it only applies to OneDrive for Business and SharePoint document libraries.
+This works with OneDrive for Business, SharePoint document libraries, and OneDrive personal accounts, including free accounts.
 
 
 Properties:
@@ -724,12 +756,17 @@ Properties:
     - Creates a read-write link to the item.
   - "embed"
     - Creates an embeddable link to the item.
+    - Only available in OneDrive personal.
 
 #### --onedrive-link-password
 
 Set the password for links created by the link command.
 
-At the time of writing this only works with OneDrive personal paid accounts.
+At the time of writing this works with OneDrive for Business and
+OneDrive personal paid accounts.
+
+OneDrive personal free accounts can't set a password or an expiry time
+(with --expire) on links.
 
 
 Properties:
@@ -828,21 +865,12 @@ Setting this flag speeds up these things greatly:
     rclone size onedrive:
     rclone rc vfs/refresh recursive=true
 
-**However** the delta listing API **only** works at the root of the
-drive. If you use it not at the root then it recurses from the root
-and discards all the data that is not under the directory you asked
-for. So it will be correct but may not be very efficient.
-
-This is why this flag is not set as the default.
-
-As a rule of thumb if nearly all of your data is under rclone's root
-directory (the `root/directory` in `onedrive:root/directory`) then
-using this flag will be a big performance win. If your data is
-mostly not under the root then using this flag will be a big
-performance loss.
-
-It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using rclone `rc vfs/refresh`.
+Rclone asks for the delta listing of the directory being listed. If
+the drive only supports delta listings at the root of the drive (as
+some older OneDrive for Business and SharePoint drives do) then
+rclone lists from the root and discards all the data that is not
+under the directory you asked for. So it will be correct but may not
+be very efficient.
 
 
 Properties:
@@ -1040,7 +1068,7 @@ Here are the possible system metadata items for the onedrive backend.
 
 | Name | Help | Type | Example | Read Only |
 |------|------|------|---------|-----------|
-| btime | Time of file birth (creation) with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | N |
+| btime | Time of file birth (creation) with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | N |
 | content-type | The MIME type of the file. | string | text/plain | **Y** |
 | created-by-display-name | Display name of the user that created the item. | string | John Doe | **Y** |
 | created-by-id | ID of the user that created the item. | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
@@ -1049,14 +1077,14 @@ Here are the possible system metadata items for the onedrive backend.
 | last-modified-by-display-name | Display name of the user that last modified the item. | string | John Doe | **Y** |
 | last-modified-by-id | ID of the user that last modified the item. | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
 | malware-detected | Whether OneDrive has detected that the item contains malware. | boolean | true | **Y** |
-| mtime | Time of last modification with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | N |
+| mtime | Time of last modification with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | N |
 | package-type | If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. | string | oneNote | **Y** |
 | permissions | Permissions in a JSON dump of OneDrive format. Enable with --onedrive-metadata-permissions. Properties: id, grantedTo, grantedToIdentities, invitation, inheritedFrom, link, roles, shareId | JSON | {} | N |
 | shared-by-id | ID of the user that shared the item (if shared). | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
 | shared-owner-id | ID of the owner of the shared item (if shared). | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
 | shared-scope | If shared, indicates the scope of how the item is shared: anonymous, organization, or users. | string | users | **Y** |
-| shared-time | Time when the item was shared, with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
-| utime | Time of upload with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
+| shared-time | Time when the item was shared, with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
+| utime | Time of upload with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
 
 See the [metadata](/docs/#metadata) docs for more info.
 
@@ -1154,11 +1182,6 @@ Or you can set the `no_versions` parameter to `true` and rclone will
 remove versions after operations which create new versions. This takes
 extra transactions so only enable it if you need it.
 
-**Note** At the time of writing Onedrive Personal creates versions
-(but not for setting the modification time) but the API for removing
-them returns "API not found" so cleanup and `no_versions` should not
-be used on Onedrive Personal.
-
 ### Disabling versioning
 
 Starting October 2018, users will no longer be able to
@@ -1213,9 +1236,36 @@ rclone cleanup --interactive remote:path/subdir # interactively remove all old v
 rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir
 ```
 
-**NB** Onedrive personal can't currently delete versions
-
 ## Troubleshooting
+
+### Pre-authenticated URLs
+
+Microsoft is [retiring pre-authenticated (tempauth) URLs](https://devblogs.microsoft.com/microsoft365dev/pre-authenticated-tempauth-urls-are-retiring-move-to-microsoft-entra-id-tokens-before-april-1-2027/)
+in OneDrive for Business and SharePoint from April 1, 2027.
+
+**Upgrade to rclone v1.76 or later before April 1, 2027.** Earlier
+versions rely on pre-authenticated URLs, so after that date their
+downloads, chunked uploads and server-side copies will fail with
+OneDrive for Business and SharePoint. Rclone v1.76 and later keep
+working with the existing configuration, apart from the client
+credentials flow with a client secret (see below).
+
+Rclone uses these URLs when downloading files, when uploading files
+bigger than `--onedrive-upload-cutoff` in chunks and when doing
+server-side copies. When SharePoint returns them without
+pre-authentication rclone authenticates them with a SharePoint token
+which it gets using the existing login, so no reconfiguration is
+needed. OneDrive Personal is not affected.
+
+If rclone can't get a SharePoint token, or SharePoint refuses it, you
+will see the error `SharePoint refused to authenticate a request`. In
+this case rclone uploads files smaller than 250 MiB in a single
+request instead and copies files by downloading and uploading them,
+but bigger files can't be uploaded and downloads may fail.
+
+SharePoint does not accept tokens from the client credentials flow
+which were got with a client secret, so this affects
+`client_credentials` users.
 
 ### Excessive throttling or blocked on SharePoint
 
@@ -1278,7 +1328,7 @@ This means that rclone can't use the OneDrive for Business API with your account
 You can't do much about it, maybe write an email to your admins.
 
 However, there are other ways to interact with your OneDrive account. Have a look
-at the WebDAV backend: <https://rclone.org/webdav/#sharepoint>
+at the WebDAV backend: <https://rclone.org/webdav/#sharepoint-online>
 
 ### invalid\_grant (AADSTS50076)
 
@@ -1317,6 +1367,27 @@ Shared with me files is not supported by rclone
    behaves like a normal folder/file.
     ![in_my_files](https://i.imgur.com/0S8H3li.png "Screenshot (My Files)")
     ![rclone_mount](https://i.imgur.com/2Iq66sW.png "Screenshot (rclone mount)")
+
+Listing such a shortcut may still fail with
+
+```text
+invalidRequest: The provided drive id appears to be malformed, or does not represent a valid drive.
+```
+
+as the drive it points to can't always be read with the drive ID the
+API supplies. `Personal Vault` is a shortcut of the same kind and
+fails to list in the same way, though it reports
+`invalidResourceId: ObjectHandle is Invalid`.
+
+A normal listing reports the error for that folder and carries on, so
+the rest of the drive is still listed, and excluding the folder (for
+example with `--exclude "/Personal Vault/**"`) avoids the error.
+
+A recursive listing with `--fast-list` stops at the first error, so
+listing the root of a drive which has one of these shortcuts in it
+will fail. Filters don't help here as the folder is listed by the
+backend before the filters are applied - use `--disable ListR` (or
+don't use `--fast-list`) on such a drive.
 
 ### Live Photos uploaded from iOS (small video clips in .heic files)
 

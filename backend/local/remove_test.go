@@ -38,7 +38,7 @@ func TestRemove(t *testing.T) {
 		require.NoError(t, fd.Close())
 	})
 	// delete the open file
-	err = remove(name)
+	err = remove(name, os.Remove)
 	require.NoError(t, err)
 	// check it no longer exists
 	assert.False(t, exists())

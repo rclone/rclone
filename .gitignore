@@ -19,4 +19,6 @@ Thumbs.db
 __pycache__
 .DS_Store
 resource_windows_*.syso
+/librclone.h
 .devcontainer
+/cmd/bisync/testdata/bisync_vscode_debuggers_launch.json

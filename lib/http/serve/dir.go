@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -19,13 +20,14 @@ import (
 
 // DirEntry is a directory entry
 type DirEntry struct {
-	remote  string
-	URL     string
-	ZipURL  string
-	Leaf    string
-	IsDir   bool
-	Size    int64
-	ModTime time.Time
+	remote   string
+	URL      string
+	ZipURL   string
+	Leaf     string
+	IsDir    bool
+	Size     int64
+	ModTime  time.Time
+	MimeType string
 }
 
 // Directory represents a directory
@@ -41,6 +43,8 @@ type Directory struct {
 	Breadcrumb   []Crumb
 	Sort         string
 	Order        string
+	Static       bool   // rendering for a static site, so no "up" link at the root
+	LinkIndex    string // if set, appended to directory links, e.g. "index.html"
 }
 
 // Crumb is a breadcrumb entry
@@ -80,6 +84,64 @@ func NewDirectory(dirRemote string, htmlTemplate *template.Template) *Directory 
 	return d
 }
 
+// SetLinkIndex makes directory links point at name inside the
+// directory, e.g. "dir/index.html" rather than "dir/", for hosts which
+// don't serve index documents. Call it before adding entries.
+func (d *Directory) SetLinkIndex(name string) *Directory {
+	d.LinkIndex = name
+	for i := range d.Breadcrumb {
+		d.Breadcrumb[i].Link += name
+	}
+	return d
+}
+
+// Path returns the path of the directory from the root with leading
+// and trailing slashes, e.g. "/dir/" or "/" for the root.
+func (d *Directory) Path() string {
+	if d.IsRoot() {
+		return "/"
+	}
+	return "/" + strings.Trim(d.DirRemote, "/") + "/"
+}
+
+// IsRoot returns true if this is the root directory
+func (d *Directory) IsRoot() bool {
+	return strings.Trim(d.DirRemote, "/") == ""
+}
+
+// UpLink returns the link to the parent directory
+func (d *Directory) UpLink() string {
+	if d.LinkIndex == "" {
+		return ".."
+	}
+	return "../" + d.LinkIndex
+}
+
+// NumDirs returns the number of directory entries
+func (d *Directory) NumDirs() (n int) {
+	for i := range d.Entries {
+		if d.Entries[i].IsDir {
+			n++
+		}
+	}
+	return n
+}
+
+// NumFiles returns the number of file entries
+func (d *Directory) NumFiles() int {
+	return len(d.Entries) - d.NumDirs()
+}
+
+// TotalSize returns the total size of the file entries
+func (d *Directory) TotalSize() (size int64) {
+	for i := range d.Entries {
+		if !d.Entries[i].IsDir {
+			size += d.Entries[i].Size
+		}
+	}
+	return size
+}
+
 // SetQuery sets the query parameters for each URL
 func (d *Directory) SetQuery(queryParams url.Values) *Directory {
 	d.Query = ""
@@ -96,22 +158,31 @@ func (d *Directory) AddHTMLEntry(remote string, isDir bool, size int64, modTime 
 		leaf = ""
 	}
 	urlRemote := leaf
+	if leaf != "" {
+		// Link with a leading ./ as Caddy's file server does, since
+		// released versions of rclone selfupdate look for
+		// href="./vX.Y.Z/" in the listing of downloads.rclone.org
+		urlRemote = "./" + leaf
+	}
+	mimeType := fs.MimeTypeFromName(leaf)
+	linkIndex, zipURL := "", ""
 	if isDir {
 		leaf += "/"
 		urlRemote += "/"
+		mimeType = "inode/directory"
+		linkIndex = d.LinkIndex
+		zipURL = rest.URLPathEscape(urlRemote) + "?download=zip"
 	}
 	d.Entries = append(d.Entries, DirEntry{
-		remote:  remote,
-		URL:     rest.URLPathEscape(urlRemote) + d.Query,
-		ZipURL:  "",
-		Leaf:    leaf,
-		IsDir:   isDir,
-		Size:    size,
-		ModTime: modTime,
+		remote:   remote,
+		URL:      rest.URLPathEscape(urlRemote) + linkIndex + d.Query,
+		ZipURL:   zipURL,
+		Leaf:     leaf,
+		IsDir:    isDir,
+		Size:     size,
+		ModTime:  modTime,
+		MimeType: mimeType,
 	})
-	if isDir {
-		d.Entries[len(d.Entries)-1].ZipURL = rest.URLPathEscape(urlRemote) + "?download=zip"
-	}
 }
 
 // AddEntry adds an entry to that directory
@@ -164,7 +235,7 @@ func (d *Directory) ProcessQueryParams(sortParm string, orderParm string) *Direc
 		toSort = sort.Reverse(toSort)
 	}
 	if toSort != nil {
-		sort.Sort(toSort)
+		sort.Stable(toSort)
 	}
 
 	return d
@@ -230,6 +301,11 @@ const (
 	sortByTime         = "time"
 )
 
+// Render writes the directory listing to w using the HTML template
+func (d *Directory) Render(w io.Writer) error {
+	return d.HTMLTemplate.Execute(w, d)
+}
+
 // Serve serves a directory
 func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -240,7 +316,7 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
 
 	buf := &bytes.Buffer{}
-	err := d.HTMLTemplate.Execute(buf, d)
+	err := d.Render(buf)
 	if err != nil {
 		Error(ctx, d.DirRemote, w, "Failed to render template", err)
 		return

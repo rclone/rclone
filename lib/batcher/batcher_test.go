@@ -1,9 +1,11 @@
 package batcher
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -361,4 +363,31 @@ func TestBatcherCommitAsync(t *testing.T) {
 
 	assert.Equal(t, int32(4), commits.Load())
 	assert.Equal(t, int32(10), totalSize.Load())
+}
+
+func TestBatcherShutdownLog(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	oldLogLevel := ci.LogLevel
+	ci.LogLevel = fs.LogLevelDebug
+	defer func() { ci.LogLevel = oldLogLevel }()
+	var buf bytes.Buffer
+	fs.SetLogger(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	defer fs.SetLogger(slog.Default().Handler())
+
+	commitBatch := func(ctx context.Context, items []Item, results []Result, errors []error) error {
+		return nil
+	}
+	b, err := New[Item, Result](ctx, nil, commitBatch, Options{
+		Mode:         "async",
+		Size:         10,
+		Timeout:      time.Hour,
+		MaxBatchSize: 1000,
+	})
+	require.NoError(t, err)
+	_, err = b.Commit(ctx, "item", Item("item"))
+	require.NoError(t, err)
+	b.Shutdown()
+
+	assert.Regexp(t, `(?s)Committing uploads - please wait\.\.\..*Committed async batch.*Committing uploads - done`, buf.String())
 }

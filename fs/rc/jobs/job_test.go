@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"runtime"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +27,9 @@ func TestNewJobs(t *testing.T) {
 func TestJobsKickExpire(t *testing.T) {
 	testy.SkipUnreliable(t)
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	opt := rc.Opt // copy so we don't change the global options
+	opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	jobs.opt = &opt
 	assert.Equal(t, false, jobs.expireRunning)
 	jobs.kickExpire()
 	jobs.mu.Lock()
@@ -42,7 +46,9 @@ func TestJobsExpire(t *testing.T) {
 	ctx := context.Background()
 	wait := make(chan struct{})
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	opt := rc.Opt // copy so we don't change the global options
+	opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	jobs.opt = &opt
 	assert.Equal(t, false, jobs.expireRunning)
 	var gotJobID int64
 	var gotJob *Job
@@ -304,6 +310,34 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	assert.NotEqual(t, 42*fs.Mebi, ci.BufferSize)
 }
 
+// Check LogLevel in _config sets the log level for the logs of the call
+func TestExecuteJobWithConfigLogLevel(t *testing.T) {
+	ctx := context.Background()
+	require.Less(t, fs.GetConfig(ctx).LogLevel, fs.LogLevelDebug)
+	var logs []string
+	log.Handler.SetOutput(func(level slog.Level, text string) {
+		logs = append(logs, text)
+	})
+	defer log.Handler.ResetOutput()
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fs.DebugfCtx(ctx, nil, "debug from job")
+		return nil, nil
+	}
+
+	_, _, err := NewJob(ctx, jobFn, rc.Params{})
+	require.NoError(t, err)
+	assert.Empty(t, logs)
+
+	_, _, err = NewJob(ctx, jobFn, rc.Params{
+		"_config": rc.Params{
+			"LogLevel": "DEBUG",
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, logs, 1)
+	assert.Contains(t, logs[0], "debug from job")
+}
+
 // NewJob must mark the context as a remote control (rc) request, including for
 // asynchronous jobs whose context is detached
 func TestNewJobMarksRCRequest(t *testing.T) {
@@ -553,6 +587,10 @@ func TestRcJobStatus(t *testing.T) {
 func TestRcJobList(t *testing.T) {
 	ctx := context.Background()
 	jobID.Store(0)
+	// Don't list the jobs left running by other tests
+	running.mu.Lock()
+	running.jobs = map[int64]*Job{}
+	running.mu.Unlock()
 	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 

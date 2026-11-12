@@ -191,6 +191,11 @@ If the custom endpoint rewrites the requests for authentication,
 e.g., in Cloudflare Workers, this header needs to be handled properly.
 Leave blank if you want to use the endpoint provided by Backblaze.
 
+Rclone will not follow a redirect from this endpoint which downgrades
+HTTPS to HTTP, and will not send the "Authorization" header or the
+SSE-C key headers once a redirect has left the host and port of this
+endpoint.
+
 The URL provided here SHOULD have the protocol and SHOULD NOT have
 a trailing slash or specify the /file/bucket subpath as rclone will
 request files with "{download_url}/file/{bucket_name}/{path}".
@@ -272,7 +277,7 @@ See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket 
 			Name: "sse_customer_key",
 			Help: `To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data
 
-Alternatively you can provide --sse-customer-key-base64.`,
+Alternatively you can provide --b2-sse-customer-key-base64.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -283,7 +288,7 @@ Alternatively you can provide --sse-customer-key-base64.`,
 			Name: "sse_customer_key_base64",
 			Help: `To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data
 
-Alternatively you can provide --sse-customer-key.`,
+Alternatively you can provide --b2-sse-customer-key.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -529,6 +534,25 @@ func (f *Fs) setRoot(root string) {
 	f.rootBucket, f.rootDirectory = bucket.Split(f.root)
 }
 
+// redirectSecretHeaders are the request headers carrying secrets that
+// must not be forwarded when a redirect leaves the original host.
+var redirectSecretHeaders = []string{
+	"Authorization",
+	sseAlgorithmHeader,
+	sseKeyHeader,
+	sseMd5Header,
+}
+
+// newClient makes the http client used for all B2 requests.
+//
+// The download_url option sends the requests to a host the user does
+// not control so it strips headers on cross host redirects.
+func newClient(ctx context.Context) *http.Client {
+	client := fshttp.NewClient(ctx)
+	client.CheckRedirect = rest.StripHeadersOnCrossHostRedirectFn(redirectSecretHeaders...)
+	return client
+}
+
 // NewFs constructs an Fs from the path, bucket:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -581,7 +605,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:        name,
 		opt:         *opt,
 		ci:          ci,
-		srv:         rest.NewClient(fshttp.NewClient(ctx)).SetErrorHandler(errorHandler),
+		srv:         rest.NewClient(newClient(ctx)).SetErrorHandler(errorHandler),
 		cache:       bucket.NewCache(),
 		_bucketID:   make(map[string]string, 1),
 		_bucketType: make(map[string]string, 1),

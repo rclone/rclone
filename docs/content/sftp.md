@@ -522,6 +522,24 @@ upload (for example, certain configurations of ProFTPd with mod_sftp). If you
 are using one of these servers, you can set the option `set_modtime = false` in
 your RClone backend configuration to disable this behaviour.
 
+### Restricted filename characters
+
+SFTP servers on Unix-like systems can store any character in a file name
+except NUL and `/`, so by default only these are replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| /         | 0x2F  | ／           |
+
+If the server runs on Windows, which can't store many more characters,
+add the Windows restricted characters with `--sftp-encoding`, as in the
+[FTP example](/overview/#encoding-example-ftp):
+
+```text
+--sftp-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
+```
+
 ### About command
 
 The `about` command returns the total space, free space, and used
@@ -902,7 +920,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_SFTP_ENCODING
 - Type:        Encoding
-- Default:     Slash,Del,Ctl,Dot
+- Default:     Slash,Dot
 
 #### --sftp-set-modtime
 
@@ -1148,6 +1166,34 @@ Properties:
 
 - Config:      disable_concurrent_writes
 - Env Var:     RCLONE_SFTP_DISABLE_CONCURRENT_WRITES
+- Type:        bool
+- Default:     false
+
+#### --sftp-multithread-upload
+
+Set this to use multi-thread (multi-connection) uploads.
+
+Normally rclone uploads a single large file over one SFTP connection.
+With this set rclone uploads large files over several SFTP connections
+at once (one per chunk), which greatly improves throughput on high
+latency links, the same way multi-thread downloads already work. Each
+connection writes a different, non-overlapping byte range of the file,
+so this requires a server that allows several handles to the same file
+with writes at arbitrary offsets, which OpenSSH does.
+
+This is off by default because many SFTP servers only accept sequential
+writes (for example some object storage backed SFTP gateways) and would
+fail large uploads with "truncate failed" or "invalid offset" style
+errors.
+
+This is ignored (uploads stay single-threaded) when
+--sftp-disable-concurrent-writes or --sftp-connections is in use.
+
+
+Properties:
+
+- Config:      multithread_upload
+- Env Var:     RCLONE_SFTP_MULTITHREAD_UPLOAD
 - Type:        bool
 - Default:     false
 
@@ -1426,8 +1472,8 @@ Properties:
 
 On some SFTP servers (e.g. Synology) the paths are different
 for SSH and SFTP so the hashes can't be calculated properly.
-You can either use [`--sftp-path-override`](#--sftp-path-override)
-or [`disable_hashcheck`](#--sftp-disable-hashcheck).
+You can either use [`--sftp-path-override`](#sftp-path-override)
+or [`disable_hashcheck`](#sftp-disable-hashcheck).
 
 The only ssh agent supported under Windows is Putty's pageant.
 
@@ -1436,7 +1482,7 @@ default, due to security concerns. This can be re-enabled on a
 per-connection basis by setting the `use_insecure_cipher` setting in
 the configuration file to `true`. Further details on the insecurity of
 this cipher can be found
-[in this paper](http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf).
+[in this paper](https://conferences.computer.org/sp/pdfs/sp/2009/oakland2009-01.pdf).
 
 SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.

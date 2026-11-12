@@ -51,8 +51,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:      "user",
-			Help:      "SMB username.",
-			Default:   currentUser,
+			Help:      "SMB username.\n\nLeave blank to use the current user name.",
 			Sensitive: true,
 		}, {
 			Name:    "port",
@@ -78,6 +77,17 @@ authentication, and it often needs to be set for clusters. For example:
 
 Leave blank if not sure.
 `,
+			Sensitive: true,
+		}, {
+			Name: "workstation",
+			Help: `Workstation name sent in NTLM authentication.
+
+The NetBIOS name sent as the client workstation in the NTLM AUTHENTICATE
+message. Some servers (e.g. domain-joined Windows servers with per-account
+workstation restrictions or NTLM allow-lists) require this to match a
+specific name. Leave blank to send no workstation name (the default).
+`,
+			Advanced:  true,
 			Sensitive: true,
 		}, {
 			Name: "use_kerberos",
@@ -153,6 +163,7 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	Workstation     string      `config:"workstation"`
 	UseKerberos     bool        `config:"use_kerberos"`
 	KerberosCCache  string      `config:"kerberos_ccache"`
 	HideSpecial     bool        `config:"hide_special_share"`
@@ -192,6 +203,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	if opt.User == "" {
+		opt.User = currentUser
 	}
 
 	// if root is empty or ends with / (must be a directory)

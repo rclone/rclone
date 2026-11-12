@@ -196,6 +196,31 @@ func TestRcDeletefile(t *testing.T) {
 	r.CheckRemoteItems(t, file2)
 }
 
+func TestRcDeletefileBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r, call := rcNewRun(t, "operations/deletefile")
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move or copy")
+	}
+
+	ci.BackupDir = r.FremoteName + "/backup"
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)
+	file2 := r.WriteObject(ctx, "medium", strings.Repeat("-", 60), t1)
+	r.CheckRemoteItems(t, file1, file2)
+
+	in := rc.Params{
+		"fs":     r.FremoteName,
+		"remote": "small",
+	}
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+	file1.Path = "backup/small"
+	r.CheckRemoteItems(t, file1, file2)
+}
+
 // operations/list: List the given remote and path in JSON format.
 func TestRcList(t *testing.T) {
 	r, call := rcNewRun(t, "operations/list")
@@ -953,6 +978,16 @@ func TestRcGetFile(t *testing.T) {
 	out, err = call.Fn(ctx, in)
 	require.NoError(t, err)
 	assert.Equal(t, "Operation!", out["result"])
+
+	// A suffix longer than the file represents the whole file.
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"tail":   int64(operations.DefaultGetFileMaxSize + 1),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, out["result"])
 
 	// 6. Negative offset
 	in = rc.Params{

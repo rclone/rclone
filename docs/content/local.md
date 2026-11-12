@@ -213,6 +213,9 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
+Symlinks which point to a parent directory would loop forever, so
+rclone reports them as errors and skips them.
+
 #### --local-links, --links, -l
 
 Normally rclone will ignore symlinks or junction points (which behave
@@ -268,6 +271,9 @@ $ tree /tmp/b
 ├── file1 -> ./file4
 └── file2 -> /home/user/file3
 ```
+
+A `.rclonelink` file whose contents are too long to be a path (more
+than 128 KiB) is refused rather than turned into a symlink.
 
 However, if copied back without '-l'
 
@@ -577,6 +583,13 @@ deduplicated by default (i.e. having two identical files does not consume more
 storage than having just one.)  However, for use cases where data redundancy is
 preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
 
+Cloning also preserves macOS-specific metadata such as extended attributes,
+which a normal copy does not, so this metadata is lost when cloning is disabled.
+
+If the destination file already exists, cloning replaces it with a new file,
+even with --inplace, so hard links to it are broken. Use --local-no-clone to
+update existing files in place.
+
 Currently, cloning is only supported when using APFS on macOS (support for other
 platforms may be added in the future.)
 
@@ -666,10 +679,10 @@ Properties:
 
 Make out-of-space errors fatal during transfers.
 
-When enabled, an ENOSPC error during a write returns a fatal error so
-that rclone aborts rather than retrying the operation. Useful for
-backup scripts that should halt loudly on a full disk rather than spin
-retrying.
+When enabled, an out of space error while writing, creating a directory,
+or creating a file returns a fatal error so that rclone aborts rather
+than retrying the operation. Useful for backup scripts that should halt
+loudly on a full disk rather than spin retrying.
 
 Properties:
 
@@ -767,8 +780,10 @@ Metadata is supported on files and directories.
 When restoring metadata with `--metadata` rclone applies the
 "mode", "uid" and "gid" from the source. These come from the source
 remote which may not be trusted, so restoring metadata as root from an
-untrusted source can change file ownership and is not recommended. The
-setuid, setgid and sticky bits are not restored by default - see the
+untrusted source can change file ownership and is not recommended. A
+user other than root keeps its own uid and sets the gid only to a group
+it is a member of, as rsync does. The setuid, setgid and sticky bits are
+not restored by default - see the
 `--local-metadata-restore-special-bits` flag.
 
 Here are the possible system metadata items for the local backend.

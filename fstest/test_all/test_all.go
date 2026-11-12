@@ -22,6 +22,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/all" // import all fs
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fstest/runs"
 	"github.com/rclone/rclone/fstest/testserver"
@@ -65,6 +66,10 @@ func main() {
 	if err != nil {
 		fs.Log(nil, "test_all should be run from the root of the rclone source code")
 		fs.Fatal(nil, fmt.Sprint(err))
+	}
+	// Use the same config file as the tests, so test servers for wrapped remotes are found
+	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
+		_ = config.SetConfigPath(envConfig)
 	}
 	configfile.Install()
 

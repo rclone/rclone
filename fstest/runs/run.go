@@ -180,16 +180,23 @@ func (r *Run) findFailures() {
 	ignored := 0
 	for _, matches := range failRe.FindAllSubmatch(r.output, -1) {
 		failedTest := string(matches[1])
-		// Skip any ignored failures
-		if _, found := r.Ignore[failedTest]; found {
-			ignored++
-		} else {
-			r.FailedTests = append(r.FailedTests, failedTest)
-		}
 		// Find all the parents of this test
 		parts := strings.Split(failedTest, "/")
 		for i := len(parts) - 1; i >= 1; i-- {
 			excludeParents[strings.Join(parts[:i], "/")] = struct{}{}
+		}
+		// Skip any ignored failures, including subtests of ignored tests
+		isIgnored := false
+		for i := len(parts); i >= 1; i-- {
+			if _, found := r.Ignore[strings.Join(parts[:i], "/")]; found {
+				isIgnored = true
+				break
+			}
+		}
+		if isIgnored {
+			ignored++
+		} else {
+			r.FailedTests = append(r.FailedTests, failedTest)
 		}
 	}
 	// Exclude the parents

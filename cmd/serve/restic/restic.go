@@ -13,6 +13,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -208,11 +209,13 @@ with a path of ` + "`/<username>/`" + `.
 					stdout: os.Stdout,
 				}
 
-				httpSrv := &http2.Server{}
-				opts := &http2.ServeConnOpts{
+				// http.Server can't serve a single net.Conn so the
+				// deprecated http2.Server is still needed here.
+				httpSrv := &http2.Server{}    //nolint:staticcheck // see above
+				opts := &http2.ServeConnOpts{ //nolint:staticcheck // see above
 					Handler: s.server.Router(),
 				}
-				httpSrv.ServeConn(conn, opts)
+				httpSrv.ServeConn(conn, opts) //nolint:staticcheck // see above
 				return nil
 			}
 			fs.Logf(s.f, "Serving restic REST API on %s", s.server.URLs())
@@ -283,19 +286,28 @@ func checkPrivate(next http.Handler) http.Handler {
 	})
 }
 
+// uploadLock serializes uploads to one remote.
+type uploadLock struct {
+	uploadingMu sync.Mutex
+	refs        int // protected by server.uploadLocksMu
+}
+
 // server contains everything to run the server
 type server struct {
-	server *libhttp.Server
-	f      fs.Fs
-	cache  *cache
-	opt    Options
+	server        *libhttp.Server
+	f             fs.Fs
+	cache         *cache
+	opt           Options
+	uploadLocksMu sync.Mutex
+	uploadLocks   map[string]*uploadLock
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error) {
 	s = &server{
-		f:     f,
-		cache: newCache(opt.CacheObjects),
-		opt:   *opt,
+		f:           f,
+		cache:       newCache(opt.CacheObjects),
+		opt:         *opt,
+		uploadLocks: make(map[string]*uploadLock),
 	}
 	// Don't bind any HTTP listeners if running with --stdio
 	if opt.Stdio {
@@ -311,6 +323,30 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 	router := s.server.Router()
 	s.Bind(router)
 	return s, nil
+}
+
+// lockUpload locks uploads to remote and returns its unlock function.
+func (s *server) lockUpload(remote string) func() {
+	s.uploadLocksMu.Lock()
+	lock := s.uploadLocks[remote]
+	if lock == nil {
+		lock = new(uploadLock)
+		s.uploadLocks[remote] = lock
+	}
+	lock.refs++
+	s.uploadLocksMu.Unlock()
+
+	lock.uploadingMu.Lock()
+	return func() {
+		lock.uploadingMu.Unlock()
+
+		s.uploadLocksMu.Lock()
+		lock.refs--
+		if lock.refs == 0 {
+			delete(s.uploadLocks, remote)
+		}
+		s.uploadLocksMu.Unlock()
+	}
 }
 
 // Serve restic until the server is shutdown
@@ -377,7 +413,8 @@ func (s *server) Bind(router chi.Router) {
 	}
 }
 
-var matchData = regexp.MustCompile("(?:^|/)data/([^/]{2,})$")
+// Restic pack names are lowercase hexadecimal storage IDs.
+var matchData = regexp.MustCompile("(?:^|/)data/([0-9a-f]{2,})$")
 
 // newObject returns an object with the remote given either from the
 // cache or directly
@@ -422,12 +459,19 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.opt.AppendOnly {
-		// make sure the file does not exist yet
+		unlock := s.lockUpload(remote)
+		defer unlock()
+
+		// Only a definitive not-found result permits creating the object.
 		_, err := s.newObject(r.Context(), remote)
 		if err == nil {
 			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-
+			return
+		}
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			fs.Errorf(remote, "Post request: failed to check whether file exists: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -465,7 +509,11 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "Delete request error: %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 		return
 	}
 

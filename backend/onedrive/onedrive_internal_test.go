@@ -3,19 +3,27 @@ package onedrive
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,9 +45,47 @@ const (
 	// https://learn.microsoft.com/en-us/onedrive/developer/rest-api/api/driveitem_invite?view=odsp-graph-online#http-request-1
 )
 
+func init() {
+	flag.BoolVar(&stripTempauth, "strip-tempauth", false, "Remove tempauth from URLs the API returns to simulate the retirement of pre-authenticated URLs")
+}
+
 // TestMain drives the tests
 func TestMain(m *testing.M) {
 	fstest.TestMain(m)
+}
+
+func TestTenantAPIEndpoint(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		tenantURL        string
+		tenantAPIVersion string
+		want             string
+	}{
+		{
+			name:      "default",
+			tenantURL: "https://example-my.sharepoint.com/_api",
+			want:      "https://example-my.sharepoint.com/_api/v2.0",
+		}, {
+			name:             "explicit v2.1",
+			tenantURL:        "https://example-my.sharepoint.com/_api",
+			tenantAPIVersion: "v2.1",
+			want:             "https://example-my.sharepoint.com/_api/v2.1",
+		}, {
+			name:             "future version",
+			tenantURL:        "https://example-my.sharepoint.com/_api",
+			tenantAPIVersion: "v2.2",
+			want:             "https://example-my.sharepoint.com/_api/v2.2",
+		}, {
+			name:             "trailing slash",
+			tenantURL:        "https://example-my.sharepoint.com/_api/",
+			tenantAPIVersion: "/v2.1",
+			want:             "https://example-my.sharepoint.com/_api/v2.1",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, tenantAPIEndpoint(tc.tenantURL, tc.tenantAPIVersion))
+		})
+	}
 }
 
 // sharingRefused caches whether the remote refuses sharing invitations.
@@ -574,3 +620,252 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// newChangeNotifyTestFs returns an Fs whose delta listing is served by
+// handler on a local test server, plus the server itself. The tenant URL
+// is pointed at the server so no request leaves the test.
+func newChangeNotifyTestFs(t *testing.T, handler http.Handler) (*Fs, *httptest.Server) {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	ctx := context.Background()
+	f := &Fs{
+		ci:      fs.GetConfig(ctx),
+		root:    "",
+		driveID: "testdrive",
+		srv:     rest.NewClient(server.Client()).SetRoot(server.URL),
+		pacer:   fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(10*time.Millisecond))),
+	}
+	f.opt.TenantURL = server.URL
+	f.opt.TenantAPIVersion = defaultTenantAPIVersion
+	return f, server
+}
+
+// deltaItem builds a delta entry for a file named name inside a folder.
+func deltaItem(name, folder string) api.Item {
+	return api.Item{
+		ID:   name,
+		Name: name,
+		File: &api.FileFacet{},
+		ParentReference: &api.ItemReference{
+			ID:   "parentid",
+			Path: "driveid:/" + folder,
+		},
+	}
+}
+
+// TestChangeNotifyRetriesAndKeepsToken covers a transient failure of the
+// delta poll: the request must go through the pacer so it is retried, and
+// a poll which fails outright must not hand back an empty token, since the
+// caller stores whatever it returns. An empty token would reset the delta
+// listing to the start and silently lose every change in between.
+func TestChangeNotifyRetriesAndKeepsToken(t *testing.T) {
+	ctx := context.Background()
+	var attempts atomic.Int32
+	var tokens []string
+	fail := true
+	f, _ := newChangeNotifyTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		tokens = append(tokens, r.URL.Query().Get("token"))
+		if fail {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]any{"error": map[string]any{
+				"code":    "serviceNotAvailable",
+				"message": "Service unavailable",
+			}})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.DeltaResponse{
+			Value:     []api.Item{deltaItem("file1.txt", "folder")},
+			DeltaLink: "https://example.com/delta?token=newtoken",
+		})
+	}))
+
+	var notified []string
+	notifyFunc := func(path string, entryType fs.EntryType) {
+		notified = append(notified, path)
+	}
+
+	// The poll fails, but is retried by the pacer first
+	token, err := f.changeNotifyRunner(ctx, notifyFunc, "tok1")
+	require.Error(t, err)
+	assert.Empty(t, token, "a failed poll must not return a token")
+	assert.Equal(t, fs.GetConfig(ctx).LowLevelRetries, int(attempts.Load()), "the failed poll should have been retried by the pacer")
+	assert.Equal(t, slices.Repeat([]string{"tok1"}, int(attempts.Load())), tokens, "every retry should resume from the same token")
+	assert.Empty(t, notified)
+
+	// Keeping the previous token (as ChangeNotify does) resumes correctly
+	fail = false
+	attempts.Store(0)
+	tokens = nil
+	token, err = f.changeNotifyRunner(ctx, notifyFunc, "tok1")
+	require.NoError(t, err)
+	assert.Equal(t, "newtoken", token)
+	assert.Equal(t, []string{"tok1"}, tokens, "the second poll should resume from the retained token")
+	assert.Equal(t, []string{"folder/file1.txt"}, notified)
+}
+
+// TestChangeNotifyFollowsNextLink covers a change set which spans more than
+// one page. Graph returns @odata.nextLink and no @odata.deltaLink until the
+// last page, so a runner which stops after the first page both loses the
+// remaining changes and ends up with an empty resume token.
+func TestChangeNotifyFollowsNextLink(t *testing.T) {
+	ctx := context.Background()
+	var urls []string
+	var server *httptest.Server
+	f, server := newChangeNotifyTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		urls = append(urls, r.URL.RequestURI())
+		w.Header().Set("Content-Type", "application/json")
+		switch len(urls) {
+		case 1:
+			_ = json.NewEncoder(w).Encode(api.DeltaResponse{
+				Value:    []api.Item{deltaItem("page1.txt", "folder")},
+				NextLink: server.URL + "/nextpage?$skiptoken=abc",
+			})
+		case 2:
+			_ = json.NewEncoder(w).Encode(api.DeltaResponse{
+				Value:     []api.Item{deltaItem("page2.txt", "folder")},
+				DeltaLink: "https://example.com/delta?token=lasttoken",
+			})
+		default:
+			t.Errorf("unexpected extra request to %s", r.URL)
+		}
+	}))
+
+	var notified []string
+	token, err := f.changeNotifyRunner(ctx, func(path string, entryType fs.EntryType) {
+		notified = append(notified, path)
+	}, "tok1")
+	require.NoError(t, err)
+
+	assert.Equal(t, "lasttoken", token, "the resume token should come from the last page")
+	assert.Equal(t, []string{"folder/page1.txt", "folder/page2.txt"}, notified, "changes from every page should be notified")
+	require.Len(t, urls, 2, "the nextLink page should have been fetched")
+	assert.Contains(t, urls[0], "/testdrive/root/delta")
+	assert.Contains(t, urls[0], "token=tok1")
+	assert.Equal(t, "/nextpage?$skiptoken=abc", urls[1], "the nextLink should be used as-is, without the delta token")
+}
+
+// TestListDirectorySize checks that a listed directory carries the size
+// OneDrive reports for it, the total size of its contents, instead of -1.
+func TestListDirectorySize(t *testing.T) {
+	ctx := context.Background()
+	f, _ := newChangeNotifyTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/items/rootid/children", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.ListChildrenResponse{
+			Value: []api.Item{{
+				ID:     "dirid",
+				Name:   "photos",
+				Size:   2646204760,
+				Folder: &api.FolderFacet{ChildCount: 3},
+			}},
+		})
+	}))
+	f.dirCache = dircache.New("", "rootid", f)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	dir, ok := entries[0].(fs.Directory)
+	require.True(t, ok, "entry should be a directory")
+	assert.Equal(t, "photos", dir.Remote())
+	assert.Equal(t, int64(2646204760), dir.Size())
+	assert.Equal(t, int64(3), dir.Items())
+}
+
+// TestWaitForJobUsesConfiguredClient checks that the async job monitor is
+// polled with the configured HTTP client and request context rather than
+// http.DefaultClient, so proxy, TLS and timeout options and cancellation apply.
+func TestWaitForJobUsesConfiguredClient(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.UserAgent = "rclone-waitforjob-test"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "rclone-waitforjob-test", r.UserAgent())
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.AsyncOperationStatus{Status: "deleteFailed"})
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(ctx))
+
+	err := f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "deleteFailed")
+}
+
+// TestWaitForJobCancel checks that cancelling the context stops a poll of
+// the async job monitor which is not answering.
+func TestWaitForJobCancel(t *testing.T) {
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(func() { close(release) })
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt"}) }()
+	select {
+	case err := <-done:
+		assert.ErrorIs(t, err, context.DeadlineExceeded)
+	case <-time.After(5 * time.Second):
+		t.Fatal("waitForJob did not return after the context was cancelled")
+	}
+}
+
+// TestWaitForJobUnauthorized checks that a monitor URL which refuses
+// the request fails straight away instead of polling until the timeout.
+func TestWaitForJobUnauthorized(t *testing.T) {
+	var polls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		polls.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(map[string]any{"error": map[string]any{"code": "unauthenticated", "message": "no token"}})
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+	f.driveType = driveTypeBusiness
+
+	err := f.waitForJob(context.Background(), server.URL+"/monitor", &Object{remote: "file.txt"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "401")
+	assert.Equal(t, int32(1), polls.Load())
+}
+
+// TestWaitForJobRedirectCompleted checks that a monitor which
+// redirects to the new item, as it does when authenticated, is taken
+// to mean the job has finished.
+func TestWaitForJobRedirectCompleted(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/monitor":
+			http.Redirect(w, r, "/item", http.StatusSeeOther)
+		case "/item":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, `{"id":"newid","name":"file.txt","size":5,"file":{}}`)
+		default:
+			t.Errorf("unexpected request %s", r.URL)
+		}
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt", hasMetaData: true})
+	require.NoError(t, err)
+}

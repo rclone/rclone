@@ -96,12 +96,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// The upload can't be retried here as the input stream can't be re-read and
 	// the upload link is single use, so upload returns a retry
 	// error for the caller to retry with a fresh stream.
-	uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary)
+	uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary, src.ModTime(ctx))
 	if err != nil {
 		return err
 	}
 	// Set the properties from the upload back to the object
 	o.size = uploaded.Size
+	if o.fs.uploadModTime {
+		// The server keeps whole seconds only
+		o.modTime = src.ModTime(ctx).Truncate(time.Second)
+	}
 
 	return nil
 }

@@ -2,6 +2,8 @@ package http
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -9,7 +11,6 @@ import (
 	"strings"
 	"sync"
 
-	goauth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -19,7 +20,7 @@ func parseAuthorization(r *http.Request) (user, pass string, ok bool) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		s := strings.SplitN(authHeader, " ", 2)
-		if len(s) == 2 && s[0] == "Basic" {
+		if len(s) == 2 && strings.EqualFold(s[0], "Basic") {
 			b, err := base64.StdEncoding.DecodeString(s[1])
 			if err == nil {
 				parts := strings.SplitN(string(b), ":", 2)
@@ -34,42 +35,27 @@ func parseAuthorization(r *http.Request) (user, pass string, ok bool) {
 	return
 }
 
-// LoggedBasicAuth simply wraps the goauth.BasicAuth struct
-type LoggedBasicAuth struct {
-	goauth.BasicAuth
+// requireBasicAuth replies to the request asking the client for
+// basic auth credentials.
+func requireBasicAuth(w http.ResponseWriter, realm string) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+	w.WriteHeader(http.StatusUnauthorized)
+	_, _ = fmt.Fprintf(w, "%d %s\n", http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 }
 
-// CheckAuth extends BasicAuth.CheckAuth to emit a log entry for unauthorised requests
-func (a *LoggedBasicAuth) CheckAuth(r *http.Request) string {
-	username := a.BasicAuth.CheckAuth(r)
-	if username == "" {
-		user, _, _ := parseAuthorization(r)
-		fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
-	}
-	return username
-}
-
-// NewLoggedBasicAuthenticator instantiates a new instance of LoggedBasicAuthenticator
-func NewLoggedBasicAuthenticator(realm string, secrets goauth.SecretProvider) *LoggedBasicAuth {
-	return &LoggedBasicAuth{BasicAuth: goauth.BasicAuth{Realm: realm, Secrets: secrets}}
-}
-
-// Helper to generate required interface for middleware
-func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Handler {
+// basicAuth returns middleware which authenticates with basic auth,
+// using check to see whether the user and password are valid.
+func basicAuth(realm string, check func(user, pass string) bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip auth for CORS preflight
-			if r.Method == "OPTIONS" {
-				next.ServeHTTP(w, r)
+			user, pass, ok := parseAuthorization(r)
+			if !ok || !check(user, pass) {
+				fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
+				requireBasicAuth(w, realm)
 				return
 			}
-
-			username := authenticator.CheckAuth(r)
-			if username == "" {
-				authenticator.RequireAuth(w, r)
-				return
-			}
-			ctx := context.WithValue(r.Context(), ctxKeyUser, username)
+			ctx := context.WithValue(r.Context(), ctxKeyUser, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -100,35 +86,31 @@ func MiddlewareAuthCertificateUser() Middleware {
 // MiddlewareAuthHtpasswd instantiates middleware that authenticates against the passed htpasswd file
 func MiddlewareAuthHtpasswd(path, realm string) Middleware {
 	fs.Infof(nil, "Using %q as htpasswd storage", path)
-	secretProvider := goauth.HtpasswdFileProvider(path)
-	authenticator := NewLoggedBasicAuthenticator(realm, secretProvider)
-	return basicAuth(authenticator)
+	h := &htpasswdFile{path: path}
+	return basicAuth(realm, h.check)
 }
 
 // MiddlewareAuthBasic instantiates middleware that authenticates for a single user
 func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 	fs.Infof(nil, "Using --user %s --pass XXXX as authenticated user", user)
-	pass = string(goauth.MD5Crypt([]byte(pass), []byte(salt), []byte("$1$")))
-	secretProvider := func(u, r string) string {
-		if user == u {
-			return pass
-		}
-		return ""
-	}
-	authenticator := NewLoggedBasicAuthenticator(realm, secretProvider)
-	return basicAuth(authenticator)
+	pass = md5Crypt(pass, salt, "$1$")
+	// Compare hashes of the users as ConstantTimeCompare returns
+	// early if the lengths differ which would reveal the user's length
+	userSum := sha256.Sum256([]byte(user))
+	return basicAuth(realm, func(u, p string) bool {
+		// Always hash the password so a wrong user takes as long to
+		// reject as a wrong password
+		uSum := sha256.Sum256([]byte(u))
+		userOK := subtle.ConstantTimeCompare(uSum[:], userSum[:]) == 1
+		passOK := subtle.ConstantTimeCompare([]byte(md5Crypt(p, salt, "$1$")), []byte(pass)) == 1
+		return userOK && passOK
+	})
 }
 
 // MiddlewareAuthCustom instantiates middleware that authenticates using a custom function
 func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip auth for CORS preflight
-			if r.Method == "OPTIONS" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			user, pass, ok := parseAuthorization(r)
 			if !ok && userFromContext {
 				user, ok = CtxGetUser(r.Context())
@@ -145,7 +127,7 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 			value, err := fn(r, user, pass)
 			if err != nil {
 				fs.Infof(r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
-				goauth.NewBasicAuthenticator(realm, func(user, realm string) string { return "" }).RequireAuth(w, r) //Reuse BasicAuth error reporting
+				requireBasicAuth(w, realm)
 				return
 			}
 
@@ -180,7 +162,23 @@ func MiddlewareAuthGetUserFromHeader(header string) Middleware {
 
 var onlyOnceWarningAllowOrigin sync.Once
 
-// MiddlewareCORS instantiates middleware that handles basic CORS protections for rcd
+// isCORSPreflight returns true if r is a browser CORS preflight request
+func isCORSPreflight(r *http.Request) bool {
+	return r.Method == "OPTIONS" && r.Header.Get("Origin") != "" && r.Header.Get("Access-Control-Request-Method") != ""
+}
+
+// MiddlewareCORS instantiates middleware that adds the CORS headers to
+// every response if allowOrigin is set.
+//
+// It also answers CORS preflight requests itself. Browsers never
+// attach credentials to a preflight so it must succeed before any
+// authentication middleware sees it, and the browser only looks at
+// the Access-Control-* headers so it is not passed to the handler
+// whose answer could reveal information about the path to an
+// unauthenticated client.
+//
+// If allowOrigin is empty a preflight is treated like any other
+// request.
 func MiddlewareCORS(allowOrigin string) Middleware {
 	onlyOnceWarningAllowOrigin.Do(func() {
 		if allowOrigin == "*" {
@@ -196,6 +194,10 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 				w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, Prefer, TimeOut, Translate")
 				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
 				w.Header().Add("Access-Control-Max-Age", "86400")
+				if isCORSPreflight(r) {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
 			}
 
 			next.ServeHTTP(w, r)

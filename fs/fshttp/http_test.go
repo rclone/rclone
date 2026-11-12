@@ -10,13 +10,16 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"moul.io/http2curl/v2"
@@ -257,4 +260,166 @@ func TestRedirectStripsGlobalHeaders(t *testing.T) {
 		require.NotNil(t, got, test.path)
 		assert.Equal(t, test.want, got.Get("X-Potato"), test.path)
 	}
+}
+
+// TestRedirectLeavesHost checks the redirect chain walk against
+// synthetic chains, in particular that an HTTPS to HTTP downgrade
+// which keeps the host and port counts as leaving the host.
+func TestRedirectLeavesHost(t *testing.T) {
+	// chain builds the linked list of requests net/http records
+	// when following redirects, returning the last hop
+	chain := func(urls ...string) *http.Request {
+		var req *http.Request
+		for _, u := range urls {
+			next, err := http.NewRequest(http.MethodGet, u, nil)
+			require.NoError(t, err)
+			if req != nil {
+				next.Response = &http.Response{Request: req}
+			}
+			req = next
+		}
+		return req
+	}
+	for _, test := range []struct {
+		urls []string
+		want bool
+	}{
+		{[]string{"https://a.test/"}, false},
+		{[]string{"https://a.test/", "https://a.test/x"}, false},
+		{[]string{"https://a.test/", "https://A.test:443/x"}, false},
+		{[]string{"https://a.test/", "https://b.test/x"}, true},
+		{[]string{"https://a.test/", "https://b.test/x", "https://a.test/y"}, true},
+		{[]string{"https://a.test/", "http://a.test/x"}, true},
+		{[]string{"https://a.test:8443/", "http://a.test:8443/x"}, true},
+		{[]string{"https://a.test:8443/", "http://a.test:8443/x", "https://a.test:8443/y"}, true},
+		{[]string{"http://a.test:8080/", "https://a.test:8080/x"}, false},
+		{[]string{"http://a.test:8080/", "https://a.test:8080/x", "http://a.test:8080/y"}, false},
+	} {
+		assert.Equal(t, test.want, redirectLeavesHost(chain(test.urls...)), test.urls)
+	}
+}
+
+// TestRedirectStripsGlobalHeadersOnDowngrade checks the headers set
+// with --header are not sent over plaintext HTTP when an HTTPS
+// request is redirected to an http:// URL with the same host and
+// port and --allow-https-downgrade permits the redirect.
+//
+// The https:// request is made to the plain server's host and port
+// with a TLS dialer which ignores the address and connects to the
+// TLS server instead, so both hops share a host and port as they
+// would in the wild.
+func TestRedirectStripsGlobalHeadersOnDowngrade(t *testing.T) {
+	var gotTLS, gotPlain http.Header
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPlain = r.Header.Clone()
+	}))
+	defer plain.Close()
+	secure := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTLS = r.Header.Clone()
+		http.Redirect(w, r, plain.URL+"/final", http.StatusFound)
+	}))
+	defer secure.Close()
+	tlsConfig := secure.Client().Transport.(*http.Transport).TLSClientConfig
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Headers = []*fs.HTTPOption{{Key: "X-Potato", Value: "sausage"}}
+	ci.AllowHTTPSDowngrade = true
+	client := NewClientCustom(ctx, func(tr *http.Transport) {
+		tr.DialTLSContext = func(ctx context.Context, network, _ string) (net.Conn, error) {
+			return (&tls.Dialer{Config: tlsConfig}).DialContext(ctx, network, secure.Listener.Addr().String())
+		}
+	})
+
+	resp, err := client.Get("https" + strings.TrimPrefix(plain.URL, "http") + "/start")
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.NotNil(t, gotTLS)
+	require.NotNil(t, gotPlain)
+	assert.Equal(t, "sausage", gotTLS.Get("X-Potato"))
+	assert.Equal(t, "", gotPlain.Get("X-Potato"))
+}
+
+// TestRefuseHTTPSDowngrade checks the transport refuses to follow a
+// redirect from HTTPS to HTTP unless --allow-https-downgrade is set,
+// whatever CheckRedirect policy the client uses.
+func TestRefuseHTTPSDowngrade(t *testing.T) {
+	var plainHits int
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		plainHits++
+	}))
+	defer plain.Close()
+	secure := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/downgrade":
+			http.Redirect(w, r, plain.URL+"/final", http.StatusFound)
+		case "/secure":
+			http.Redirect(w, r, "/final", http.StatusFound)
+		}
+	}))
+	defer secure.Close()
+	tlsConfig := secure.Client().Transport.(*http.Transport).TLSClientConfig
+
+	for _, test := range []struct {
+		name          string
+		allow         bool
+		checkRedirect func(req *http.Request, via []*http.Request) error
+		path          string
+		wantErr       bool
+		wantPlainHits int
+	}{
+		{name: "Default", path: "/downgrade", wantErr: true},
+		{name: "CustomCheckRedirect", checkRedirect: func(*http.Request, []*http.Request) error { return nil }, path: "/downgrade", wantErr: true},
+		{name: "Allowed", allow: true, path: "/downgrade", wantPlainHits: 1},
+		{name: "HTTPSToHTTPS", path: "/secure"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			plainHits = 0
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.AllowHTTPSDowngrade = test.allow
+			client := NewClientCustom(ctx, func(tr *http.Transport) {
+				tr.TLSClientConfig = tlsConfig
+			})
+			if test.checkRedirect != nil {
+				client.CheckRedirect = test.checkRedirect
+			}
+			resp, err := client.Get(secure.URL + test.path)
+			if test.wantErr {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+				assert.Contains(t, err.Error(), "--allow-https-downgrade")
+			} else {
+				require.NoError(t, err)
+				require.NoError(t, resp.Body.Close())
+			}
+			assert.Equal(t, test.wantPlainHits, plainHits)
+		})
+	}
+}
+
+// TestRefuseHTTPSDowngradeClosesBody checks the transport closes the
+// request body when it refuses a redirect, as RoundTrip must.
+func TestRefuseHTTPSDowngradeClosesBody(t *testing.T) {
+	body := &closeRecorder{Reader: strings.NewReader("potato")}
+	req, err := http.NewRequest(http.MethodPost, "http://a.test/x", body)
+	require.NoError(t, err)
+	origin, err := http.NewRequest(http.MethodPost, "https://a.test/", nil)
+	require.NoError(t, err)
+	req.Response = &http.Response{Request: origin}
+
+	ctx, _ := fs.AddConfig(context.Background())
+	_, err = NewTransport(ctx).RoundTrip(req)
+	assert.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	assert.True(t, body.closed)
+}
+
+// closeRecorder is an io.ReadCloser which records whether it was closed
+type closeRecorder struct {
+	*strings.Reader
+	closed bool
+}
+
+// Close records the close
+func (c *closeRecorder) Close() error {
+	c.closed = true
+	return nil
 }

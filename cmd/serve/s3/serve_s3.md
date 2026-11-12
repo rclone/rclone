@@ -17,7 +17,16 @@ Alternatively `--auth-proxy` can be used to look up the secret for each
 access key ID and choose the backend it maps to (see [Auth
 Proxy](#auth-proxy) below). When an auth proxy is in use `--auth-key`
 is ignored and every request must be signed with the secret the proxy
-returns for its access key ID.
+returns for its access key ID. Each access key ID is a separate user,
+whose multipart uploads and object metadata are private to it, even if
+the proxy maps several access key IDs to the same backend.
+
+As on AWS, every `x-amz-*` header in an authenticated request must be
+in its signed headers list; a request with an unsigned `x-amz-*`
+header is refused with `AccessDenied`. S3 clients sign these headers
+as a matter of course, but a header added after signing (for example
+by a proxy in front of the server, or `x-amz-meta-*` headers sent
+with a presigned URL which only signs the host) is refused.
 
 Like all rclone flags `--auth-key` can be set via environment
 variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
@@ -53,6 +62,14 @@ part of the hostname (such as mybucket.local)
 Use `--etag-hash` if you want to change the hash uses for the `ETag`.
 Note that using anything other than `MD5` (the default) is likely to
 cause problems for S3 clients which rely on the Etag being the MD5.
+Use `--etag-hash auto` to use the best hash the backend supports - with
+`--auth-proxy` that of each user's backend.
+
+The `ETag` of an object made by a multipart upload is its hash, like
+any other object, rather than the `-N` suffixed `ETag` AWS S3 gives
+these. If the remote doesn't have the MD5 of objects, `HeadObject`
+and listings only return the MD5 of objects uploaded through `serve
+s3` while the object's metadata is kept (see below).
 
 ### Quickstart
 
@@ -124,8 +141,8 @@ never becomes visible under it.
 With the default `--vfs-cache-mode off` `serve s3` **streams** each
 multipart upload, in part-number order, into a single streaming upload
 to the underlying remote, so the whole file is never buffered in
-memory. Memory use stays bounded by the parts in flight. The remote
-then performs its own internal upload (for example its own multipart
+memory: only parts which arrive out of order are buffered, within the
+limits described below. The remote then performs its own internal upload (for example its own multipart
 upload, still with bounded memory). Remotes that don't support
 streaming uploads (those that must know the file size before the
 upload starts, such as `onedrive`, `pcloud`, `jottacloud`, `mailru`,
@@ -164,8 +181,8 @@ remote as if it had completed.
 
 **Features**
 
-- The whole object is never buffered in memory; memory use is bounded by
-  the parts in flight, not the upload size.
+- The whole object is never buffered in memory; only parts arriving out
+  of order are, within fixed limits, whatever the upload size.
 - Parts can be any size. Clients that don't produce uniform-sized parts
   work fine - for example PostgreSQL backup tools such as **pgBarman**
   and **pgBackRest**, which flush an upload buffer once it grows past
@@ -186,27 +203,47 @@ remote as if it had completed.
 
 **Limitations**
 
-- Parts must arrive in ascending, contiguous part-number order
-  (1, 2, 3, ...). Parts the client uploads concurrently or out of order
-  are buffered until their turn. The memory used for this buffering is
-  capped, per upload, by `--multipart-streaming-buffer-limit` (default
-  `256M`, `0` for no limit): a part that would take the buffer over the
-  limit is stalled until the stream drains, so a client that uploads
-  faster than the remote can accept sees backpressure rather than
-  unbounded server memory use. Since a stalled part holds its HTTP
-  request open, clients whose upload concurrency times chunk size
-  exceeds the limit may need a longer read timeout when the remote is
-  slow. Non-contiguous part numbers are rejected on completion.
-  Configure the client to upload in part order, ideally with low
-  concurrency, for the lowest memory use.
+- Parts must arrive in ascending, contiguous part-number order (1, 2, 3,
+  ...). The part the stream needs next is written straight through as it
+  arrives, so it is never buffered, whatever its size. Parts the client
+  uploads concurrently or out of order are buffered until their turn.
+  The memory used for this buffering is capped, per upload, by
+  `--multipart-streaming-buffer-limit` (default `256M`, `0` for no
+  limit), and across all the uploads of each user (each access key) by
+  `--multipart-streaming-buffer-total` (default `1G`, `0` for no
+  limit), counting each buffered part in the
+  whole 1 MiB memory pages it occupies: a part that would take the
+  buffer over either limit is stalled until the stream drains (or, if it
+  is bigger than the limits, until it is the next part), so a client
+  that uploads faster than the remote can accept sees backpressure
+  rather than unbounded server memory use. A stalled part holds its HTTP
+  request open, and one stalled for more than a minute is failed with a
+  `SlowDown` error, which S3 clients retry. Clients whose upload
+  concurrency times part size exceeds the limits will see these stalls
+  and retries when the remote is slower than the client. Non-contiguous
+  part numbers are rejected on completion. Configure the client to
+  upload in part order, ideally with low concurrency, for the lowest
+  memory use.
 - A part uploaded again before completion - typically a client retrying
   after a timeout - is accepted: if the earlier copy is still buffered
   it is replaced, and if it has already been streamed an identical
-  re-upload is a no-op. What isn't possible is replacing a part that has
-  already been streamed with *different* content - that is rejected. A
-  failure in the stream to the remote itself still aborts the whole
-  upload and the client must start it again. (The remote's own upload
+  re-upload is a no-op (a re-upload which arrives while the part is
+  being streamed waits for it to finish first). If a part fails part way
+  through being streamed
+  (for example the client's connection drops) the client's retry of it
+  carries on where it stopped, provided it has the same content. What
+  isn't possible is replacing a part that has already been streamed,
+  in whole or in part, with *different* content - that is rejected. A
+  part which arrives in full but is then rejected, for example because
+  it doesn't match the `Content-MD5` the client declared, has already
+  been streamed, so the whole upload is failed and the client must
+  start it again. So is a failure in the stream to the remote itself. (The remote's own upload
   still retries its internal chunks.)
+- A `CompleteMultipartUpload` which fails because the parts it lists
+  don't match those uploaded, or there is a gap in the part numbers,
+  leaves the upload open, as on S3, so the client can upload any
+  missing parts and complete it again. If writing the completed object
+  to the remote fails, the upload is failed and must be started again.
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded. When streaming, the remote's own upload
   runs concurrently with the parts arriving; with the local disk spool
@@ -307,7 +344,18 @@ clock, so the expiry only needs to outlast the client's pauses
 
 Late operations on an expired upload fail with `NoSuchUpload`, as they
 do on real S3 when a lifecycle rule has aborted the upload. Set
-`--multipart-expiry 0` to keep incomplete uploads forever.
+`--multipart-expiry 0` to keep incomplete uploads forever - but note
+that abandoned uploads are then never cleaned up and go on counting
+towards `--multipart-max-uploads` below, so enough of them will stop
+the user starting any new multipart upload until the server is
+restarted.
+
+Each multipart upload in progress holds server resources - for example
+the buffers the remote's own upload uses once the first part has
+arrived - so each user (each access key) can have no more than
+`--multipart-max-uploads` (default `1000`, `0` for no limit) in
+progress at once. Starting another fails with a `SlowDown` error,
+which S3 clients retry, and a one-off `NOTICE` is logged.
 
 #### Disabling streaming
 
@@ -320,17 +368,98 @@ use grows with the size of the upload**, so it is only suitable for
 small objects. A one-off `NOTICE` is logged the first time this
 happens. This flag is the only thing that makes multipart uploads
 buffer in memory - it is never done because of missing remote
-capabilities. Consider `--vfs-cache-mode writes` instead, which
-buffers the upload in the VFS cache on disk and takes precedence over
+capabilities. The limits on multipart uploads above
+(`--multipart-streaming-buffer-limit`,
+`--multipart-streaming-buffer-total` and `--multipart-max-uploads`) do
+not apply to uploads buffered in memory, so don't use this flag if the
+server is open to clients you don't trust. Consider
+`--vfs-cache-mode writes` instead, which buffers the upload in the VFS
+cache on disk and takes precedence over
 `--disable-multipart-streaming`.
 
-### Bugs
+### Memory use
 
-Multipart server side copies do not work (see
-[#7454](https://github.com/rclone/rclone/issues/7454)). These take a
-very long time and eventually fail. The default threshold for
-multipart server side copies is 5G which is the maximum it can be, so
-files above this side will fail to be server side copied.
+`serve s3` never buffers whole objects in memory (except with
+`--disable-multipart-streaming`, above), and limits the memory each
+kind of request can use, so that a client, even a hostile one, can't
+make it use unbounded memory.
+
+- **Object data.** `PutObject` bodies and multipart parts arriving in
+  order are streamed straight through to the remote. Parts arriving out
+  of order are buffered, up to `--multipart-streaming-buffer-limit`
+  per upload and `--multipart-streaming-buffer-total` per user.
+- **Uploads in progress.** Each user can have at most
+  `--multipart-max-uploads` multipart uploads in progress. An upload
+  holds little memory until its
+  first part arrives. After that, with `--vfs-cache-mode off`, it holds
+  a `--streaming-upload-cutoff` sized buffer plus whatever the remote's
+  own upload buffers, which for many remotes is up to their chunk size
+  times their upload concurrency (for example `--s3-chunk-size` times
+  `--s3-upload-concurrency`). Plain `PutObject` uploads use the same
+  while they are in progress.
+- **Metadata.** The metadata of at most `--metadata-max-objects`
+  objects of each user is kept, each limited to 2 KB.
+- **Request bodies.** The XML bodies of requests such as
+  `CompleteMultipartUpload` and `DeleteObjects` are limited to 10 MiB,
+  and `DeleteObjects` to 1000 keys. A browser form (`POST`) upload
+  holds at most 1 MiB in memory, spooling the rest to a temporary file,
+  and is limited to 5 GB.
+- **Listings.** Each page of a `ListObjects` listing reads only the
+  directories needed to fill it, and returns at most 1000 keys.
+  Directory listings are cached by the [VFS directory
+  cache](#vfs-directory-cache).
+
+The largest of these is usually the remote's upload buffers, which can
+be up to `--multipart-max-uploads` times the buffers of one upload for
+each user if clients start many uploads and send part of each. The
+limits apply to each user separately, so that one user can't stop
+others uploading, which means the memory use grows with the number of
+users. To limit it, lower
+`--multipart-max-uploads`, the remote's chunk size or upload
+concurrency, or set `--max-buffer-memory` to limit the memory used by
+the buffers of all uploads to remotes which use rclone's buffer pool
+(including `s3`, `azureblob` and `b2`). Buffered multipart parts come
+from the same pool, so if you set `--max-buffer-memory` make it
+comfortably bigger than `--multipart-streaming-buffer-total` times the
+number of users uploading at once, otherwise
+buffered parts can use up all the memory the remote needs to upload the
+parts which would free them.
+
+The number of connections is not limited, so if the server is open to
+clients you don't trust, use `--auth-key` or `--auth-proxy` and
+consider putting it behind a reverse proxy which limits connections.
+
+### Design goals
+
+These goals explain many of the limitations below.
+
+- **Objects are plain files on the remote.** A bucket is a directory
+  in the root and a key is a path in it, so the remote stays usable by
+  other tools, such as `rclone mount` or `rclone sync`. So keys must
+  be paths (see [Object names](#object-names)).
+- **No database.** `serve s3` stores nothing but the objects. What the
+  remote can't hold, such as user metadata, tags, the MD5 `ETag` of an
+  object on a remote without MD5 and the directory markers put, is
+  kept in memory as a best effort, and lost on restart.
+- **Works with any rclone remote.** What `serve s3` can do depends on
+  what the remote supports, such as the hashes used for `ETag`s and
+  modification times, rather than needing a particular backend.
+- **Bounded memory.** Uploads, including multipart uploads, are
+  streamed to the remote and the memory each request can use is
+  limited (see [Memory use](#memory-use)). Nothing is written to local
+  disk unless the VFS cache is used or the remote can't stream uploads
+  (see [Multipart uploads](#multipart-uploads)).
+- **Refuse rather than ignore.** Unsupported features are refused, or
+  answered as S3 answers when the feature isn't configured, so a
+  client is never told something was done which wasn't (see
+  [Compatibility](#compatibility)).
+- **A storage gateway, not a full S3.** `serve s3` implements the parts
+  of the S3 API clients use to store and fetch objects. Versioning,
+  ACLs, bucket policies, lifecycle rules and the like are out of scope.
+- **Compatible with rclone's s3 backend.** This includes its directory
+  markers, which the tests check.
+
+### Bugs
 
 For a current list of `serve s3` bugs see the [serve
 s3](https://github.com/rclone/rclone/labels/serve%20s3) bug category
@@ -340,54 +469,121 @@ on GitHub.
 
 `serve s3` will treat all directories in the root as buckets and
 ignore all files in the root. You can use `CreateBucket` to create
-folders under the root, but you can't create empty folders under other
-folders not in the root.
+folders under the root, and put a directory marker to create an empty
+folder below them (see [Object names](#object-names)).
 
 When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
-folders automatically, use `--no-cleanup`.
+folders automatically, use `--directory-markers` (see [Object
+names](#object-names)). The deprecated `--no-cleanup` does the same.
 
-When using `ListObjects`, rclone will use `/` when the delimiter is
-empty. This reduces backend requests with no effect on most
-operations, but if the delimiter is something other than `/` and
-empty, rclone will do a full recursive search of the backend, which
-can take some time.
+When using `ListObjects` with the delimiter `/`, rclone lists the
+directory the prefix is in, showing its subdirectories as common
+prefixes, including empty ones. Without a delimiter the listing is
+recursive: rclone walks the directory tree below the prefix, reading
+only as many directories as it needs to fill each page, and lists
+empty directories as their directory markers (see below). Any other
+delimiter is supported too, but needs the whole directory tree below
+the prefix walking, unless the delimiter is in the directory names.
 
-Versioning is not currently supported.
+Versioning is not supported (see [Design goals](#design-goals)).
 
-Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file.
+Conditional writes, `PutObject` and `CompleteMultipartUpload` with
+`If-None-Match` or `If-Match`, are supported. The conditions are
+checked before the object is written, and again as it is moved into
+place when it is written to a temporary object first. This happens for
+multipart uploads and, for `PutObject`, with remotes which can upload
+partial files (such as local disk) or with `--vfs-cache-mode minimal`
+or above. The second check is atomic against other writes through
+`serve s3`, but neither is atomic against changes made to the remote
+some other way. If the remote doesn't support the `--etag-hash`,
+objects have no `ETag` so `If-Match` with an `ETag` always fails.
+
+Metadata will only be saved in memory (see [Design
+goals](#design-goals)) other than the rclone `mtime` metadata which
+will be set as the modification time of the file. The
+metadata of at most `--metadata-max-objects` objects (default `100000`,
+`0` for no limit) of each user (each access key) is kept; after that
+the metadata of the user's least recently used object is forgotten. The metadata of an object is
+ignored once the object has been changed some other way, for example
+by another `--auth-proxy` user or directly on the backend. Object tags
+are kept with the metadata in the same way.
 
 ### Object names
 
 `serve s3` stores objects as files in the backend, so object keys are
 mapped to file paths rather than treated as the opaque strings AWS S3
 allows. Keys must be in canonical path form: keys that contain `..` or
-`.` path segments, repeated slashes (`//`), or a leading or trailing
-slash are rejected with a `400 Bad Request` (`InvalidArgument`)
-instead of being normalised, since normalising them could alias two
-distinct keys to the same file or resolve a key outside its bucket.
-This matches the behaviour of other S3 servers such as MinIO.
+`.` path segments, repeated slashes (`//`), or a leading slash are
+rejected with a `400 Bad Request` (`InvalidArgument`) instead of being
+normalised, since normalising them could alias two distinct keys to
+the same file or resolve a key outside its bucket. This matches the
+behaviour of other S3 servers such as MinIO.
 
-### Supported operations
+A key ending in `/`, such as `dir/`, is a directory marker, standing
+for the directory `dir`. Putting an empty directory marker creates the
+directory (one with data is rejected with `400 Bad Request`), and
+deleting it removes the directory if it is empty. Directory markers
+are found by `HeadObject`, `GetObject` and `CopyObject` for any
+directory, but only the markers of empty directories, and of the
+directories a marker was put for, are listed as objects, as other
+directories may not have been made by putting a marker. The markers
+put are remembered in memory with the metadata (see
+[Limitations](#limitations)), so after a restart, or once forgotten,
+the marker of a directory holding other keys is no longer listed.
+While a marker is remembered its directory isn't removed when the
+last key below it is deleted.
 
-`serve s3` currently supports the following operations.
+With `--directory-markers` every directory is listed as a directory
+marker, so the markers are listed after a restart too, as needed by
+clients which rely on them, such as rclone's s3 backend with
+`--s3-directory-markers`. As every directory has a marker, a directory
+isn't removed when the last key below it is deleted. Deleting the
+marker of a directory which holds other keys stops it being listed,
+and the directory is then removed with the last key below it, but this
+is only remembered in memory, like the markers put without
+`--directory-markers`.
 
-- Bucket
-  - `ListBuckets`
-  - `CreateBucket`
-  - `DeleteBucket`
-- Object
-  - `HeadObject`
-  - `ListObjects`
-  - `GetObject`
-  - `PutObject`
-  - `DeleteObject`
-  - `DeleteObjects`
-  - `CreateMultipartUpload`
-  - `CompleteMultipartUpload`
-  - `AbortMultipartUpload`
-  - `CopyObject`
-  - `UploadPart`
+As keys are file paths, a key can't be both an object and a directory
+holding other objects, for example `a/b` and `a/b/c`. Writing an
+object which would need this fails with `400 Bad Request`
+(`InvalidRequest`).
 
-Other operations will return error `Unimplemented`.
+### Compatibility
+
+`serve s3` implements the parts of the S3 API that S3 clients commonly
+use to store and fetch objects. Features it doesn't support are
+refused with `501 NotImplemented`, or answered as AWS S3 answers for a
+bucket without that feature configured, rather than being silently
+ignored.
+
+| Feature | Supported | Notes |
+| ------- | --------- | ----- |
+| `ListBuckets`, `CreateBucket`, `DeleteBucket`, `HeadBucket`, `GetBucketLocation` | Yes | Buckets are the directories in the root of the remote. |
+| `ListObjects`, `ListObjectsV2` | Yes | Prefixes, delimiters, markers, `start-after`, continuation tokens, `fetch-owner` and `encoding-type=url` all work. Delimiters other than `/` need the whole directory tree walking. |
+| `HeadObject`, `GetObject` | Yes | Including `Range`, `partNumber`, the `response-*` header overrides and the `If-Match`, `If-None-Match`, `If-Modified-Since` and `If-Unmodified-Since` conditions. |
+| `PutObject` | Yes | Including `Content-MD5`, `aws-chunked` uploads and uploads with no `Content-Length`. |
+| `CopyObject` | Yes | Including the metadata and tagging directives and the `x-amz-copy-source-if-*` conditions. |
+| `DeleteObject`, `DeleteObjects` | Yes | |
+| Multipart uploads | Yes | `CreateMultipartUpload`, `UploadPart`, `UploadPartCopy`, `CompleteMultipartUpload`, `AbortMultipartUpload`, `ListMultipartUploads` and `ListParts`. The `ETag` of the object is its hash, not the `-N` suffixed one AWS gives. The 5 MiB minimum part size isn't enforced. |
+| Conditional writes | Partial | `If-Match` and `If-None-Match` on `PutObject` and `CompleteMultipartUpload` are checked, but not atomically against changes made to the remote some other way (see [Limitations](#limitations)). |
+| Authentication | Partial | AWS Signature Version 4, in headers, presigned URLs and browser form (`POST`) uploads. Signature Version 2 isn't supported. |
+| Anonymous access | Partial | All requests are allowed without `--auth-key` or `--auth-proxy`, and none are with them, as buckets and objects can't be made public. |
+| Metadata | Partial | `x-amz-meta-*`, the storage class and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. The storage class is only recorded, so doesn't change how the object is stored. |
+| Directory markers | Partial | Keys ending in `/` are stored as directories, so can't hold data. A marker put for a directory holding other keys is only listed while it is remembered in memory, unless `--directory-markers` is set (see [Object names](#object-names)). |
+| Checksums | Partial | The `x-amz-checksum-*` of a `PutObject` (CRC32, CRC32C, CRC64NVME, SHA1 or SHA256) is checked and returned with the metadata. The `Content-MD5` and `x-amz-checksum-*` of the bodies of other requests, such as `DeleteObjects`, are checked. The checksums of multipart uploads aren't supported. |
+| `GetObjectAttributes` | Partial | Everything but the checksums of multipart uploads. |
+| Object tagging | Partial | `GetObjectTagging`, `PutObjectTagging` and `DeleteObjectTagging` work, but tags are kept in memory with the metadata. |
+| Bucket owner | No | `serve s3` has no AWS account IDs, so `x-amz-expected-bucket-owner` and `x-amz-source-expected-bucket-owner` are ignored. |
+| ACLs | Partial | `GetBucketAcl` and `GetObjectAcl` give the owner full control. Only the `private` ACL can be set. |
+| CORS | Partial | Preflight (`OPTIONS`) requests are answered, allowing any origin. CORS configuration (`PutBucketCors`) isn't supported. |
+| Server side encryption | No | SSE-S3 (`AES256`) is accepted but the data isn't encrypted. SSE-KMS and SSE-C are refused. |
+| Versioning | No | Buckets are reported as unversioned and `ListObjectVersions` lists each object as version `null`. Enabling versioning is refused. |
+| Object lock, retention and legal hold | No | |
+| Bucket configuration | No | Bucket policies, tagging, lifecycle, logging, encryption, website, replication, notifications and the like. Getting them fails as for a bucket without them configured. |
+| `SelectObjectContent`, `RestoreObject`, torrents | No | |
+
+The [ceph s3-tests](https://github.com/ceph/s3-tests) can be run
+against `serve s3` to check its compatibility. See
+[cmd/serve/s3/s3tests](https://github.com/rclone/rclone/tree/master/cmd/serve/s3/s3tests)
+for how.

@@ -118,8 +118,8 @@ func (mode NameEncryptionMode) String() (out string) {
 	return out
 }
 
-// fileNameEncoding are the encoding methods dealing with encrypted file names
-type fileNameEncoding interface {
+// FileNameEncoding is the interface for the encoding methods dealing with encrypted file names
+type FileNameEncoding interface {
 	EncodeToString(src []byte) string
 	DecodeString(s string) ([]byte, error)
 }
@@ -154,7 +154,7 @@ func (caseInsensitiveBase32Encoding) DecodeString(s string) ([]byte, error) {
 }
 
 // NewNameEncoding creates a NameEncoding from a string
-func NewNameEncoding(s string) (enc fileNameEncoding, err error) {
+func NewNameEncoding(s string) (enc FileNameEncoding, err error) {
 	s = strings.ToLower(s)
 	switch s {
 	case "base32":
@@ -176,7 +176,7 @@ type Cipher struct {
 	nameTweak       [nameCipherBlockSize]byte // used to tweak the name crypto
 	block           gocipher.Block
 	mode            NameEncryptionMode
-	fileNameEnc     fileNameEncoding
+	fileNameEnc     FileNameEncoding
 	buffers         sync.Pool // encrypt/decrypt buffers
 	cryptoRand      io.Reader // read crypto random numbers from here
 	dirNameEncrypt  bool
@@ -185,7 +185,7 @@ type Cipher struct {
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding) (*Cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc FileNameEncoding) (*Cipher, error) {
 	c := &Cipher{
 		mode:            mode,
 		fileNameEnc:     enc,

@@ -47,7 +47,7 @@ Consequently:
   reason to change it.
 - **Do not use `--rc-no-auth` on a non-loopback bind.** It disables
   authentication on the endpoints that access remotes — see
-  [`--rc-no-auth`](#--rc-no-auth).
+  [`--rc-no-auth`](#rc-no-auth).
 - **Use authentication and TLS** (`--rc-user`/`--rc-pass` or `--rc-htpasswd`,
   plus `--rc-cert`/`--rc-key`) whenever the port is reachable by anyone you do
   not fully trust, and raise `--rc-min-tls-version`.
@@ -174,9 +174,20 @@ Default Off.
 
 Set the allowed Access-Control-Allow-Origin for rc requests.
 
-Can be used with --rc-web-gui if the rclone is running on different IP than the web-gui.
+This enables cross-origin (CORS) requests from browsers on the origin
+given, for example `--rc-allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without
+authentication as browsers never send credentials with them. All other
+requests, including other OPTIONS requests, must be authenticated when
+authentication is enabled.
 
-Default is IP address on which rc is running.
+The `rclone gui` command sets this automatically to the origin the GUI
+is served from if it is not set explicitly.
+
+Setting this to `*` allows any origin which is a security risk on an
+authenticated server.
+
+Default is off (no CORS).
 
 ### --rc-web-fetch-url
 
@@ -220,6 +231,9 @@ remote as is `sync/copy`.
 If this is set then no authorisation will be required on the server to
 use these methods.  The alternative is to use `--rc-user` and
 `--rc-pass` and use these credentials in the request.
+
+Without authorisation or this flag, POST request bodies are limited to
+64 KiB.
 
 Default Off.
 
@@ -300,6 +314,30 @@ Rather than
 ```console
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
+
+### Paths on Windows
+
+Prefer forward slashes (`/`) in Windows paths passed to the rc API, for
+example `C:/path1/path2`. If you use backslashes (`\`) in a JSON string,
+escape each one as `\\`. These JSON objects contain equivalent Windows
+paths:
+
+```json
+{"remote": "C:/path1/path2"}
+```
+
+```json
+{"remote": "C:\\path1\\path2"}
+```
+
+This applies to JSON request bodies and to JSON-encoded object parameters,
+such as `parameters` in `config/create`, even when that JSON is sent in a
+query string or form data. An unescaped backslash can cause a JSON parsing
+error or be interpreted as an escape sequence, such as `\t` for a tab.
+
+String parameters sent directly in a query string or form data, without
+JSON encoding, do not need JSON escaping. Use your HTTP client's URL
+encoding for query strings and form data.
 
 ## Special parameters
 
@@ -468,6 +506,16 @@ Or flat:
 
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
+
+Setting `LogLevel` sets the log level for the logs made by the rc call
+only, for example to debug a single call.
+
+```json
+"_config":{"LogLevel": "DEBUG"}
+```
+
+Note that not all of rclone's logs support this yet. In particular the
+backends log at the global log level.
 
 ### Setting filter flags with _filter
 
@@ -1177,6 +1225,7 @@ Returns the following values:
 	"totalTransfers": total number of transfers in the group,
 	"transferTime" : total time spent on running jobs,
 	"transfers": number of transferred files,
+	"updatedDirs": number of directories updated (modtime or metadata set),
 	"transferring": an array of currently active file transfers:
 		[
 			{
@@ -1442,8 +1491,6 @@ Results:
 - runningIds - array of integer job ids that are running
 - finishedIds - array of integer job ids that are finished
 
-**Authentication is not required for this call.**
-
 ### job/status: Reads the status of the job ID {#job-status}
 
 Parameters:
@@ -1463,8 +1510,6 @@ Results:
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
 - progress - output of the progress related to the underlying job
-
-**Authentication is not required for this call.**
 
 ### job/stop: Stop the running job {#job-stop}
 
@@ -1795,6 +1840,25 @@ This command does not have a command line equivalent so use this instead:
 
     rclone rc --loopback operations/fsinfo fs=remote:
 
+### operations/getfile: Get a single file into a JSON response. {#operations-getfile}
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:path/to/file" or "drive:path/to/dir"
+- remote - (optional) a path within that remote e.g. "file.txt"
+- offset - (optional) start reading at offset N (or from end if negative) (default 0)
+- count - (optional) only read N bytes (default -1)
+- head - (optional) only read the first N bytes (default 0)
+- tail - (optional) only read the last N bytes (default 0)
+- maxSize - (optional) maximum size limit in bytes (can only lower the built-in maximum) (default 2097152 / 2MiB)
+- base64 - (optional) if true, returns the file contents base64-encoded (default false)
+
+Returns:
+
+- result - contents of the file as string or base64-encoded string
+
+For streaming file content over HTTP with Range support, use the --rc-serve flag instead.
+
 ### operations/hashsum: Produces a hashsum file for all the objects in the path. {#operations-hashsum}
 
 Produces a hash file for all the objects in the path using the hash
@@ -1868,6 +1932,26 @@ Example:
     }
 
 See the [hashsum](/commands/rclone_hashsum/) command for more information on the above.
+
+### operations/index: Write static directory listings into a remote {#operations-index}
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+- opt - a dictionary of options to control the indexing (optional)
+    - output - list of listings to write in each directory as "NAME=FORMAT" (default ["index.html=html"])
+    - rules - which directories get listings, e.g. {"ExcludeRule": ["/private/**"]}
+    - maxDepth - only make listings this many directories deep (default -1 for no limit)
+    - linkIndex - link to "dir/NAME" rather than "dir/"
+    - dirTime - how to work out directory times: "newest", "dir" or "none"
+    - noModTime - don't show modification times
+    - rewrite - write every listing even if it is unchanged
+    - changed - list of changed paths for a partial run, directories ending in "/"
+    - changedFrom - list of files of changed paths, one per line
+    - changedCombined - list of files in the sync --combined report format
+    - changedMaxDirs - do a full run if a partial one would list more directories than this
+
+See the [index](/commands/rclone_index/) command for more information on the above.
 
 ### operations/list: List the given remote and path in JSON format {#operations-list}
 
@@ -2088,85 +2172,6 @@ And this sets NOTICE level logs (normal without -v)
 
     rclone rc options/set --json '{"main": {"LogLevel": "NOTICE"}}'
 
-### pluginsctl/addPlugin: Add a plugin using url {#pluginsctl-addPlugin}
-
-Used for adding a plugin to the webgui.
-
-This takes the following parameters:
-
-- url - http url of the github repo where the plugin is hosted (http://github.com/rclone/rclone-webui-react).
-
-Example:
-
-   rclone rc pluginsctl/addPlugin
-
-### pluginsctl/getPluginsForType: Get plugins with type criteria {#pluginsctl-getPluginsForType}
-
-This shows all possible plugins by a mime type.
-
-This takes the following parameters:
-
-- type - supported mime type by a loaded plugin e.g. (video/mp4, audio/mp3).
-- pluginType - filter plugins based on their type e.g. (DASHBOARD, FILE_HANDLER, TERMINAL).
-
-Returns:
-
-- loadedPlugins - list of current production plugins.
-- testPlugins - list of temporarily loaded development plugins, usually running on a different server.
-
-Example:
-
-   rclone rc pluginsctl/getPluginsForType type=video/mp4
-
-### pluginsctl/listPlugins: Get the list of currently loaded plugins {#pluginsctl-listPlugins}
-
-This allows you to get the currently enabled plugins and their details.
-
-This takes no parameters and returns:
-
-- loadedPlugins - list of current production plugins.
-- testPlugins - list of temporarily loaded development plugins, usually running on a different server.
-
-E.g.
-
-   rclone rc pluginsctl/listPlugins
-
-### pluginsctl/listTestPlugins: Show currently loaded test plugins {#pluginsctl-listTestPlugins}
-
-Allows listing of test plugins with the rclone.test set to true in package.json of the plugin.
-
-This takes no parameters and returns:
-
-- loadedTestPlugins - list of currently available test plugins.
-
-E.g.
-
-    rclone rc pluginsctl/listTestPlugins
-
-### pluginsctl/removePlugin: Remove a loaded plugin {#pluginsctl-removePlugin}
-
-This allows you to remove a plugin using it's name.
-
-This takes parameters:
-
-- name - name of the plugin in the format `author`/`plugin_name`.
-
-E.g.
-
-   rclone rc pluginsctl/removePlugin name=rclone/video-plugin
-
-### pluginsctl/removeTestPlugin: Remove  a test plugin {#pluginsctl-removeTestPlugin}
-
-This allows you to remove a plugin using it's name.
-
-This takes the following parameters:
-
-- name - name of the plugin in the format `author`/`plugin_name`.
-
-Example:
-
-    rclone rc pluginsctl/removeTestPlugin name=rclone/rclone-webui-react
-
 ### rc/error: This returns an error {#rc-error}
 
 This returns an error with the input as part of its error string.
@@ -2341,6 +2346,8 @@ This takes the following parameters:
 - path1 (required) - (string) a remote directory string e.g. `drive:path1`
 - path2 (required) - (string) a remote directory string e.g. `drive:path2`
 - dryRun - (bool) dry-run mode
+- maxDelete - (int) Safety check on maximum percentage of deleted files
+allowed. If exceeded, the bisync run will abort. (default: 50%)
 - backupDir1 - (string) --backup-dir for Path1. Must be a non-overlapping path on
 the same remote.  
 - backupDir2 - (string) --backup-dir for Path2. Must be a non-overlapping path on
@@ -2370,6 +2377,8 @@ unavailable. (warning: may be slow and use lots of data!)
 using with --verbose  
 - ignoreListingChecksum - (bool) Do not use checksums for listings (add --ignore-
 checksum to additionally skip post-copy checksum checks)  
+- maxDeleteRenamesAware - (bool) Exclude tracked renames from the --max-delete
+safety check (requires --track-renames)  
 - maxLock - (Duration) Consider lock files older than this to be expired
 (default: 0 (never expire)) (minimum: 2m)  
 - noCleanup - (bool) Retain working files (useful for troubleshooting and
@@ -2403,7 +2412,27 @@ This takes the following parameters:
 - srcFs - a remote name string e.g. "drive:src" for the source
 - dstFs - a remote name string e.g. "drive:dst" for the destination
 - createEmptySrcDirs - create empty src directories on destination if set
+- combined - make a combined report of changes (default false)
+- missingOnSrc - report all files missing from the source (default false)
+- missingOnDst - report all files missing from the destination (default false)
+- match - report all matching files (default false)
+- differ - report all non-matching files (default false)
+- error - report all files with errors (hashing or reading) (default false)
+- destAfter - report all files that exist on the destination post-copy (default false)
 
+Returns:
+
+- combined - array of strings of combined report of changes
+- missingOnSrc - array of strings of all files missing from the source
+- missingOnDst - array of strings of all files missing from the destination
+- match - array of strings of all matching files
+- differ - array of strings of all non-matching files
+- error - array of strings of all files with errors (hashing or reading)
+- destAfter - array of strings of all files that exist on the destination post-copy
+
+Each report is only returned if its parameter is set to true. If the
+operation fails the reports are only available if it was run with
+`_async`, as part of the job output.
 
 See the [copy](/commands/rclone_copy/) command for more information on the above.
 
@@ -2415,7 +2444,27 @@ This takes the following parameters:
 - dstFs - a remote name string e.g. "drive:dst" for the destination
 - createEmptySrcDirs - create empty src directories on destination if set
 - deleteEmptySrcDirs - delete empty src directories if set
+- combined - make a combined report of changes (default false)
+- missingOnSrc - report all files missing from the source (default false)
+- missingOnDst - report all files missing from the destination (default false)
+- match - report all matching files (default false)
+- differ - report all non-matching files (default false)
+- error - report all files with errors (hashing or reading) (default false)
+- destAfter - report all files that exist on the destination post-move (default false)
 
+Returns:
+
+- combined - array of strings of combined report of changes
+- missingOnSrc - array of strings of all files missing from the source
+- missingOnDst - array of strings of all files missing from the destination
+- match - array of strings of all matching files
+- differ - array of strings of all non-matching files
+- error - array of strings of all files with errors (hashing or reading)
+- destAfter - array of strings of all files that exist on the destination post-move
+
+Each report is only returned if its parameter is set to true. If the
+operation fails the reports are only available if it was run with
+`_async`, as part of the job output.
 
 See the [move](/commands/rclone_move/) command for more information on the above.
 
@@ -2426,7 +2475,27 @@ This takes the following parameters:
 - srcFs - a remote name string e.g. "drive:src" for the source
 - dstFs - a remote name string e.g. "drive:dst" for the destination
 - createEmptySrcDirs - create empty src directories on destination if set
+- combined - make a combined report of changes (default false)
+- missingOnSrc - report all files missing from the source (default false)
+- missingOnDst - report all files missing from the destination (default false)
+- match - report all matching files (default false)
+- differ - report all non-matching files (default false)
+- error - report all files with errors (hashing or reading) (default false)
+- destAfter - report all files that exist on the destination post-sync (default false)
 
+Returns:
+
+- combined - array of strings of combined report of changes
+- missingOnSrc - array of strings of all files missing from the source
+- missingOnDst - array of strings of all files missing from the destination
+- match - array of strings of all matching files
+- differ - array of strings of all non-matching files
+- error - array of strings of all files with errors (hashing or reading)
+- destAfter - array of strings of all files that exist on the destination post-sync
+
+Each report is only returned if its parameter is set to true. If the
+operation fails the reports are only available if it was run with
+`_async`, as part of the job output.
 
 See the [sync](/commands/rclone_sync/) command for more information on the above.
 
@@ -2666,9 +2735,11 @@ The keys in the error response are:
 
 ### CORS
 
-The sever implements basic CORS support and allows all origins for that.
-The response to a preflight OPTIONS request will echo the requested
-"Access-Control-Request-Headers" back.
+The server implements basic CORS support when `--rc-allow-origin` is
+set. Browser CORS preflight OPTIONS requests are then answered by
+rclone without authentication with the `Access-Control-*` headers.
+Without `--rc-allow-origin` no CORS headers are sent and a preflight
+request is authenticated like any other request.
 
 ### Using POST with URL parameters only
 
@@ -2781,7 +2852,7 @@ profiling tools on the same port.
 The profiling endpoints follow the same authentication rules as the
 rest of the rc: they are only served if authentication has been set up
 (`--rc-user`/`--rc-pass` or `--rc-htpasswd`) or the
-[`--rc-no-auth`](#--rc-no-auth) flag is in use. For debugging on the
+[`--rc-no-auth`](#rc-no-auth) flag is in use. For debugging on the
 default localhost port the easiest thing is to use `--rc --rc-no-auth`
 (but see the warning about using `--rc-no-auth` on a non-loopback
 bind).

@@ -83,7 +83,15 @@ func (r *regInfoValues) Get(key string) (value string, ok bool) {
 type setConfigFile string
 
 // Set a config item into the config file
+//
+// The item is only saved if the remote is defined in the config file,
+// so remotes defined on the fly or with environment variables aren't
+// written to it.
 func (section setConfigFile) Set(key, value string) {
+	if !ConfigFileHasSection(string(section)) {
+		Debugf(nil, "Not saving config %q as section %q is not in the config file", key, section)
+		return
+	}
 	Debugf(nil, "Saving config %q in section %q of the config file", key, section)
 	err := ConfigFileSet(string(section), key, value)
 	if err != nil {

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -20,6 +22,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -83,7 +87,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 			return false
 		}
 		err := fmt.Errorf("file not in %v", c.opt.Fsrc)
-		fs.Errorf(dst, "%v", err)
+		fs.ErrorfCtx(c.ctx, dst, "%v", err)
 		_ = fs.CountError(c.ctx, err)
 		c.differences.Add(1)
 		c.srcFilesMissing.Add(1)
@@ -105,7 +109,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch src.(type) {
 	case fs.Object:
 		err := fmt.Errorf("file not in %v", c.opt.Fdst)
-		fs.Errorf(src, "%v", err)
+		fs.ErrorfCtx(c.ctx, src, "%v", err)
 		_ = fs.CountError(c.ctx, err)
 		c.differences.Add(1)
 		c.dstFilesMissing.Add(1)
@@ -128,7 +132,7 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 	}()
 	if sizeDiffers(ctx, src, dst) {
 		err = fmt.Errorf("sizes differ")
-		fs.Errorf(src, "%v", err)
+		fs.ErrorfCtx(ctx, src, "%v", err)
 		return true, false, nil
 	}
 	if ci.SizeOnly {
@@ -155,7 +159,7 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 				}()
 				differ, noHash, err := c.checkIdentical(ctx, dstX, srcX)
 				if err != nil {
-					fs.Errorf(src, "%v", err)
+					fs.ErrorfCtx(ctx, src, "%v", err)
 					_ = fs.CountError(ctx, err)
 					c.report(src, c.opt.Error, '!')
 				} else if differ {
@@ -169,15 +173,15 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 					c.report(src, c.opt.Match, '=')
 					if noHash {
 						c.noHashes.Add(1)
-						fs.Debugf(dstX, "OK - could not check hash")
+						fs.DebugfCtx(ctx, dstX, "OK - could not check hash")
 					} else {
-						fs.Debugf(dstX, "OK")
+						fs.DebugfCtx(ctx, dstX, "OK")
 					}
 				}
 			}()
 		} else {
 			err := fmt.Errorf("is file on %v but directory on %v", c.opt.Fsrc, c.opt.Fdst)
-			fs.Errorf(src, "%v", err)
+			fs.ErrorfCtx(ctx, src, "%v", err)
 			_ = fs.CountError(ctx, err)
 			c.differences.Add(1)
 			c.dstFilesMissing.Add(1)
@@ -190,7 +194,7 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 			return true
 		}
 		err := fmt.Errorf("is file on %v but directory on %v", c.opt.Fdst, c.opt.Fsrc)
-		fs.Errorf(dst, "%v", err)
+		fs.ErrorfCtx(ctx, dst, "%v", err)
 		_ = fs.CountError(ctx, err)
 		c.differences.Add(1)
 		c.srcFilesMissing.Add(1)
@@ -230,7 +234,7 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 		NoTraverse:             ci.NoTraverse,
 		NoUnicodeNormalization: ci.NoUnicodeNormalization,
 	}
-	fs.Debugf(c.opt.Fdst, "Waiting for checks to finish")
+	fs.DebugfCtx(ctx, c.opt.Fdst, "Waiting for checks to finish")
 	err := m.Run(ctx)
 	c.wg.Wait() // wait for background go-routines
 
@@ -239,25 +243,25 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 
 func (c *checkMarch) reportResults(ctx context.Context, err error) error {
 	if c.dstFilesMissing.Load() > 0 {
-		fs.Logf(c.opt.Fdst, "%d files missing", c.dstFilesMissing.Load())
+		fs.LogfCtx(ctx, c.opt.Fdst, "%d files missing", c.dstFilesMissing.Load())
 	}
 	if c.srcFilesMissing.Load() > 0 {
 		entity := "files"
 		if c.opt.Fsrc == nil {
 			entity = "hashes"
 		}
-		fs.Logf(c.opt.Fsrc, "%d %s missing", c.srcFilesMissing.Load(), entity)
+		fs.LogfCtx(ctx, c.opt.Fsrc, "%d %s missing", c.srcFilesMissing.Load(), entity)
 	}
 
-	fs.Logf(c.opt.Fdst, "%d differences found", c.differences.Load())
+	fs.LogfCtx(ctx, c.opt.Fdst, "%d differences found", c.differences.Load())
 	if errs := accounting.Stats(ctx).GetErrors(); errs > 0 {
-		fs.Logf(c.opt.Fdst, "%d errors while checking", errs)
+		fs.LogfCtx(ctx, c.opt.Fdst, "%d errors while checking", errs)
 	}
 	if c.noHashes.Load() > 0 {
-		fs.Logf(c.opt.Fdst, "%d hashes could not be checked", c.noHashes.Load())
+		fs.LogfCtx(ctx, c.opt.Fdst, "%d hashes could not be checked", c.noHashes.Load())
 	}
 	if c.matches.Load() > 0 {
-		fs.Logf(c.opt.Fdst, "%d matching files", c.matches.Load())
+		fs.LogfCtx(ctx, c.opt.Fdst, "%d matching files", c.matches.Load())
 	}
 	if err != nil {
 		return err
@@ -284,7 +288,7 @@ func Check(ctx context.Context, opt *CheckOpt) error {
 		}
 		if !same {
 			err = fmt.Errorf("%v differ", ht)
-			fs.Errorf(src, "%v", err)
+			fs.ErrorfCtx(ctx, src, "%v", err)
 			return true, false, nil
 		}
 		return false, false, nil
@@ -375,7 +379,7 @@ func CheckDownload(ctx context.Context, opt *CheckOpt) error {
 		}
 		if !same {
 			err = errors.New("contents differ")
-			fs.Errorf(src, "%v", err)
+			fs.ErrorfCtx(ctx, src, "%v", err)
 			return true, false, nil
 		}
 		return false, false, nil
@@ -430,7 +434,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 	if err != nil {
 		return fmt.Errorf("cannot open sum file: %w", err)
 	}
-	hashes, err := ParseSumFile(ctx, sumObj)
+	hashes, err := ParseSumFile(ctx, sumObj, hashType)
 	if err != nil {
 		return fmt.Errorf("failed to parse sum file: %w", err)
 	}
@@ -457,7 +461,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 		}
 		// filesystem missed the file, sum wasn't consumed
 		err := fmt.Errorf("file not in %v", opt.Fdst)
-		fs.Errorf(filename, "%v", err)
+		fs.ErrorfCtx(ctx, filename, "%v", err)
 		_ = fs.CountError(ctx, err)
 		if lastErr == nil {
 			lastErr = err
@@ -486,7 +490,7 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 	if !sumFound {
 		err := errors.New("sum not found")
 		_ = fs.CountError(ctx, err)
-		fs.Errorf(obj, "%v", err)
+		fs.ErrorfCtx(ctx, obj, "%v", err)
 		c.differences.Add(1)
 		c.srcFilesMissing.Add(1)
 		c.report(obj, c.opt.MissingOnSrc, '-')
@@ -534,29 +538,29 @@ func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj 
 	switch {
 	case err != nil:
 		_ = fs.CountError(ctx, err)
-		fs.Errorf(obj, "Failed to calculate hash: %v", err)
+		fs.ErrorfCtx(ctx, obj, "Failed to calculate hash: %v", err)
 		c.report(obj, c.opt.Error, '!')
 	case sumHash == "":
 		err = errors.New("duplicate file")
 		_ = fs.CountError(ctx, err)
-		fs.Errorf(obj, "%v", err)
+		fs.ErrorfCtx(ctx, obj, "%v", err)
 		c.report(obj, c.opt.Error, '!')
 	case objHash == "":
-		fs.Debugf(nil, "%v = %s (sum)", hashType, sumHash)
-		fs.Debugf(obj, "%v - could not check hash (%v)", hashType, c.opt.Fdst)
+		fs.DebugfCtx(ctx, nil, "%v = %s (sum)", hashType, sumHash)
+		fs.DebugfCtx(ctx, obj, "%v - could not check hash (%v)", hashType, c.opt.Fdst)
 		c.noHashes.Add(1)
 		c.matches.Add(1)
 		c.report(obj, c.opt.Match, '=')
 	case objHash == sumHash:
-		fs.Debugf(obj, "%v = %s OK", hashType, sumHash)
+		fs.DebugfCtx(ctx, obj, "%v = %s OK", hashType, sumHash)
 		c.matches.Add(1)
 		c.report(obj, c.opt.Match, '=')
 	default:
 		err = errors.New("files differ")
 		_ = fs.CountError(ctx, err)
-		fs.Debugf(nil, "%v = %s (sum)", hashType, sumHash)
-		fs.Debugf(obj, "%v = %s (%v)", hashType, objHash, c.opt.Fdst)
-		fs.Errorf(obj, "%v", err)
+		fs.DebugfCtx(ctx, nil, "%v = %s (sum)", hashType, sumHash)
+		fs.DebugfCtx(ctx, obj, "%v = %s (%v)", hashType, objHash, c.opt.Fdst)
+		fs.ErrorfCtx(ctx, obj, "%v", err)
 		c.differences.Add(1)
 		c.report(obj, c.opt.Differ, '*')
 	}
@@ -566,47 +570,71 @@ func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj 
 type HashSums map[string]string
 
 // ParseSumFile parses a hash SUM file and returns hashes as a map
-func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
+func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (HashSums, error) {
 	rd, err := Open(ctx, sumFile)
 	if err != nil {
 		return nil, err
 	}
-	parser := bufio.NewReader(rd)
+	parser := bufio.NewReader(transform.NewReader(rd, unicode.BOMOverride(transform.Nop)))
 
 	const maxWarn = 3
 	numWarn := 0
 
-	re := regexp.MustCompile(`^([^ ]+) [ *](.+)$`)
+	re := regexp.MustCompile(`^([^ ]+) (?:\?([^ *]+))?[ *](.+)$`)
 	hashes := HashSums{}
+	marked := map[string]bool{} // files with a hash from a line marked with hashType
 	for lineNo := 0; true; lineNo++ {
-		lineBytes, _, err := parser.ReadLine()
-		if err == io.EOF {
+		line, err := parser.ReadString('\n')
+		if err == io.EOF && line == "" {
 			break
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		line := string(lineBytes)
-		if line == "" {
+		line = strings.TrimSuffix(strings.TrimSuffix(line, "\n"), "\r")
+		if line == "" || line[0] == '#' || line[0] == ';' {
 			continue
+		}
+		escaped := line[0] == '\\'
+		if escaped {
+			line = line[1:]
 		}
 
 		fields := re.FindStringSubmatch(ApplyTransforms(ctx, line))
-		if fields == nil {
+		if fields != nil && escaped {
+			fields[3] = unescapeSumFileName(fields[3])
+		}
+		if fields == nil || fields[3] == "" {
 			numWarn++
 			if numWarn <= maxWarn {
-				fs.Logf(sumFile, "improperly formatted checksum line %d", lineNo)
+				fs.LogfCtx(ctx, sumFile, "improperly formatted checksum line %d", lineNo)
 			}
 			continue
 		}
 
-		sum, file := fields[1], fields[2]
-		if hashes[file] != "" {
+		sum, algo, file := fields[1], fields[2], fields[3]
+		// Treat the path like a local path, where backslash is a separator
+		// on Windows, unless the escaping says it is a literal backslash
+		if !escaped {
+			file = filepath.ToSlash(file)
+		}
+		file = strings.TrimPrefix(path.Clean(file), "/")
+		if algo != "" && !strings.EqualFold(algo, hashType.String()) {
+			continue
+		}
+		// A marked line replaces an unmarked one, but not the reverse
+		if algo == "" && marked[file] {
+			continue
+		}
+		if hashes[file] != "" && (algo == "" || marked[file]) {
 			numWarn++
 			if numWarn <= maxWarn {
-				fs.Logf(sumFile, "duplicate file on checksum line %d", lineNo)
+				fs.LogfCtx(ctx, sumFile, "duplicate file on checksum line %d", lineNo)
 			}
 			continue
+		}
+		if algo != "" {
+			marked[file] = true
 		}
 
 		// We've standardised on lower case checksums in rclone internals.
@@ -614,10 +642,39 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 	}
 
 	if numWarn > maxWarn {
-		fs.Logf(sumFile, "%d warning(s) suppressed...", numWarn-maxWarn)
+		fs.LogfCtx(ctx, sumFile, "%d warning(s) suppressed...", numWarn-maxWarn)
 	}
 	if err = rd.Close(); err != nil {
 		return nil, err
 	}
 	return hashes, nil
+}
+
+// unescapeSumFileName reverses the escaping GNU md5sum and friends use for
+// file names containing backslash, newline or carriage return. It returns
+// "" if s is not validly escaped.
+func unescapeSumFileName(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\\' {
+			i++
+			if i == len(s) {
+				return ""
+			}
+			switch s[i] {
+			case '\\':
+				c = '\\'
+			case 'n':
+				c = '\n'
+			case 'r':
+				c = '\r'
+			default:
+				return ""
+			}
+		}
+		b.WriteByte(c)
+	}
+	return b.String()
 }

@@ -1,6 +1,7 @@
 package runs
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -176,4 +177,46 @@ func TestTests(t *testing.T) {
 			t.Run("C32", nilTest)
 		})
 	})
+}
+
+func TestFindFailuresIgnore(t *testing.T) {
+	output := []byte(`--- FAIL: TestOne (0.00s)
+    --- FAIL: TestOne/Sub1 (0.00s)
+    --- FAIL: TestOne/Sub2 (0.00s)
+--- FAIL: TestTwo (0.00s)
+    --- FAIL: TestTwo/Sub1 (0.00s)
+--- FAIL: TestThree (0.00s)
+`)
+	for _, test := range []struct {
+		ignore []string
+		want   []string
+	}{
+		{
+			ignore: nil,
+			want:   []string{"TestOne/Sub1", "TestOne/Sub2", "TestTwo/Sub1", "TestThree"},
+		},
+		{
+			ignore: []string{"TestOne"},
+			want:   []string{"TestTwo/Sub1", "TestThree"},
+		},
+		{
+			ignore: []string{"TestOne/Sub1"},
+			want:   []string{"TestOne/Sub2", "TestTwo/Sub1", "TestThree"},
+		},
+		{
+			ignore: []string{"TestOne", "TestTwo", "TestThree"},
+			want:   nil,
+		},
+	} {
+		r := &Run{
+			Ignore: map[string]struct{}{},
+			err:    errors.New("failed"),
+			output: output,
+		}
+		for _, name := range test.ignore {
+			r.Ignore[name] = struct{}{}
+		}
+		r.findFailures()
+		assert.Equal(t, test.want, r.FailedTests, fmt.Sprintf("ignore=%v", test.ignore))
+	}
 }

@@ -208,6 +208,24 @@ func (d Du) GetName() xml.Name {
 
 //------------------------------------------------------------------------------
 
+// apiHeaders are the NetStorage API request headers which carry the
+// account name, the request signature and the signed action. They must
+// not be forwarded when a redirect leaves the configured host.
+//
+// The action header is sent uncanonicalised, hence the "*" prefix.
+var apiHeaders = []string{"X-Akamai-ACS-Auth-Data", "X-Akamai-ACS-Auth-Sign", "*X-Akamai-ACS-Action"}
+
+// newClient makes the http client used for all NetStorage requests.
+//
+// The signer adds the API headers to every request, so the client
+// strips them on cross host redirects and refuses an HTTPS to HTTP
+// downgrade.
+func newClient(ctx context.Context) *http.Client {
+	client := fshttp.NewClient(ctx)
+	client.CheckRedirect = rest.StripHeadersOnCrossHostRedirectFn(apiHeaders...)
+	return client
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 //
@@ -236,11 +254,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("couldn't parse URL %q: %w", opt.Endpoint, err)
 	}
-	u, err := rest.URLJoin(base, rest.URLPathEscape(root))
+	u, err := rest.URLJoinRoot(base, root)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't join URL %q and %q: %w", base.String(), root, err)
+		return nil, err
 	}
-	client := fshttp.NewClient(ctx)
+	client := newClient(ctx)
 
 	f := &Fs{
 		name:        name,
@@ -573,10 +591,12 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 				fs.Errorf(nil, "Unable to parse URL %q: %v", f.endpointURL, err)
 				return fs.ErrorDirNotFound
 			}
-			resumeURL, err := rest.URLJoin(u, rest.URLPathEscape(resumeStart))
+			// A bad resume start must fail the listing rather than
+			// return fs.ErrorDirNotFound which sync treats as an empty
+			// directory
+			resumeURL, err := rest.URLJoinRoot(u, resumeStart)
 			if err != nil {
-				fs.Errorf(nil, "Unable to join URL %q for resumeStart %s: %v", f.endpointURL, resumeStart, err)
-				return fs.ErrorDirNotFound
+				return fmt.Errorf("unable to join URL %q for resumeStart %q: %w", f.endpointURL, resumeStart, err)
 			}
 			URL = resumeURL.String()
 		}
