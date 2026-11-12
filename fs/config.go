@@ -384,9 +384,14 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Maximum duration rclone will transfer data for",
 	Groups:  "Copy",
 }, {
+	Name:    "max_errors",
+	Default: 0,
+	Help:    "Stop transferring after this many errors (0 for off)",
+	Groups:  "Copy",
+}, {
 	Name:    "cutoff_mode",
 	Default: CutoffMode(0),
-	Help:    "Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS",
+	Help:    "Mode to stop transfers when reaching the max transfer, duration or errors limit HARD|SOFT|CAUTIOUS",
 	Groups:  "Copy",
 }, {
 	Name:    "max_backlog",
@@ -657,6 +662,7 @@ type ConfigInfo struct {
 	UseServerModTime           bool              `config:"use_server_modtime"`
 	MaxTransfer                SizeSuffix        `config:"max_transfer"`
 	MaxDuration                Duration          `config:"max_duration"`
+	MaxErrors                  int               `config:"max_errors"`
 	CutoffMode                 CutoffMode        `config:"cutoff_mode"`
 	MaxBacklog                 int               `config:"max_backlog"`
 	MaxStatsGroups             int               `config:"max_stats_groups"`

@@ -36,6 +36,7 @@ type StatsInfo struct {
 	ci                    *fs.ConfigInfo
 	bytes                 int64
 	errors                int64
+	totalErrors           int64 // like errors but not reset by ResetErrors so it counts across retries
 	lastError             error
 	fatalError            bool
 	retryError            bool
@@ -604,6 +605,7 @@ func (s *StatsInfo) Errors(errors int64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors += errors
+	s.totalErrors += errors
 }
 
 // GetErrors reads the number of errors
@@ -611,6 +613,13 @@ func (s *StatsInfo) GetErrors() int64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.errors
+}
+
+// GetTotalErrors reads the number of errors including those from previous retries
+func (s *StatsInfo) GetTotalErrors() int64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.totalErrors
 }
 
 // GetLastError returns the lastError
@@ -727,6 +736,7 @@ func (s *StatsInfo) ResetCounters() {
 	defer s.mu.Unlock()
 	s.bytes = 0
 	s.errors = 0
+	s.totalErrors = 0
 	s.lastError = nil
 	s.fatalError = false
 	s.retryError = false
@@ -779,6 +789,7 @@ func (s *StatsInfo) Error(err error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors++
+	s.totalErrors++
 	s.lastError = err
 	err = fserrors.FsError(err)
 	fserrors.Count(err)
