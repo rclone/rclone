@@ -134,6 +134,7 @@ directories to and from different cloud storage providers.
 - Storj [:page_facing_up:](https://rclone.org/storj/)
 - SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
 - Synology C2 Object Storage [:page_facing_up:](https://rclone.org/s3/#synology-c2)
+- Tarkle [:page_facing_up:](https://rclone.org/tarkle/)
 - Tencent Cloud Object Storage (COS) [:page_facing_up:](https://rclone.org/s3/#tencent-cos)
 - Uloz.to [:page_facing_up:](https://rclone.org/ulozto/)
 - US3 Object Storage [:page_facing_up:](https://rclone.org/s3/#us3)
