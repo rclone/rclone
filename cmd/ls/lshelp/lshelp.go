@@ -2,8 +2,41 @@
 package lshelp
 
 import (
+	"fmt"
+	"io"
+	"os"
 	"strings"
+
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/spf13/pflag"
 )
+
+// OutputFile is the file to write the listing to, or "" for standard output.
+var OutputFile string
+
+// AddOutputFileFlag adds the --output-file flag to a list command.
+func AddOutputFileFlag(cmdFlags *pflag.FlagSet) {
+	flags.StringVarP(cmdFlags, &OutputFile, "output-file", "", "", "Write the listing to a file rather than standard output", "")
+}
+
+// Output returns the writer for the listing: the --output-file if one
+// was given, otherwise standard output. Call close when done.
+func Output() (out io.Writer, close func(), err error) {
+	if OutputFile == "" {
+		return os.Stdout, func() {}, nil
+	}
+	file, err := os.Create(OutputFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create output file %q: %w", OutputFile, err)
+	}
+	close = func() {
+		if err := file.Close(); err != nil {
+			fs.Errorf(nil, "Failed to close output file %q: %v", OutputFile, err)
+		}
+	}
+	return file, close, nil
+}
 
 // Help describes the common help for all the list commands
 // Warning! "|" will be replaced by backticks below
@@ -36,4 +69,8 @@ See [|--fast-list|](/docs/#fast-list) for more details.
 
 Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
-the bucket-based remotes).`, "|", "`")
+the bucket-based remotes).
+
+Use |--output-file| to write the listing to a file instead of standard
+output. Progress (|-P|) and log output still go to the terminal, so a
+listing can be captured while watching the progress.`, "|", "`")
