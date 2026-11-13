@@ -24,6 +24,7 @@ func TestIntegration(t *testing.T) {
 		UnimplementableFsMethods: []string{
 			"OpenWriterAt",
 			"OpenChunkWriter",
+			"ServerSideFetchURL",
 		},
 		UnimplementableObjectMethods: []string{},
 	}

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -19,9 +20,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newLinkTestFs(t *testing.T) *Fs {
+func newLinkTestFs(t *testing.T, observers ...func(*http.Request)) *Fs {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for _, observe := range observers {
+			observe(r)
+		}
 		if r.URL.Query().Has("versions") {
 			assert.Equal(t, http.MethodGet, r.Method)
 			assert.Equal(t, "prefix/file", r.URL.Query().Get("prefix"))
@@ -44,6 +48,8 @@ func newLinkTestFs(t *testing.T) *Fs {
 	t.Cleanup(server.Close)
 
 	ctx, opt, client := SetupS3Test(t)
+	ctx, ci := fs.AddConfig(ctx)
+	ci.LowLevelRetries = 1
 	opt.Endpoint = server.URL
 	opt.ForcePathStyle = true
 	opt.Region = "us-east-1"
@@ -53,12 +59,14 @@ func newLinkTestFs(t *testing.T) *Fs {
 	c, _, err := s3Connection(ctx, opt, client)
 	require.NoError(t, err)
 	f := &Fs{
-		name:  "s3test",
-		opt:   *opt,
-		ctx:   ctx,
-		c:     c,
-		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
-		cache: bucket.NewCache(),
+		name:                "s3test",
+		opt:                 *opt,
+		ctx:                 ctx,
+		c:                   c,
+		pacer:               fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+		cache:               bucket.NewCache(),
+		urlFetchLogSafe:     true,
+		urlFetchRequestSafe: true,
 	}
 	f.setRoot("bucket/prefix")
 	return f
@@ -250,6 +258,51 @@ func TestPublicLinkRequestFixups(t *testing.T) {
 			assert.Equal(t, tt.useXID, u.Query().Has("x-id"))
 			assert.Equal(t, "host", u.Query().Get("X-Amz-SignedHeaders"))
 			assert.Equal(t, u.Query().Get("X-Amz-Signature"), linkSignature(t, u))
+		})
+	}
+}
+
+func TestDirectPublicLinkPresigning(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		expire time.Duration
+		want   string
+	}{
+		{"one second", time.Second, "1"},
+		{"seventeen minutes", 17 * time.Minute, "1020"},
+		{"one hour", time.Hour, "3600"},
+		{"one day", 24 * time.Hour, "86400"},
+		{"seven days", 7 * 24 * time.Hour, "604800"},
+		{"clamped eight days", 8 * 24 * time.Hour, "604800"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var heads, gets atomic.Int32
+			f := newLinkTestFs(t, func(r *http.Request) {
+				switch r.Method {
+				case http.MethodHead:
+					heads.Add(1)
+				case http.MethodGet:
+					gets.Add(1)
+				}
+			})
+			require.True(t, f.supportsDirectPublicLink())
+			remote := "dir/a file +&?%\u2603.txt"
+			link, err := f.PublicLink(context.Background(), remote, fs.Duration(tt.expire), false)
+			require.NoError(t, err)
+			u, err := url.Parse(link)
+			require.NoError(t, err)
+			assert.Equal(t, "/bucket/prefix/"+remote, u.Path)
+			assert.Equal(t, "/bucket/prefix/dir/a%20file%20%2B%26%3F%25%E2%98%83.txt", u.EscapedPath())
+			q := u.Query()
+			assert.Equal(t, tt.want, q.Get("X-Amz-Expires"))
+			assert.Equal(t, "host", q.Get("X-Amz-SignedHeaders"))
+			assert.Equal(t, "test-token+/=", q.Get("X-Amz-Security-Token"))
+			assert.Contains(t, u.RawQuery, "X-Amz-Security-Token=test-token%2B%2F%3D")
+			assert.NotContains(t, u.RawQuery, " ")
+			require.NotEmpty(t, q.Get("X-Amz-Signature"))
+			assert.Equal(t, q.Get("X-Amz-Signature"), linkSignature(t, u))
+			assert.Equal(t, int32(1), heads.Load())
+			assert.Zero(t, gets.Load(), "presigning must not download the source body")
 		})
 	}
 }

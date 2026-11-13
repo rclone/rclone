@@ -2735,6 +2735,15 @@ differently.
 Note that this isn't enabled by default because it isn't easy for
 rclone to tell if it will work between any two configurations.
 
+### --server-side-fetch-url-expire Duration
+
+Set the lifetime of the temporary source URLs used for server-side URL
+fetches, such as Direct Fetch to Fastly Object Storage. The default is
+`24h` and the minimum is `1s`. The source may limit this, for example S3
+presigned URLs last at most 7 days.
+
+Use `--disable ServerSideFetchURL` to turn server-side URL fetches off.
+
 ### --size-only
 
 Normally rclone will look at modification time and size of files to
