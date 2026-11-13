@@ -2041,6 +2041,12 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 
 // MoveBackupDir moves a file to the backup dir
 func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err error) {
+	// dst.Remote() is already transformed, so don't transform it again
+	if transform.Transforming(ctx) {
+		var ci *fs.ConfigInfo
+		ctx, ci = fs.AddConfig(ctx)
+		ci.NameTransform = nil
+	}
 	remoteWithSuffix := SuffixName(ctx, dst.Remote())
 	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
 	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)

@@ -369,6 +369,53 @@ func TestRunTwice(t *testing.T) {
 	r.CheckRemoteItems(t, fstest.NewItem("tictactoe/tictactoe/toe.txt", "hello world", t1))
 }
 
+func TestTransformBackupDir(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		backupDir string // relative to the remote root, "" for --suffix only
+		suffix    string
+	}{
+		{"BackupDir", "backup", ""},
+		{"BackupDirWithSuffix", "backup", ".bak"},
+		{"SuffixOnly", "", ".bak"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			r := newTransformRun(t)
+			if !operations.CanServerSideMove(r.Fremote) {
+				t.Skip("Skipping test as remote does not support server-side move")
+			}
+			require.NoError(t, transform.SetOptions(ctx, "all,prefix=p-"))
+			backupDir := "dst/"
+			if tc.backupDir != "" {
+				ci.BackupDir = r.FremoteName + "/" + tc.backupDir
+				backupDir = tc.backupDir + "/"
+			} else {
+				// Keep the backups out of the sync, else it deletes them
+				flt, err := filter.NewFilter(nil)
+				require.NoError(t, err)
+				require.NoError(t, flt.AddRule("- *"+tc.suffix))
+				ctx = filter.ReplaceConfig(ctx, flt)
+			}
+			ci.Suffix = tc.suffix
+
+			file1 := r.WriteFile("sub/file.txt", "same", t1)
+			file1dst := r.WriteObject(ctx, "dst/p-sub/p-file.txt", "same", t1)
+			file2 := r.WriteObject(ctx, "dst/sub/other.txt", "deleted", t1)
+			fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+			require.NoError(t, err)
+
+			err = Sync(ctx, fdst, r.Flocal, true)
+			require.NoError(t, err)
+
+			// The backup keeps the name it had on the destination
+			r.CheckLocalItems(t, file1)
+			file2.Path = backupDir + "sub/other.txt" + tc.suffix
+			r.CheckRemoteItems(t, file1dst, file2)
+		})
+	}
+}
+
 func TestSyntax(t *testing.T) {
 	ctx := context.Background()
 	err := transform.SetOptions(ctx, "prefix")
