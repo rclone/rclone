@@ -65,7 +65,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 		}
 		if err != nil {
 			err = fs.CountError(ctx, fserrors.NoRetryError(err))
-			fs.Errorf(s, "Failed to transform: %v", err)
+			fs.Errorf(old, "Failed to transform: %v", err)
 			// a failed transform must not change where the file ends up
 			return old
 		}
