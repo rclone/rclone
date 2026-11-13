@@ -2132,9 +2132,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	}
 
 	// Find dst object if it exists
+	//
+	// The destination object is at the transformed name when
+	// --name-transform is in use, as that is where the copy or
+	// move will write.
 	var dstObj fs.Object
 	if !ci.NoCheckDest {
-		dstObj, err = fdst.NewObject(ctx, dstFileName)
+		dstObj, err = fdst.NewObject(ctx, transform.Path(ctx, dstFileName, false))
 		if errors.Is(err, fs.ErrorObjectNotFound) {
 			dstObj = nil
 		} else if err != nil {
