@@ -174,6 +174,9 @@ type Features struct {
 	// immediately.
 	ListP func(ctx context.Context, dir string, callback ListRCallback) error
 
+	// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
+	NewObjectFromSerialized func(ctx context.Context, remote string, data []byte) (Object, error)
+
 	// About gets quota information from the Fs
 	About func(ctx context.Context) (*Usage, error)
 
@@ -345,6 +348,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(ListPer); ok {
 		ft.ListP = do.ListP
 	}
+	if do, ok := f.(ObjectDeserializer); ok {
+		ft.NewObjectFromSerialized = do.NewObjectFromSerialized
+	}
 	if do, ok := f.(Abouter); ok {
 		ft.About = do.About
 	}
@@ -455,6 +461,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.ListP == nil {
 		ft.ListP = nil
+	}
+	if mask.NewObjectFromSerialized == nil {
+		ft.NewObjectFromSerialized = nil
 	}
 	if mask.About == nil {
 		ft.About = nil
@@ -701,6 +710,15 @@ type ListPer interface {
 	// immediately.
 	ListP(ctx context.Context, dir string, callback ListRCallback) error
 }
+
+// ObjectDeserializer is an optional interface for Fs
+type ObjectDeserializer interface {
+	// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
+	NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (Object, error)
+}
+
+// NewObjectFromSerializedFn describes the NewObjectFromSerialized function pointer
+type NewObjectFromSerializedFn func(ctx context.Context, remote string, data []byte) (Object, error)
 
 // RangeSeeker is the interface that wraps the RangeSeek method.
 //

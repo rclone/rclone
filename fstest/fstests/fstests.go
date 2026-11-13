@@ -403,7 +403,7 @@ func Run(t *testing.T, opt *Opt) {
 		purged               bool // whether the dir has been purged or not
 		ctx                  = context.Background()
 		ci                   = fs.GetConfig(ctx)
-		unwrappableFsMethods = []string{"Command"} // these Fs methods don't need to be wrapped ever
+		unwrappableFsMethods = []string{"Command", "NewObjectFromSerialized"} // these Fs methods don't need to be wrapped ever
 	)
 
 	if strings.HasSuffix(os.Getenv("RCLONE_CONFIG"), "/notfound") && *fstest.RemoteName == "" && !opt.QuickTestOK {
