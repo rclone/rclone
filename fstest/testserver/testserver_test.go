@@ -2,6 +2,7 @@ package testserver
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -58,4 +59,61 @@ func TestStartWrappedLoop(t *testing.T) {
 	require.NoError(t, err)
 	finish()
 	assert.NoFileExists(t, stopped)
+}
+
+func TestRunBashCleansStoppedResources(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("init.d scripts need a POSIX shell")
+	}
+	if _, err := exec.LookPath("flock"); err != nil {
+		t.Skip("run.bash needs flock")
+	}
+	runBash, err := filepath.Abs("init.d/run.bash")
+	require.NoError(t, err)
+	for _, command := range []string{"stop", "force-stop"} {
+		t.Run(command, func(t *testing.T) {
+			dir := t.TempDir()
+			stopped := filepath.Join(dir, "cleaned")
+			script := filepath.Join(dir, "server")
+			require.NoError(t, os.WriteFile(script, []byte(`#!/usr/bin/env bash
+NAME=cleanup-test
+status() { return 1; }
+stop() { touch "$STOPPED"; }
+. "$RUN_BASH"
+`), 0o700))
+			cmd := exec.Command("bash", script, command)
+			cmd.Env = append(os.Environ(), "STATE_DIR="+dir, "STOPPED="+stopped, "RUN_BASH="+runBash)
+			output, err := cmd.CombinedOutput()
+			require.NoError(t, err, "%s", output)
+			assert.FileExists(t, stopped)
+		})
+	}
+}
+
+func TestRunBashPreservesStateOnCleanupError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("init.d scripts need a POSIX shell")
+	}
+	if _, err := exec.LookPath("flock"); err != nil {
+		t.Skip("run.bash needs flock")
+	}
+	runBash, err := filepath.Abs("init.d/run.bash")
+	require.NoError(t, err)
+	for _, command := range []string{"stop", "force-stop", "reset"} {
+		t.Run(command, func(t *testing.T) {
+			dir := t.TempDir()
+			script := filepath.Join(dir, "server")
+			require.NoError(t, os.WriteFile(script, []byte(`#!/usr/bin/env bash
+NAME=cleanup-test
+status() { return 1; }
+stop() { return 1; }
+. "$RUN_BASH"
+`), 0o700))
+			cmd := exec.Command("bash", script, command)
+			cmd.Env = append(os.Environ(), "STATE_DIR="+dir, "RUN_BASH="+runBash)
+			output, err := cmd.CombinedOutput()
+			require.Error(t, err, "%s", output)
+			assert.FileExists(t, filepath.Join(dir, "cleanup-test/state/refcount"))
+		})
+	}
 }

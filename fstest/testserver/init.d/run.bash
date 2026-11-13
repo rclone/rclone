@@ -47,7 +47,7 @@ case "${1:-}" in
     if (( rc == 0 )); then
       # First client: ensure a clean instance, then start and cache env
       if _is_running; then
-        stop || true
+        stop
       fi
       # Run start in a subshell with errexit on so a failing command
       # (eg docker run) aborts it. The subshell's status is only
@@ -78,8 +78,8 @@ case "${1:-}" in
     rc=$(cat "${RUN_REF_COUNT}" 2>/dev/null || echo 0)
     if (( rc > 0 )); then rc=$((rc-1)); fi
     echo "${rc}" > "${RUN_REF_COUNT}"
-    if (( rc == 0 )) && _is_running; then
-      stop || true
+    if (( rc == 0 )); then
+      stop
     fi
 
     trap - EXIT
@@ -90,7 +90,7 @@ case "${1:-}" in
     _acquire_lock
     trap '_release_lock' EXIT
 
-    stop || true
+    stop
     rm -rf "${RUN_ROOT}"
 
     trap - EXIT
@@ -104,9 +104,7 @@ case "${1:-}" in
     _acquire_lock
     trap '_release_lock' EXIT
 
-    if _is_running; then
-      stop || true
-    fi
+    stop
     echo 0 > "${RUN_REF_COUNT}"
 
     trap - EXIT
