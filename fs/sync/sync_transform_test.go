@@ -421,6 +421,25 @@ func TestMove(t *testing.T) {
 	r.CheckRemoteListing(t, []fstest.Item{fstest.NewItem("tictactoe/tictactoe/tictactoe.txt", "hello world", t1)}, []string{"tictacempty_dir", "tictactoe", "tictactoe/tictactoe"})
 }
 
+func TestMoveNoDst(t *testing.T) {
+	ctx := context.Background()
+	r := newTransformRun(t)
+	err := transform.SetOptions(ctx, "all,prefix=tac", "all,prefix=tic")
+	require.NoError(t, err)
+	r.WriteFile("toe/toe/toe.txt", "hello world", t1)
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "empty_dir", t1)
+	require.NoError(t, err)
+
+	// Not creating the destination lets MoveDir try a server-side DirMove
+	ctx = predictDstFromLogger(ctx)
+	err = MoveDir(ctx, r.Fremote, r.Flocal, true, true)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	require.NoError(t, err)
+
+	r.CheckLocalListing(t, []fstest.Item{}, []string{})
+	r.CheckRemoteListing(t, []fstest.Item{fstest.NewItem("tictactoe/tictactoe/tictactoe.txt", "hello world", t1)}, []string{"tictacempty_dir", "tictactoe", "tictactoe/tictactoe"})
+}
+
 func TestTransformFile(t *testing.T) {
 	ctx := context.Background()
 	r := newTransformRun(t)
