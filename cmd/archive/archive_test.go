@@ -13,8 +13,10 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -88,8 +90,16 @@ func testArchiveRemote(t *testing.T, fromLocal bool, subDir string, extension st
 
 	// create archive on dst
 	archiveName := "test." + extension
-	err = create.ArchiveCreate(ctx, dst, archiveName, src, "", "")
+	createCtx := accounting.WithStatsGroup(ctx, random.String(8))
+	err = create.ArchiveCreate(createCtx, dst, archiveName, src, "", "")
 	require.NoError(t, err)
+
+	// the archive upload is the only transfer
+	archiveObj, err := dst.NewObject(ctx, archiveName)
+	require.NoError(t, err)
+	createStats := accounting.Stats(createCtx)
+	assert.Equal(t, int64(1), createStats.GetTransfers())
+	assert.Equal(t, archiveObj.Size(), createStats.GetBytes())
 
 	// list archive on dst
 	expected := map[string]int64{
@@ -122,8 +132,14 @@ func testArchiveRemote(t *testing.T, fromLocal bool, subDir string, extension st
 	fstest.CheckItems(t, src)
 
 	// extract dst archive back to src
-	err = extract.ArchiveExtract(ctx, src, subDir, dst, archiveName)
+	extractCtx := accounting.WithStatsGroup(ctx, random.String(8))
+	err = extract.ArchiveExtract(extractCtx, src, subDir, dst, archiveName)
 	require.NoError(t, err)
+
+	// the extracted files are the only transfers
+	extractStats := accounting.Stats(extractCtx)
+	assert.Equal(t, int64(3), extractStats.GetTransfers())
+	assert.Equal(t, f1.Size+f2.Size+f3.Size, extractStats.GetBytes())
 
 	// check files on src are restored from the archive on dst
 	items := []fstest.Item{f1, f2, f3}
