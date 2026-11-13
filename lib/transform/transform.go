@@ -65,7 +65,9 @@ func Path(ctx context.Context, s string, isDir bool) string {
 		}
 		if err != nil {
 			err = fs.CountError(ctx, fserrors.NoRetryError(err))
-			fs.Errorf(s, "Failed to transform: %v", err)
+			fs.Errorf(old, "Failed to transform: %v", err)
+			// a failed transform must not change where the file ends up
+			return old
 		}
 	}
 	if old != s {
@@ -91,10 +93,13 @@ func transformPath(s string, t transform, baseOnly bool) (string, error) {
 
 	if baseOnly {
 		transformedBase, err := transformPathSegment(path.Base(s), t)
+		if err != nil {
+			return "", err
+		}
 		if err := validateSegment(transformedBase); err != nil {
 			return "", err
 		}
-		return path.Join(path.Dir(s), transformedBase), err
+		return path.Join(path.Dir(s), transformedBase), nil
 	}
 
 	segments := strings.Split(s, "/")
