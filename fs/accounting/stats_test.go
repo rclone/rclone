@@ -329,6 +329,37 @@ func TestRemoteStats(t *testing.T) {
 	})
 }
 
+func TestRemoteStatsConcurrentError(t *testing.T) {
+	ctx := context.Background()
+	s := NewStats(ctx)
+
+	// RemoteStats must not read s.errors / s.lastError without holding
+	// the lock while Error writes them - run with -race to check.
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 1000 {
+				_ = s.Error(fmt.Errorf("test error"))
+			}
+		}()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 1000 {
+				_, err := s.RemoteStats(false)
+				assert.NoError(t, err)
+			}
+		}()
+	}
+	wg.Wait()
+
+	rs, err := s.RemoteStats(false)
+	require.NoError(t, err)
+	assert.Equal(t, "test error", rs["lastError"])
+}
+
 // make time ranges from string description for testing
 func makeTimeRanges(t *testing.T, in []string) timeRanges {
 	trs := make(timeRanges, len(in))
