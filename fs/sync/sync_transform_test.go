@@ -369,6 +369,37 @@ func TestRunTwice(t *testing.T) {
 	r.CheckRemoteItems(t, fstest.NewItem("tictactoe/tictactoe/toe.txt", "hello world", t1))
 }
 
+func TestTransformUpdate(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		run   func(ctx context.Context, fdst, fsrc fs.Fs) error
+		local bool // whether the source file is still there afterwards
+	}{
+		{"Copy", func(ctx context.Context, fdst, fsrc fs.Fs) error { return CopyDir(ctx, fdst, fsrc, true) }, true},
+		{"Sync", func(ctx context.Context, fdst, fsrc fs.Fs) error { return Sync(ctx, fdst, fsrc, true) }, true},
+		{"Move", func(ctx context.Context, fdst, fsrc fs.Fs) error { return MoveDir(ctx, fdst, fsrc, false, true) }, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			r := newTransformRun(t)
+			err := transform.SetOptions(ctx, "all,prefix=tac")
+			require.NoError(t, err)
+			file1 := r.WriteFile("toe/toe.txt", "new content", t2)
+			r.WriteObject(ctx, "tactoe/tactoe.txt", "old", t1)
+
+			err = tc.run(ctx, r.Fremote, r.Flocal)
+			require.NoError(t, err)
+
+			if tc.local {
+				r.CheckLocalItems(t, file1)
+			} else {
+				r.CheckLocalItems(t)
+			}
+			r.CheckRemoteItems(t, fstest.NewItem("tactoe/tactoe.txt", "new content", t2))
+		})
+	}
+}
+
 func TestSyntax(t *testing.T) {
 	ctx := context.Background()
 	err := transform.SetOptions(ctx, "prefix")
