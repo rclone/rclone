@@ -547,7 +547,7 @@ func (item *Item) open(o fs.Object) (err error) {
 	}
 
 	item.opens++
-	if item.opens != 1 {
+	if item.opens != 1 && item.fd != nil {
 		return nil
 	}
 
@@ -888,6 +888,74 @@ func (item *Item) reload(ctx context.Context) error {
 	return nil
 }
 
+// replace the cache file with a fresh one for the new object
+// while the item is open
+//
+// The old file is closed and removed and a new file sized to the
+// object takes its place at the same path, with new downloaders
+// fetching from the new object. Simply removing the file would
+// leave the open handles reading from and writing to an unlinked
+// file, so writes would never reach the remote.
+//
+// call with lock held
+func (item *Item) _replaceStale(o fs.Object, remoteFingerprint string) (err error) {
+	// Block new accesses while the file is replaced, and wait
+	// for in-flight accesses to finish so no thread is using
+	// the fd when it is closed. open() holds one access itself,
+	// so wait until only that one remains.
+	item.beingReset = true
+	defer func() {
+		item.beingReset = false
+		item.cond.Broadcast()
+	}()
+	for item.pendingAccesses > 1 {
+		item.cond.Wait()
+	}
+
+	// Close the downloaders
+	if dls := item.downloaders; dls != nil {
+		item.downloaders = nil
+		unlockMutexForCall(&item.mu, func() {
+			err = dls.Close(nil)
+		})
+		if err != nil {
+			return fmt.Errorf("vfs cache item: replace stale failed to close downloaders: %w", err)
+		}
+	}
+
+	// Close the file handle
+	if item.fd != nil {
+		if closeErr := item.fd.Close(); closeErr != nil {
+			return fmt.Errorf("vfs cache item: replace stale failed to close cache file: %w", closeErr)
+		}
+		item.fd = nil
+	}
+
+	// Remove the old cache file and metadata
+	item._remove("stale (remote is different)")
+	item.info.Fingerprint = remoteFingerprint
+	item.info.Size = o.Size()
+
+	// Create a fresh cache file for the new object
+	osPath := item.c.toOSPath(item.name) // No locking in Cache
+	err = item._createFile(osPath)
+	if err != nil {
+		return fmt.Errorf("vfs cache item: replace stale failed to create cache file: %w", err)
+	}
+
+	// Size the new file to the object so reads don't return zeros
+	// for the not yet downloaded tail
+	err = item._truncate(o.Size())
+	if err != nil {
+		return fmt.Errorf("vfs cache item: replace stale failed to size cache file: %w", err)
+	}
+
+	// Fetch from the new object from here on
+	item.downloaders = downloaders.New(item.c.ctx, item, item.c.opt, item.name, o)
+
+	return nil
+}
+
 // check the fingerprint of an object and update the item or delete
 // the cached file accordingly
 //
@@ -918,9 +986,21 @@ func (item *Item) _checkObject(o fs.Object) error {
 			// remote object && local object
 			if remoteFingerprint != item.info.Fingerprint {
 				if !item.info.Dirty {
-					fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
-					item._remove("stale (remote is different)")
-					item.info.Fingerprint = remoteFingerprint
+					if item.opens > 0 && item.fd != nil {
+						// The item is open, so replace the
+						// cache file in place: open handles
+						// keep a live file to read and write,
+						// and the new object is fetched from
+						// here on.
+						err := item._replaceStale(o, remoteFingerprint)
+						if err != nil {
+							return err
+						}
+					} else {
+						fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
+						item._remove("stale (remote is different)")
+						item.info.Fingerprint = remoteFingerprint
+					}
 				} else {
 					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 				}

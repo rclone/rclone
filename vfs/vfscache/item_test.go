@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -868,4 +869,95 @@ func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
 	n, err = item.ReadAt(buf, 0)
 	require.NoError(t, err)
 	assert.Equal(t, contents, string(buf[:n]))
+}
+
+// Opening a second handle after the remote changed must return the
+// new remote contents, not stale or zero-filled data, and must not
+// remove the cache file from underneath the first handle.
+func TestItemOpenAfterRemoteChangeRead(t *testing.T) {
+	r, c := newItemTestCache(t)
+	ctx := context.Background()
+
+	// Create a 100 byte file of "A"s and open it
+	oldContents := strings.Repeat("A", 100)
+	r.WriteObject(ctx, "existing", oldContents, time.Now())
+	obj, err := r.Fremote.NewObject(ctx, "existing")
+	require.NoError(t, err)
+	item, _ := c.get("existing")
+	require.NoError(t, item.Open(obj))
+
+	// Read the file to populate the cache
+	buf := make([]byte, 100)
+	n, err := item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, oldContents, string(buf[:n]))
+
+	// Replace the remote file with 200 "B"s outside the cache
+	newContents := strings.Repeat("B", 200)
+	r.WriteObject(ctx, "existing", newContents, time.Now().Add(time.Second))
+	obj, err = r.Fremote.NewObject(ctx, "existing")
+	require.NoError(t, err)
+
+	// Open a second handle while the first is still open
+	require.NoError(t, item.Open(obj))
+
+	// The cache file must still exist on disk at the new size
+	fi, err := os.Stat(item.c.toOSPath(item.name))
+	require.NoError(t, err)
+	assert.Equal(t, int64(200), fi.Size())
+
+	// The second handle must read the new contents
+	buf = make([]byte, 200)
+	n, err = item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, 200, n)
+	assert.Equal(t, newContents, string(buf[:n]))
+
+	// Close both handles
+	require.NoError(t, item.Close(nil))
+	require.NoError(t, item.Close(nil))
+}
+
+// Writes through a handle opened before a remote change must reach
+// the remote, not be lost when a second handle is opened.
+func TestItemOpenAfterRemoteChangeWrite(t *testing.T) {
+	r, c := newItemTestCache(t)
+	ctx := context.Background()
+
+	contents := strings.Repeat("A", 100)
+	r.WriteObject(ctx, "existing", contents, time.Now())
+	obj, err := r.Fremote.NewObject(ctx, "existing")
+	require.NoError(t, err)
+	item, _ := c.get("existing")
+	require.NoError(t, item.Open(obj))
+
+	// Read the file to populate the cache
+	buf := make([]byte, 100)
+	n, err := item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(buf[:n]))
+
+	// Touch only the modtime of the remote file outside the cache
+	require.NoError(t, obj.SetModTime(ctx, time.Now().Add(time.Hour)))
+	obj, err = r.Fremote.NewObject(ctx, "existing")
+	require.NoError(t, err)
+
+	// Open a second handle while the first is still open and read a byte
+	require.NoError(t, item.Open(obj))
+	one := make([]byte, 1)
+	n, err = item.ReadAt(one, 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n)
+	assert.Equal(t, "A", string(one[:n]))
+
+	// Write through the first handle, sync and close both handles
+	n, err = item.WriteAt([]byte("WRITE"), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 5, n)
+	require.NoError(t, item.Sync())
+	require.NoError(t, item.Close(nil))
+	require.NoError(t, item.Close(nil))
+
+	// The write must have reached the remote
+	checkObject(t, r, "existing", "WRITE"+contents[5:])
 }
