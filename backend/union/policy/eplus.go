@@ -19,14 +19,13 @@ type EpLus struct {
 }
 
 func (p *EpLus) lus(upstreams []*upstream.Fs) (*upstream.Fs, error) {
+	spaces := usages(len(upstreams), func(i int) (int64, error) {
+		return upstreams[i].GetUsedSpace()
+	})
 	var minUsedSpace int64 = math.MaxInt64
 	var lusupstream *upstream.Fs
-	for _, u := range upstreams {
-		space, err := u.GetUsedSpace()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Used Space is not supported for upstream %s, treating as 0", u.Name())
-		}
+	for i, u := range upstreams {
+		space := spaces[i]
 		if space < minUsedSpace {
 			minUsedSpace = space
 			lusupstream = u
@@ -39,14 +38,13 @@ func (p *EpLus) lus(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 }
 
 func (p *EpLus) lusEntries(entries []upstream.Entry) (upstream.Entry, error) {
+	spaces := usages(len(entries), func(i int) (int64, error) {
+		return entries[i].UpstreamFs().GetUsedSpace()
+	})
 	var minUsedSpace int64 = math.MaxInt64
 	var lusEntry upstream.Entry
-	for _, e := range entries {
-		space, err := e.UpstreamFs().GetUsedSpace()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Used Space is not supported for upstream %s, treating as 0", e.UpstreamFs().Name())
-		}
+	for i, e := range entries {
+		space := spaces[i]
 		if space < minUsedSpace {
 			minUsedSpace = space
 			lusEntry = e
