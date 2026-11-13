@@ -869,3 +869,70 @@ func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, contents, string(buf[:n]))
 }
+
+// A handle to a deleted file can be closed after a new file with the same
+// name has been written. The old item must not overwrite the new item's
+// metadata, otherwise the new file looks clean on disk and its pending upload
+// is lost if rclone restarts before it is uploaded.
+func TestItemCloseAfterRemove(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = fs.Duration(time.Hour) // keep the new file waiting for upload
+	opt.HandleCaching = 0
+	_, c := newTestCacheOpt(t, opt)
+
+	oldItem := c.Item("potato")
+	require.NoError(t, oldItem.Open(nil))
+	_, err := oldItem.WriteAt([]byte("old"), 0)
+	require.NoError(t, err)
+
+	c.Remove("potato")
+
+	// The old handle carries on writing to the deleted file
+	_, err = oldItem.WriteAt([]byte("old again"), 0)
+	require.NoError(t, err)
+
+	newContents := "new contents"
+	item := c.Item("potato")
+	require.NoError(t, item.Open(nil))
+	_, err = item.WriteAt([]byte(newContents), 0)
+	require.NoError(t, err)
+	require.NoError(t, item.Close(nil))
+
+	require.NoError(t, oldItem.Close(nil))
+
+	// Read the metadata back as a restart would
+	reloaded := newItem(c, "potato")
+	assert.True(t, reloaded.info.Dirty, "new file no longer marked for upload")
+	assert.Equal(t, int64(len(newContents)), reloaded.info.Size)
+	assert.True(t, reloaded.info.Rs.Present(ranges.Range{Pos: 0, Size: int64(len(newContents))}))
+}
+
+// A handle which is open when its file is deleted keeps reading the data it
+// had, like an unlinked local file, even if it was never uploaded.
+func TestItemReadAfterRemove(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = fs.Duration(time.Hour) // never uploaded during the test
+	opt.HandleCaching = 0
+	_, c := newTestCacheOpt(t, opt)
+
+	item := c.Item("potato")
+	require.NoError(t, item.Open(nil))
+	contents := "potato contents"
+	_, err := item.WriteAt([]byte(contents), 0)
+	require.NoError(t, err)
+
+	c.Remove("potato")
+
+	// A file handle reads the size before reading
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), size)
+
+	buf := make([]byte, len(contents))
+	n, err := item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(buf[:n]))
+	require.NoError(t, item.Close(nil))
+}
