@@ -158,6 +158,8 @@ func TestVarious(t *testing.T) {
 		// the extension alone exceeds the limit, so there is nothing valid to return
 		{"stories/photo.jpeg", "stories/photo.jpeg", []string{"all,truncate_keep_extension=3"}},
 		{"stories/a.tar.gz", "stories/a.tar.gz", []string{"all,truncate_keep_extension=2"}},
+		{"stories/.bashrc", "stories/.bash", []string{"truncate_keep_extension=5"}},
+		{"stories/.bashrc", "stories/.bashrc_v2", []string{"suffix_keep_extension=_v2"}},
 		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt", []string{"all,command=echo"}},
 		{"stories/The Quick Brown Fox!.txt", "ababababababab/ababab ababababab ababababab ababab!abababab", []string{"all,regex=[\\.\\w]/ab"}},
 	} {
