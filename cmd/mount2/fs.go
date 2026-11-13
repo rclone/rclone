@@ -136,6 +136,8 @@ func translateError(err error) syscall.Errno {
 		return syscall.EINVAL
 	case vfs.ELOOP:
 		return syscall.ELOOP
+	case vfs.ENOTDIR:
+		return syscall.ENOTDIR
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return syscall.EIO
