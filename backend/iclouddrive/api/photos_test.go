@@ -83,6 +83,17 @@ func testAlbumRecordJSON(name, recordName string, albumType int, parentID string
 	}
 }
 
+func continuationTestPhotoMasterRecord(recordName, filename string) photoRecord {
+	encodedFilename := base64.StdEncoding.EncodeToString([]byte(filename))
+	var record photoRecord
+	record.RecordName = recordName
+	record.RecordType = "CPLMaster"
+	record.Fields.FilenameEnc = &ckStringField{Value: encodedFilename, Type: "ENCRYPTED_BYTES"}
+	record.Fields.ResOriginalRes = &ckResourceField{}
+	record.Fields.ResOriginalRes.Value.DownloadURL = "https://example.com/" + filename
+	return record
+}
+
 func newUserAlbumForTest(lib *Library, name, recordName string) *Album {
 	album := lib.newUserAlbum(name, recordName)
 	album.lib = lib
@@ -124,6 +135,51 @@ func TestGetPhotos_DoesNotServeStaleCacheOnPagedDeltaFailure(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, photos)
 	assert.Nil(t, lib.pendingDelta, "failed delta apply must not leave pendingDelta stuck forever")
+}
+
+func TestFetchPhotosParallel_FetchesContinuationAfterShortPartition(t *testing.T) {
+	ctx := context.Background()
+	var queryCalls atomic.Int32
+	ps := newHTTPTestPhotosService(t, "short-photo-partition", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/database/1/com.apple.photos.cloud/production/private/records/query" {
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+			return
+		}
+		var query struct {
+			ContinuationMarker string `json:"continuationMarker"`
+			Query              struct {
+				FilterBy []struct {
+					FieldName  string `json:"fieldName"`
+					FieldValue struct {
+						Value json.RawMessage `json:"value"`
+					} `json:"fieldValue"`
+				} `json:"filterBy"`
+			} `json:"query"`
+		}
+		require.NoError(t, readJSONBody(r, &query))
+		startRank := -1
+		for _, filter := range query.Query.FilterBy {
+			if filter.FieldName == "startRank" {
+				require.NoError(t, json.Unmarshal(filter.FieldValue.Value, &startRank))
+			}
+		}
+		queryCalls.Add(1)
+		switch {
+		case startRank == 0 && query.ContinuationMarker == "":
+			writeJSON(t, w, map[string]any{"records": []any{continuationTestPhotoMasterRecord("photo-1", "one.jpg")}, "continuationMarker": "more"})
+		case startRank == 0 && query.ContinuationMarker == "more":
+			writeJSON(t, w, map[string]any{"records": []any{continuationTestPhotoMasterRecord("photo-2", "two.jpg")}})
+		default:
+			http.Error(w, "unexpected rank or marker", http.StatusInternalServerError)
+		}
+	})
+	lib := &Library{service: ps, zoneID: "PrimarySync", area: areaPrivate}
+	album := &Album{Name: "test", ListType: "CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted", Direction: "ASCENDING", lib: lib}
+
+	photos, _, err := album.fetchPhotosParallel(ctx, 2)
+	require.NoError(t, err)
+	assert.Len(t, photos, 2)
+	assert.Equal(t, int32(2), queryCalls.Load())
 }
 
 func TestGetLibraries_RediscoversZonesWhenCacheExists(t *testing.T) {
