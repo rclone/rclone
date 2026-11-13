@@ -157,6 +157,7 @@ func (s *Storage) Save() error {
 
 	var fileMode os.FileMode = 0600
 	info, err = os.Stat(configPath)
+	haveOldConfig := err == nil && !info.IsDir()
 	if err != nil {
 		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
 	} else if info.Mode() != fileMode {
@@ -171,33 +172,22 @@ func (s *Storage) Save() error {
 		fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
 
-	fbackup, err := os.CreateTemp(configDir, configName+".old")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file for old config backup: %w", err)
-	}
-	err = fbackup.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close temp file for old config backup: %w", err)
-	}
-	keepBackup := true
-	defer func() {
-		if !keepBackup {
-			if err := os.Remove(fbackup.Name()); err != nil && !os.IsNotExist(err) {
-				fs.Errorf(nil, "Failed to remove temp file for old config backup: %v", err)
-			}
+	if haveOldConfig && info.Mode().Perm()&0200 == 0 {
+		// Renaming over a read-only file fails on Windows, so clear
+		// the read-only flag on the previous config first. The new
+		// file carries the previous file's permissions, set above.
+		if err := os.Chmod(configPath, info.Mode().Perm()|0200); err != nil {
+			fs.Errorf(nil, "Failed to make previous config file writable: %v", err)
 		}
-	}()
+	}
 
-	if err = os.Rename(configPath, fbackup.Name()); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("failed to move previous config to backup location: %w", err)
-		}
-		keepBackup = false // no existing file, no need to keep backup even if writing of new file fails
-	}
+	// Rename the new file over the config file. On Unix the rename
+	// is atomic, so the config path always names a complete config
+	// file. On other platforms the rename still replaces the file,
+	// though that is not guaranteed to be atomic.
 	if err = os.Rename(f.Name(), configPath); err != nil {
 		return fmt.Errorf("failed to move newly written config from %s to final location: %v", f.Name(), err)
 	}
-	keepBackup = false // new file was written, no need to keep backup
 
 	// Update s.fi with the newly written file
 	s.fi, _ = os.Stat(configPath)
