@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/internxt/rclone-adapter/buckets"
+	"github.com/internxt/rclone-adapter/folders"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/lib/multipart"
@@ -68,6 +69,7 @@ type internxtChunkWriter struct {
 	size           int64
 	dirID          string
 	meta           *buckets.CreateMetaResponse
+	file           *folders.File // the file as the service holds it, nil if not visible yet
 	chunkSize      int64
 	hashMu         sync.Mutex
 	nextHashChunk  int
@@ -276,6 +278,9 @@ func (w *internxtChunkWriter) Close(ctx context.Context) error {
 		return fmt.Errorf("failed to create file metadata: %w", err)
 	}
 	w.meta = meta
+
+	// Core looks the object up as soon as we return, so wait for it
+	w.file = w.f.waitForFile(ctx, path.Base(w.remote), w.dirID, meta.UUID)
 
 	return nil
 }
