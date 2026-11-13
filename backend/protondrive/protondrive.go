@@ -54,10 +54,6 @@ var (
 	errCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
 	errCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
 	protonDriveInvalidVersionChars     = regexp.MustCompile(`[^0-9A-Za-z.+-]+`)
-
-	// for the auth/deauth handler
-	_mapper        configmap.Mapper
-	_saltedKeyPass string
 )
 
 // Register with Fs
@@ -330,7 +326,6 @@ func getConfigMap(m configmap.Mapper) (uid, accessToken, refreshToken, saltedKey
 	if saltedKeyPass, ok = m.Get(clientSaltedKeyPassKey); !ok {
 		return
 	}
-	_saltedKeyPass = saltedKeyPass
 
 	// empty strings are considered "ok" by m.Get, which is not true business-wise
 	ok = accessToken != "" && uid != "" && refreshToken != "" && saltedKeyPass != ""
@@ -343,22 +338,34 @@ func setConfigMap(m configmap.Mapper, uid, accessToken, refreshToken, saltedKeyP
 	m.Set(clientAccessTokenKey, accessToken)
 	m.Set(clientRefreshTokenKey, refreshToken)
 	m.Set(clientSaltedKeyPassKey, saltedKeyPass)
-	_saltedKeyPass = saltedKeyPass
 }
 
 func clearConfigMap(m configmap.Mapper) {
 	setConfigMap(m, "", "", "", "")
-	_saltedKeyPass = ""
 }
 
-func authHandler(auth proton.Auth) {
-	// fs.Debugf("authHandler called")
-	setConfigMap(_mapper, auth.UID, auth.AccessToken, auth.RefreshToken, _saltedKeyPass)
-}
-
-func deAuthHandler() {
-	// fs.Debugf("deAuthHandler called")
-	clearConfigMap(_mapper)
+// configAuthHooks returns the session callbacks for one Fs, all closing over
+// its config.
+//
+// Proton rotates the refresh token on every use, so two clients started from
+// the same stored credentials can't both refresh: the second presents a spent
+// token and is rejected. The refresh hook lets a client re-read the config
+// before refreshing, and again after a rejection, and adopt credentials that
+// another Fs (or another rclone process, since the config file is re-read
+// when it changes) has stored since.
+func configAuthHooks(m configmap.Mapper) (proton.AuthHandler, proton.Handler, proton.AuthRefreshHook) {
+	authHandler := func(auth proton.Auth) {
+		saltedKeyPass, _ := m.Get(clientSaltedKeyPassKey)
+		setConfigMap(m, auth.UID, auth.AccessToken, auth.RefreshToken, saltedKeyPass)
+	}
+	deAuthHandler := func() {
+		clearConfigMap(m)
+	}
+	refreshHook := func() (uid, accessToken, refreshToken string, ok bool) {
+		uid, accessToken, refreshToken, _, ok = getConfigMap(m)
+		return uid, accessToken, refreshToken, ok
+	}
+	return authHandler, deAuthHandler, refreshHook
 }
 
 func protonDriveAppVersionFromRcloneVersion(version string) string {
@@ -481,7 +488,8 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 
 	// let's see if we have the cached access credential
 	uid, accessToken, refreshToken, saltedKeyPass, hasUseReusableLoginCredentials := getConfigMap(m)
-	_saltedKeyPass = saltedKeyPass
+	authHandler, deAuthHandler, refreshHook := configAuthHooks(m)
+	config.AuthRefreshHook = refreshHook
 
 	if hasUseReusableLoginCredentials {
 		fs.Debugf(f, "Has cached credentials")
@@ -536,7 +544,6 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// pacer is not used in NewFs()
-	_mapper = m
 
 	// Parse config into Options struct
 	opt := new(Options)
