@@ -976,6 +976,44 @@ func testChunkerServerSideOverwrite(t *testing.T, moveFs *Fs) {
 	}
 }
 
+// Test that stale chunk cleanup keeps old chunks whose names differ from
+// the new chunks only by case when the base is case insensitive, as these
+// are the same files there.
+func testRemoveStaleChunksCaseInsensitive(t *testing.T, _ *Fs) {
+	ctx := context.Background()
+	fsResult, err := fs.NewFs(ctx, ":chunker,remote=':memory:stalechunkscase',chunk_size=3B:")
+	require.NoError(t, err)
+	f, ok := fsResult.(*Fs)
+	require.True(t, ok)
+	oldCaseInsensitive := f.features.CaseInsensitive
+	defer func() {
+		f.features.CaseInsensitive = oldCaseInsensitive
+		_ = operations.Purge(ctx, f.base, "")
+	}()
+
+	for _, caseInsensitive := range []bool{true, false} {
+		t.Run(fmt.Sprintf("CaseInsensitive=%v", caseInsensitive), func(t *testing.T) {
+			f.features.CaseInsensitive = caseInsensitive
+			target := testPutFile(ctx, t, f, "b.txt", "abcdef", "target", true)
+			oldObject := target.(*Object)
+			require.Len(t, oldObject.chunks, 2)
+			newChunk := testPutFile(ctx, t, f.base, f.makeChunkName("B.txt", 0, "", ""), "new", "new chunk", true)
+
+			removeStaleChunks(ctx, oldObject, []fs.Object{newChunk})
+
+			_, err := f.base.NewObject(ctx, oldObject.chunks[0].Remote())
+			if caseInsensitive {
+				assert.NoError(t, err, "chunk matching a new chunk by case must be kept")
+			} else {
+				assert.Equal(t, fs.ErrorObjectNotFound, err)
+			}
+			_, err = f.base.NewObject(ctx, oldObject.chunks[1].Remote())
+			assert.Equal(t, fs.ErrorObjectNotFound, err, "chunk without a new counterpart must be removed")
+			require.NoError(t, operations.Purge(ctx, f.base, ""))
+		})
+	}
+}
+
 // Test that md5all creates metadata even for small files
 func testMD5AllSlow(t *testing.T, f *Fs) {
 	ctx := context.Background()
@@ -1051,6 +1089,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("ChunkerServerSideOverwrite", func(t *testing.T) {
 		testChunkerServerSideOverwrite(t, f)
+	})
+	t.Run("RemoveStaleChunksCaseInsensitive", func(t *testing.T) {
+		testRemoveStaleChunksCaseInsensitive(t, f)
 	})
 	t.Run("MD5AllSlow", func(t *testing.T) {
 		testMD5AllSlow(t, f)
