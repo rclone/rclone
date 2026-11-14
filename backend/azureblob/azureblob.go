@@ -2939,8 +2939,22 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	}
 
 	// Upload the block, with MD5 for check
+	// io.Copy reads with a 32 KiB buffer from a reader that implements
+	// neither WriterTo nor a memory backed Read - which is what a local
+	// file opened by a multi-thread copy is - so give it a bigger one to
+	// keep the source reads a useful size. It isn't taken from the pool,
+	// where it could wait for ever on --max-buffer-memory. A reader with
+	// WriterTo, such as a pool.RW, doesn't need one.
 	m := md5.New()
-	currentChunkSize, err := io.Copy(m, reader)
+	var (
+		currentChunkSize int64
+		err              error
+	)
+	if _, ok := reader.(io.WriterTo); ok {
+		currentChunkSize, err = io.Copy(m, reader)
+	} else {
+		currentChunkSize, err = io.CopyBuffer(m, reader, make([]byte, multipart.BufferSize))
+	}
 	if err != nil {
 		return -1, err
 	}
