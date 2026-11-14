@@ -110,6 +110,10 @@ func CheckContentRange(resp *http.Response, options []fs.OpenOption, size int64)
 	}
 
 	responseRange := resp.Header.Get("Content-Range")
+	// Some servers return 206 with Content-Length but omit Content-Range.
+	if responseRange == "" {
+		return checkRangeByContentLength(resp.ContentLength, requested, size, requestRange)
+	}
 	got, err := ParseContentRange(responseRange)
 	if err != nil {
 		return fmt.Errorf("invalid Content-Range %q: %w", responseRange, err)
@@ -155,6 +159,59 @@ func CheckContentRange(resp *http.Response, options []fs.OpenOption, size int64)
 		return fmt.Errorf("Content-Length %d does not match Content-Range %q", resp.ContentLength, responseRange)
 	}
 	return nil
+}
+
+// checkRangeByContentLength checks a 206 response that omitted Content-Range
+// against the length implied by the request and the known representation size.
+func checkRangeByContentLength(contentLength int64, requested *fs.RangeOption, size int64, requestRange string) error {
+	expected, ok := expectedRangeLength(requested, size)
+	if contentLength < 0 {
+		return fmt.Errorf("missing Content-Range and Content-Length for requested range %q", requestRange)
+	}
+	if ok {
+		if contentLength != expected {
+			return fmt.Errorf("Content-Length %d does not match requested range %q", contentLength, requestRange)
+		}
+		return nil
+	}
+	if size >= 0 {
+		// The request is outside the representation, so the length is not valid.
+		return fmt.Errorf("Content-Length %d does not match requested range %q", contentLength, requestRange)
+	}
+	// Suffix length is an upper bound when the complete size is unknown.
+	if requested.Start < 0 && requested.End >= 0 && contentLength > requested.End {
+		return fmt.Errorf("Content-Length %d does not match requested range %q", contentLength, requestRange)
+	}
+	return nil
+}
+
+// expectedRangeLength returns the number of bytes a range request should
+// return when that length can be determined from the request and size.
+func expectedRangeLength(requested *fs.RangeOption, size int64) (int64, bool) {
+	start := requested.Start
+	end := requested.End
+	if start >= 0 {
+		if end >= 0 {
+			if size >= 0 && end >= size {
+				end = size - 1
+			}
+			if end < start {
+				return 0, false
+			}
+			return end - start + 1, true
+		}
+		if size >= 0 {
+			if start >= size {
+				return 0, false
+			}
+			return size - start, true
+		}
+		return 0, false
+	}
+	if size >= 0 && end >= 0 {
+		return min(end, size), true
+	}
+	return 0, false
 }
 
 // ParseSizeFromHeaders parses HTTP response headers to get the full file size.
