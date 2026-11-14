@@ -35,24 +35,39 @@ func ParseContentRange(value string) (ContentRange, error) {
 		return ContentRange{}, errors.New("must contain one '-'")
 	}
 
-	start, err := strconv.ParseInt(bounds[0], 10, 64)
-	if err != nil || start < 0 {
+	start, err := parseDigits(bounds[0])
+	if err != nil {
 		return ContentRange{}, errors.New("invalid start")
 	}
-	end, err := strconv.ParseInt(bounds[1], 10, 64)
+	end, err := parseDigits(bounds[1])
 	if err != nil || end < start {
 		return ContentRange{}, errors.New("invalid end")
 	}
 
 	size := int64(-1)
 	if rangeAndSize[1] != "*" {
-		size, err = strconv.ParseInt(rangeAndSize[1], 10, 64)
-		if err != nil || size < 0 || end >= size {
+		size, err = parseDigits(rangeAndSize[1])
+		if err != nil || end >= size {
 			return ContentRange{}, errors.New("invalid complete length")
 		}
 	}
 
 	return ContentRange{Start: start, End: end, Size: size}, nil
+}
+
+// parseDigits parses a non-negative decimal number made only of the
+// digits 0-9, as the Content-Range grammar requires. Unlike
+// strconv.ParseInt it rejects a leading '+' or '-'.
+func parseDigits(s string) (int64, error) {
+	if s == "" {
+		return 0, errors.New("empty number")
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return 0, fmt.Errorf("invalid digit %q", c)
+		}
+	}
+	return strconv.ParseInt(s, 10, 64)
 }
 
 // CheckContentRange checks that a response satisfies a Range open option.
@@ -182,8 +197,8 @@ func ParseSizeFromHeaders(headers http.Header) (size int64) {
 	if slash < 0 {
 		return -1
 	}
-	ret, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
-	if err != nil || ret < 0 {
+	ret, err := parseDigits(contentRange[slash+1:])
+	if err != nil {
 		return -1
 	}
 	return ret
