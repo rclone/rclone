@@ -1032,10 +1032,11 @@ func TestCopyURLHeaderFilename(t *testing.T) {
 			assert.Equal(t, test.want, obj.Remote())
 			in, err := obj.Open(ctx)
 			require.NoError(t, err)
-			defer in.Close()
+			defer func() {
+				assert.NoError(t, in.Close())
+			}()
 			actual, err := io.ReadAll(in)
 			require.NoError(t, err)
-			require.NoError(t, in.Close())
 			assert.Equal(t, contents, string(actual))
 			fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{fstest.NewItem(test.want, contents, t1)}, nil, fs.ModTimeNotSupported)
 		})
