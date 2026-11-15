@@ -396,7 +396,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.GetTier = ft.GetTier && mask.GetTier
 	ft.ServerSideAcrossConfigs = ft.ServerSideAcrossConfigs && mask.ServerSideAcrossConfigs
 	// ft.IsLocal = ft.IsLocal && mask.IsLocal Don't propagate IsLocal
-	ft.SlowModTime = ft.SlowModTime && mask.SlowModTime
+	ft.SlowModTime = ft.SlowModTime || mask.SlowModTime // a restriction, so either Fs having it applies
 	ft.SlowHash = ft.SlowHash && mask.SlowHash
 	ft.FilterAware = ft.FilterAware && mask.FilterAware
 	ft.PartialUploads = ft.PartialUploads && mask.PartialUploads
