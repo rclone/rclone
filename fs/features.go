@@ -400,7 +400,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.SlowHash = ft.SlowHash && mask.SlowHash
 	ft.FilterAware = ft.FilterAware && mask.FilterAware
 	ft.PartialUploads = ft.PartialUploads && mask.PartialUploads
-	ft.NoMultiThreading = ft.NoMultiThreading && mask.NoMultiThreading
+	ft.NoMultiThreading = ft.NoMultiThreading || mask.NoMultiThreading // a restriction, so either Fs having it applies
 	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
 	ft.ChunkWriterDoesntSeek = ft.ChunkWriterDoesntSeek && mask.ChunkWriterDoesntSeek
 	ft.DoubleSlash = ft.DoubleSlash && mask.DoubleSlash
