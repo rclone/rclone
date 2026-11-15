@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -433,6 +435,86 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Equal(t, used, used2)
 	assert.Equal(t, free, free2)
 	assert.Equal(t, oldTime, vfs.usageTime)
+}
+
+type blockingAboutFs struct {
+	fs.Fs
+	about func(context.Context) (*fs.Usage, error)
+}
+
+func (f *blockingAboutFs) Features() *fs.Features {
+	features := *f.Fs.Features()
+	features.About = f.about
+	return &features
+}
+
+func TestVFSStatfsStaleDoesNotBlock(t *testing.T) {
+	r := fstest.NewRun(t)
+	started := make(chan struct{})
+	release := make(chan struct{})
+	refreshed := make(chan struct{})
+	refreshDone := make(chan struct{})
+	var releaseOnce sync.Once
+	var calls atomic.Int32
+	total := int64(100)
+	used := int64(25)
+	free := int64(75)
+	f := &blockingAboutFs{
+		Fs: r.Fremote,
+		about: func(context.Context) (*fs.Usage, error) {
+			if calls.Add(1) == 1 {
+				return &fs.Usage{Total: &total, Used: &used, Free: &free}, nil
+			}
+			close(started)
+			<-release
+			close(refreshed)
+			return &fs.Usage{Total: &total, Used: &used, Free: &free}, nil
+		},
+	}
+	opt := vfscommon.Opt
+	vfs := New(context.Background(), f, &opt)
+	t.Cleanup(func() {
+		releaseOnce.Do(func() { close(release) })
+		select {
+		case <-refreshDone:
+		case <-time.After(time.Second):
+			t.Error("timed out waiting for Statfs")
+		}
+		cleanupVFS(t, vfs)
+	})
+
+	_, _, _ = vfs.Statfs()
+	vfs.usageTime = time.Now().Add(-time.Hour)
+	go func() {
+		vfs.Statfs()
+		close(refreshDone)
+	}()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for About")
+	}
+
+	done := make(chan struct{})
+	var gotTotal, gotUsed, gotFree int64
+	go func() {
+		gotTotal, gotUsed, gotFree = vfs.Statfs()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("stale Statfs blocked by About")
+	}
+	assert.Equal(t, total, gotTotal)
+	assert.Equal(t, used, gotUsed)
+	assert.Equal(t, free, gotFree)
+	releaseOnce.Do(func() { close(release) })
+	select {
+	case <-refreshed:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for About refresh")
+	}
 }
 
 func TestVFSMkdir(t *testing.T) {
