@@ -91,6 +91,9 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.
 		WriteMimeType:           false,
 		BucketBased:             false,
 		CanHaveEmptyDirectories: true,
+		// Open can't seek within an entry, so each chunk of a
+		// multi-thread download would read the entry from the start
+		NoMultiThreading: true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	if singleObject {
