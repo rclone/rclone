@@ -709,6 +709,12 @@ The Swift API doesn't return a correct MD5SUM for segmented files
 (Dynamic or Static Large Objects) so rclone won't check or use the
 MD5SUM for these.
 
+Some providers (eg Blomp) don't allow the account to be listed and
+give each user one container named after their login. If listing the
+account is forbidden then rclone shows the container named after
+`user` as the only container in the root of the remote, so commands
+like `rclone lsd remote:` and `rclone about remote:` work.
+
 ## Troubleshooting
 
 ### Rclone gives Failed to create file system for "remote:": Bad Request
