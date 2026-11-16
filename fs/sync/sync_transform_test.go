@@ -106,7 +106,7 @@ func TestTransform(t *testing.T) {
 			r := newTransformRun(t)
 			defer r.Finalise()
 
-			ctx := context.Background()
+			ctx, _ := fs.AddConfig(context.Background())
 			r.Mkdir(ctx, r.Flocal)
 			r.Mkdir(ctx, r.Fremote)
 			items := makeTestFiles(t, r, "dir1")
@@ -236,7 +236,7 @@ func detectEncoding(s string) string {
 }
 
 func TestTransformCopy(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,suffix_keep_extension=_somesuffix")
 	require.NoError(t, err)
@@ -253,7 +253,7 @@ func TestTransformCopy(t *testing.T) {
 }
 
 func TestDoubleTransform(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,prefix=tac", "all,prefix=tic")
 	require.NoError(t, err)
@@ -270,7 +270,7 @@ func TestDoubleTransform(t *testing.T) {
 }
 
 func TestFileTag(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "file,prefix=tac", "file,prefix=tic")
 	require.NoError(t, err)
@@ -287,7 +287,7 @@ func TestFileTag(t *testing.T) {
 }
 
 func TestNoTag(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "prefix=tac", "prefix=tic")
 	require.NoError(t, err)
@@ -304,7 +304,7 @@ func TestNoTag(t *testing.T) {
 }
 
 func TestDirTag(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "dir,prefix=tac", "dir,prefix=tic")
 	require.NoError(t, err)
@@ -323,7 +323,7 @@ func TestDirTag(t *testing.T) {
 }
 
 func TestAllTag(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,prefix=tac", "all,prefix=tic")
 	require.NoError(t, err)
@@ -344,7 +344,7 @@ func TestAllTag(t *testing.T) {
 }
 
 func TestRunTwice(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "dir,prefix=tac", "dir,prefix=tic")
 	require.NoError(t, err)
@@ -370,7 +370,7 @@ func TestRunTwice(t *testing.T) {
 }
 
 func TestSyntax(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	err := transform.SetOptions(ctx, "prefix")
 	assert.Error(t, err) // should error as required value is missing
 
@@ -385,7 +385,7 @@ func TestSyntax(t *testing.T) {
 }
 
 func TestConflicting(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "prefix=tac", "trimprefix=tac")
 	require.NoError(t, err)
@@ -403,7 +403,7 @@ func TestConflicting(t *testing.T) {
 }
 
 func TestMove(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,prefix=tac", "all,prefix=tic")
 	require.NoError(t, err)
@@ -422,7 +422,7 @@ func TestMove(t *testing.T) {
 }
 
 func TestTransformFile(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,prefix=tac", "all,prefix=tic")
 	require.NoError(t, err)
@@ -451,7 +451,7 @@ func TestTransformFile(t *testing.T) {
 }
 
 func TestManualTransformFile(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 
 	r.Flocal.Features().DisableList([]string{"Copy", "Move"})
@@ -484,7 +484,7 @@ func TestManualTransformFile(t *testing.T) {
 }
 
 func TestBase64(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,base64encode")
 	require.NoError(t, err)
@@ -512,7 +512,7 @@ func TestBase64(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	ctx := context.Background()
+	ctx, _ := fs.AddConfig(context.Background())
 	r := newTransformRun(t)
 	err := transform.SetOptions(ctx, "all,prefix=ta/c") // has illegal character
 	require.NoError(t, err)
