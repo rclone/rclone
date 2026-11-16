@@ -723,3 +723,49 @@ func testPathTraversal(t *testing.T, baseURL string) {
 		fstest.NewItem("served-root/dir/inside-dir.txt", "INSIDE DIR", modTime),
 	}, []string{"served-root", "served-root/dir"}, fs.GetModifyWindow(ctx, outside))
 }
+
+// TestWebDavCopyMoveOntoItself checks that COPY and MOVE with the
+// source as the Destination are rejected and leave the source alone,
+// with and without a BaseURL.
+func TestWebDavCopyMoveOntoItself(t *testing.T) {
+	for _, baseURL := range []string{"", "/base"} {
+		t.Run("BaseURL="+baseURL, func(t *testing.T) {
+			ctx := context.Background()
+			modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+			f, err := fs.NewFs(ctx, ":memory:webdav-onto-itself-test"+strings.ReplaceAll(baseURL, "/", "-"))
+			require.NoError(t, err)
+			_, err = operations.Rcat(ctx, f, "file.txt", io.NopCloser(strings.NewReader("FILE")), modTime, nil)
+			require.NoError(t, err)
+			_, err = operations.Rcat(ctx, f, "dir/sub/inside.txt", io.NopCloser(strings.NewReader("INSIDE")), modTime, nil)
+			require.NoError(t, err)
+
+			opt := Opt
+			opt.HTTP.ListenAddr = []string{"localhost:0"}
+			opt.HTTP.BaseURL = baseURL
+			w, err := newWebDAV(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
+			require.NoError(t, err)
+			w.server.Serve()
+			defer func() {
+				assert.NoError(t, w.Shutdown())
+			}()
+			router := w.server.Router()
+
+			for _, method := range []string{"COPY", "MOVE"} {
+				for _, urlPath := range []string{"/file.txt", "/dir"} {
+					t.Run(method+" "+urlPath, func(t *testing.T) {
+						req := httptest.NewRequest(method, baseURL+urlPath, nil)
+						req.Header.Set("Destination", baseURL+urlPath)
+						rec := httptest.NewRecorder()
+						router.ServeHTTP(rec, req)
+						assert.Equal(t, http.StatusForbidden, rec.Code)
+					})
+				}
+			}
+
+			fstest.CheckListingWithPrecision(t, f, []fstest.Item{
+				fstest.NewItem("file.txt", "FILE", modTime),
+				fstest.NewItem("dir/sub/inside.txt", "INSIDE", modTime),
+			}, []string{"dir", "dir/sub"}, fs.GetModifyWindow(ctx, f))
+		})
+	}
+}
