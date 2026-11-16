@@ -2122,7 +2122,7 @@ If set, don't allocate more than given amount of memory as buffers. If
 not set or set to `0` or `off` this will not limit the amount of memory
 in use.
 
-This includes memory used by buffers created by the `--buffer` flag
+This includes memory used by buffers created by the `--buffer-size` flag
 and buffers used by multi-thread transfers.
 
 Most multi-thread transfers do not take additional memory, but some do
@@ -2142,7 +2142,7 @@ in use and the use of HTTP1 vs HTTP2.
 
 When downloading files, backends only limit the initial opening of the
 stream. The bulk data download is not counted as a connection. This
-means that the `--max--connections` flag won't limit the total number
+means that the `--max-connections` flag won't limit the total number
 of downloads.
 
 Note that it is possible to cause deadlocks with this setting so it
@@ -2424,7 +2424,7 @@ Most multi-thread transfers do not take additional memory, but some do
 (for example uploading to s3). In the worst case memory usage can be
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
-`--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
+`--transfers` \* `--s3-chunk-size` \* `--s3-upload-concurrency`. However you
 can use the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
@@ -2922,7 +2922,7 @@ See also `--tpslimit-burst`.
 Max burst of transactions for `--tpslimit` (default `1`).
 
 Normally `--tpslimit` will do exactly the number of transaction per
-second specified.  However if you supply `--tps-burst` then rclone can
+second specified.  However if you supply `--tpslimit-burst` then rclone can
 save up some transactions from when it was idle giving a burst of up
 to the parameter supplied.
 

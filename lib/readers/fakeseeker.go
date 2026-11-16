@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// FakeSeeker adapts an io.Seeker into an io.ReadSeeker
+// FakeSeeker adapts an io.Reader into an io.ReadSeeker.
 type FakeSeeker struct {
 	in      io.Reader
 	readErr error

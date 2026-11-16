@@ -675,7 +675,7 @@ separators.) To address this particular issue, an additional `{MacFriendlyTime}`
 (or just `{mac}`) option is supported, which results in `2006-01-02 0304PM`.
 
 Note that `--conflict-suffix` is entirely separate from rclone's main
-[`--sufix`](/docs/#suffix-string) flag. This is intentional, as users may wish
+[`--suffix`](/docs/#suffix-string) flag. This is intentional, as users may wish
 to use both flags simultaneously, if also using
 [`--backup-dir`](#backup-dir1-and-backup-dir2).
 
