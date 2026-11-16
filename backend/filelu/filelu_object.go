@@ -67,76 +67,21 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	o.size = size
 
-	// Offset and Count for range download
-	var offset int64
-	var count int64
 	fs.FixRangeOption(options, o.size)
-	for _, option := range options {
-		switch x := option.(type) {
-		case *fs.RangeOption:
-			offset, count = x.Decode(o.size)
-			if count < 0 {
-				count = o.size - offset
-			}
-		case *fs.SeekOption:
-			offset = x.Offset
-			count = o.size
-		default:
-			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
-			}
-		}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: directLink,
+		Options: options,
 	}
-
-	// Wrap the response body to handle offset and count
-	var reader io.ReadCloser
+	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to create download request: %w", err)
-		}
-
-		resp, err := o.fs.client.Do(req)
-		if err != nil {
-			return shouldRetry(err), fmt.Errorf("failed to download file: %w", err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			defer func() {
-				if err := resp.Body.Close(); err != nil {
-					fs.Logf(nil, "Failed to close response body: %v", err)
-				}
-			}()
-			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
-		}
-
-		if offset > 0 {
-			_, err = io.CopyN(io.Discard, resp.Body, offset)
-			if err != nil {
-				_ = resp.Body.Close()
-				return false, fmt.Errorf("failed to skip offset: %w", err)
-			}
-		}
-
-		if count > 0 {
-			reader = struct {
-				io.Reader
-				io.Closer
-			}{
-				Reader: io.LimitReader(resp.Body, count),
-				Closer: resp.Body,
-			}
-		} else {
-			reader = resp.Body
-		}
-
-		return false, nil
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(err), err
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
-
-	return reader, nil
+	return resp.Body, nil
 }
 
 // Update updates the object with new data
