@@ -1576,6 +1576,54 @@ func (item *Item) steal() {
 	item.stolen = true
 }
 
+// releaseForRename closes the backing file handle of an item which is
+// about to have its cache paths taken over by a rename, so the rename
+// can replace the file on platforms which cannot rename over an open
+// file (Windows). Only items with no open handles are released - an
+// actively used item keeps its handle and the rename fails as it
+// would have anyway. If the rename then fails the item simply reopens
+// its cache file on next access.
+//
+// Call with no locks held.
+func (item *Item) releaseForRename() {
+	item.mu.Lock()
+
+	// Wait for any in-progress grace-period close to finish so we
+	// start from a fully closed item rather than racing the fd
+	// teardown, as in open.
+	for item.closing != nil {
+		closing := item.closing
+		item.mu.Unlock()
+		<-closing
+		item.mu.Lock()
+	}
+
+	if item.opens != 0 {
+		item.mu.Unlock()
+		return
+	}
+
+	// Cancel the pending grace-period close - the item is being
+	// torn down here instead.
+	if item.graceTimer != nil {
+		item.graceTimer.Stop()
+		item.graceTimer = nil
+	}
+
+	dls := item.downloaders
+	item.downloaders = nil
+	fd := item.fd
+	item.fd = nil
+	item.mu.Unlock()
+
+	if dls != nil {
+		_ = dls.Close(nil)
+	}
+	if fd != nil {
+		_ = fd.Close()
+	}
+}
+
 // rename the item
 func (item *Item) rename(name string, newName string, newObj fs.Object) (err error) {
 	item.preAccess()
