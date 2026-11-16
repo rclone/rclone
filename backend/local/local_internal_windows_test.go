@@ -4,10 +4,12 @@ package local
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"runtime"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
@@ -37,4 +39,31 @@ func TestRmdirWindows(t *testing.T) {
 
 	err = operations.Rmdir(context.Background(), r.Flocal, "testdir")
 	assert.NoError(t, err)
+}
+
+// TestListDirModTimeWindows tests that the modification time of a
+// directory is up to date in a listing made straight after something
+// is created in it. The time Windows returns when listing the
+// directory it is in isn't updated until the directory is next opened.
+func TestListDirModTimeWindows(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	require.NoError(t, operations.Mkdir(ctx, r.Flocal, "dir"))
+	dirPath := filepath.Join(r.LocalName, "dir")
+	old := time.Date(2001, 2, 3, 4, 5, 6, 0, time.UTC)
+	require.NoError(t, os.Chtimes(dirPath, old, old))
+	require.NoError(t, os.WriteFile(filepath.Join(dirPath, "file.txt"), []byte("hello"), 0o666))
+
+	entries, err := r.Flocal.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	listed := entries[0].ModTime(ctx)
+
+	// This opens the directory, so has to come after the listing
+	fi, err := os.Stat(dirPath)
+	require.NoError(t, err)
+	assert.False(t, fi.ModTime().Equal(old), "creating a file didn't change the modification time of the directory")
+	assert.True(t, listed.Equal(fi.ModTime()), "listed %v but the directory has %v", listed, fi.ModTime())
 }
