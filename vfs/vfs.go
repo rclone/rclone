@@ -710,7 +710,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 		vfs.usageRefreshing = true
 		synchronousRefresh = vfs.usage == nil
 		if !synchronousRefresh {
-			go vfs.refreshUsage(doAbout)
+			go func() { _ = vfs.refreshUsage(doAbout) }()
 		}
 	}
 	vfs.usageMu.Unlock()
