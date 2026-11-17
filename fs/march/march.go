@@ -487,11 +487,16 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 						continue
 					}
 					leaf := path.Base(t.src.Remote())
+					// Look up the path the object will have in the
+					// destination, which differs with --name-transform.
+					// job.dstRemote is never transformed here as no
+					// destination directories are matched with --no-traverse.
+					dstRemote := transform.Path(m.Ctx, path.Join(job.dstRemote, leaf), false)
 					if err := m.newObjectSem.Acquire(m.Ctx, 1); err != nil {
 						t.dstMatch <- nil
 						continue
 					}
-					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
+					dst, err := m.Fdst.NewObject(m.Ctx, dstRemote)
 					m.newObjectSem.Release(1)
 					if err != nil {
 						dst = nil
