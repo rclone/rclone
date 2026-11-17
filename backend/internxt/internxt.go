@@ -112,6 +112,11 @@ func init() {
 			Advanced: true,
 			Help:     "Skip hash validation when downloading files.\n\nBy default, hash validation is disabled. Set this to false to enable validation.",
 		}, {
+			Name:     "skip_thumbnails",
+			Default:  false,
+			Advanced: true,
+			Help:     "Don't generate thumbnails when uploading images.\n\nImages uploaded with this have no preview in the Internxt apps.",
+		}, {
 			Name:     "upload_concurrency",
 			Help:     "Concurrency for multipart uploads.\n\nThis is the number of chunks of the same file that are uploaded concurrently.\n\nNote that each chunk is buffered in memory.",
 			Default:  4,
@@ -229,6 +234,7 @@ type Options struct {
 	TwoFA              string               `config:"2fa"`
 	Mnemonic           string               `config:"mnemonic"`
 	SkipHashValidation bool                 `config:"skip_hash_validation"`
+	SkipThumbnails     bool                 `config:"skip_thumbnails"`
 	UploadCutoff       fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
 	UploadConcurrency  int                  `config:"upload_concurrency"`
@@ -332,6 +338,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	cfg := config.NewDefaultToken(oauthToken.AccessToken)
 	cfg.Mnemonic = opt.Mnemonic
 	cfg.SkipHashValidation = opt.SkipHashValidation
+	cfg.SkipThumbnails = opt.SkipThumbnails
 	cfg.HTTPClient = fshttp.NewClient(ctx)
 
 	f := &Fs{
