@@ -58,15 +58,18 @@ func Path(ctx context.Context, s string, isDir bool) string {
 			continue
 		}
 		baseOnly := !isDir && t.tag == file
+		var transformed string
 		if t.tag == dir && !isDir {
-			s, err = transformDir(s, t)
+			transformed, err = transformDir(s, t)
 		} else {
-			s, err = transformPath(s, t, baseOnly)
+			transformed, err = transformPath(s, t, baseOnly)
 		}
 		if err != nil {
 			err = fs.CountError(ctx, fserrors.NoRetryError(err))
 			fs.Errorf(s, "Failed to transform: %v", err)
+			continue
 		}
+		s = transformed
 	}
 	if old != s {
 		fs.Debugf(old, "transformed to: %v", s)

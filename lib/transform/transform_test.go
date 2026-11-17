@@ -185,3 +185,16 @@ func TestTitlecase(t *testing.T) {
 		assert.Equal(t, test.want, got)
 	}
 }
+
+func TestTransformErrorKeepsOriginalName(t *testing.T) {
+	// "é" is two bytes in UTF-8, so truncating to one byte fails;
+	// on failure the original name must be kept (see #10334)
+	ctx, err := newOptions("file,truncate_bytes=1")
+	require.NoError(t, err)
+
+	got := Path(ctx, "é.txt", false)
+	assert.Equal(t, "é.txt", got)
+
+	got = Path(ctx, "sub/é.txt", false)
+	assert.Equal(t, "sub/é.txt", got)
+}
