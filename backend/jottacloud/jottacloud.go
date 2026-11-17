@@ -50,7 +50,8 @@ const (
 	defaultMountpoint  = "Archive"
 	jfsURL             = "https://jfs.jottacloud.com/jfs/"
 	apiURL             = "https://api.jottacloud.com/"
-	wwwURL             = "https://www.jottacloud.com/"
+	contentURL         = "https://content.jottacloud.com/"
+	webAppURL          = "https://app.jottacloud.com/"
 	cachePrefix        = "rclone-jcmd5-"
 	configDevice       = "device"
 	configMountpoint   = "mountpoint"
@@ -1670,12 +1671,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.New("couldn't create public link - no uri received")
 	}
 	if result.PublicSharePath != "" {
-		webLink := joinPath(wwwURL, result.PublicSharePath)
+		webLink := joinPath(webAppURL, result.PublicSharePath)
 		fs.Debugf(nil, "Web link: %s", webLink)
 	} else {
 		fs.Debugf(nil, "No web link received")
 	}
-	directLink := joinPath(wwwURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
+	directLink := joinPath(contentURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
 	fs.Debugf(nil, "Direct link: %s", directLink)
 	return directLink, nil
 }
