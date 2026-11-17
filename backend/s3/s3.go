@@ -3027,10 +3027,14 @@ func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
 }
 
+// pathEscapeReplacer escapes the characters rest.URLPathEscape leaves
+// alone which S3 and DigitalOcean Spaces need escaped
+var pathEscapeReplacer = strings.NewReplacer("+", "%2B", ",", "%2C")
+
 // pathEscape escapes s as for a URL path.  It uses rest.URLPathEscape
-// but also escapes '+' for S3 and Digital Ocean spaces compatibility
+// but also escapes '+' and ',' for S3 and DigitalOcean Spaces compatibility
 func pathEscape(s string) string {
-	return strings.ReplaceAll(rest.URLPathEscape(s), "+", "%2B")
+	return pathEscapeReplacer.Replace(rest.URLPathEscape(s))
 }
 
 // copy does a server-side copy
