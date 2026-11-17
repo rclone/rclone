@@ -1206,7 +1206,8 @@ func (d *Dir) RemoveName(name string) error {
 
 // Rename the file
 //
-// It returns EINVAL if newName isn't a single safe path element.
+// It returns EINVAL if newName isn't a single safe path element or a directory
+// is renamed to itself or one of its descendants.
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	// fs.Debugf(d, "BEFORE\n%s", d.dump())
 	if d.vfs.Opt.ReadOnly {
@@ -1248,13 +1249,16 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			return err
 		}
 	case fs.Directory:
+		srcRemote := x.Remote()
+		if newPath == srcRemote || strings.HasPrefix(newPath, srcRemote+"/") {
+			return EINVAL
+		}
 		features := d.f.Features()
 		if features.DirMove == nil && features.Move == nil && features.Copy == nil {
 			err := fmt.Errorf("Fs %q can't rename directories (no DirMove, Move or Copy)", d.f)
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		srcRemote := x.Remote()
 		dstRemote := newPath
 		err = operations.DirMove(d.vfs.ctx, d.f, srcRemote, dstRemote)
 		if err != nil {
