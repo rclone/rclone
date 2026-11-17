@@ -93,6 +93,9 @@ func MiddlewareAuthHtpasswd(path, realm string) Middleware {
 // MiddlewareAuthBasic instantiates middleware that authenticates for a single user
 func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 	fs.Infof(nil, "Using --user %s --pass XXXX as authenticated user", user)
+	if pass == "" {
+		fs.Logf(nil, "WARNING: --user %s is set but --pass is empty so anyone who knows the user name can log in with an empty password", user)
+	}
 	pass = md5Crypt(pass, salt, "$1$")
 	// Compare hashes of the users as ConstantTimeCompare returns
 	// early if the lengths differ which would reveal the user's length

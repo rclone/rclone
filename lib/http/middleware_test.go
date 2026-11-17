@@ -1,16 +1,19 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -291,6 +294,18 @@ func TestMiddlewareAuthBasicUnknownUserTiming(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestMiddlewareAuthBasicEmptyPassWarning(t *testing.T) {
+	capture := func(pass string) string {
+		var buf bytes.Buffer
+		fs.SetLogger(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		defer fs.SetLogger(slog.Default().Handler())
+		_ = MiddlewareAuthBasic("user", pass, "test", "dlPL2MqE")
+		return buf.String()
+	}
+	assert.Contains(t, capture(""), "--pass is empty")
+	assert.NotContains(t, capture("pass"), "--pass is empty")
 }
 
 // An unknown user must never be authenticated by the decoy secret
