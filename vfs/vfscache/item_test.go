@@ -3,6 +3,7 @@ package vfscache
 // FIXME need to test async writeback here
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/ranges"
@@ -868,4 +870,153 @@ func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
 	n, err = item.ReadAt(buf, 0)
 	require.NoError(t, err)
 	assert.Equal(t, contents, string(buf[:n]))
+}
+
+// rewritingFs changes every file on upload the way SharePoint changes
+// Office documents, so the stored object is bigger than the upload
+// and starts with different bytes.
+type rewritingFs struct {
+	fs.Fs
+}
+
+const rewriteHeader = "<added by the remote>"
+
+// Name differs from the wrapped Fs so uploads from the cache aren't
+// done as server-side copies.
+func (f *rewritingFs) Name() string { return "rewriting" }
+
+func (f *rewritingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	data, err := io.ReadAll(in)
+	if err != nil {
+		return nil, err
+	}
+	stored := append([]byte(rewriteHeader), data...)
+	info := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), int64(len(stored)), true, nil, f.Fs)
+	return f.Fs.Put(ctx, bytes.NewReader(stored), info, options...)
+}
+
+// newItemTestCacheRewriting makes a cache on a remote which changes
+// files on upload, with the flags needed for such uploads to succeed.
+func newItemTestCacheRewriting(t *testing.T) (r *fstest.Run, c *Cache) {
+	r = fstest.NewRun(t)
+
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = 0
+	opt.HandleCaching = 0
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.IgnoreSize = true
+	ci.IgnoreChecksum = true
+	ctx, cancel := context.WithCancel(ctx)
+
+	avInfos = nil
+	c, err := New(ctx, &rewritingFs{Fs: r.Fremote}, &opt, addVirtual)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		require.NoError(t, c.CleanUp())
+		assertPathNotExist(t, c.root)
+		cancel()
+	})
+	return r, c
+}
+
+// readAll reads size bytes from the start of the item
+func readAll(t *testing.T, item *Item, size int64) string {
+	buf := make([]byte, size)
+	n, err := item.ReadAt(buf, 0)
+	if err != io.EOF {
+		require.NoError(t, err)
+	}
+	return string(buf[:n])
+}
+
+func TestItemRemoteChangedOnUpload(t *testing.T) {
+	r, c := newItemTestCacheRewriting(t)
+	const written = "the document as the application wrote it"
+
+	item, _ := c.get("document.docx")
+	require.NoError(t, item.Open(nil))
+	_, err := item.WriteAt([]byte(written), 0)
+	require.NoError(t, err)
+	require.NoError(t, item.Close(nil))
+	checkObject(t, r, "document.docx", rewriteHeader+written)
+
+	obj, err := r.Fremote.NewObject(context.Background(), "document.docx")
+	require.NoError(t, err)
+	require.NoError(t, item.Open(obj))
+	assert.Equal(t, rewriteHeader+written, readAll(t, item, obj.Size()))
+	require.NoError(t, item.Close(nil))
+}
+
+func TestItemRemoteChangedOnUploadReload(t *testing.T) {
+	r, c := newItemTestCacheRewriting(t)
+	const written = "another document"
+
+	item, _ := c.get("sheet.xlsx")
+	require.NoError(t, item.Open(nil))
+	_, err := item.WriteAt([]byte(written), 0)
+	require.NoError(t, err)
+	require.NoError(t, item.Close(nil))
+
+	// Forget the item so it is loaded from its metadata again, as
+	// happens when rclone restarts.
+	c.mu.Lock()
+	delete(c.item, item.name)
+	c.mu.Unlock()
+	item, _ = c.get("sheet.xlsx")
+
+	obj, err := r.Fremote.NewObject(context.Background(), "sheet.xlsx")
+	require.NoError(t, err)
+	require.NoError(t, item.Open(obj))
+	assert.Equal(t, rewriteHeader+written, readAll(t, item, obj.Size()))
+	require.NoError(t, item.Close(nil))
+}
+
+func TestItemRemoteChangedOnUploadWhileOpen(t *testing.T) {
+	r, c := newItemTestCacheRewriting(t)
+	const written = "the presentation, still open in the application"
+
+	item, _ := c.get("slides.pptx")
+	require.NoError(t, item.Open(nil))
+	_, err := item.WriteAt([]byte(written), 0)
+	require.NoError(t, err)
+
+	// Upload while the item is still open
+	require.NoError(t, item.store(c.ctx, nil))
+	obj, err := r.Fremote.NewObject(context.Background(), "slides.pptx")
+	require.NoError(t, err)
+	require.Equal(t, int64(len(rewriteHeader+written)), obj.Size())
+
+	// An open handle keeps reading what was written
+	assert.Equal(t, written, readAll(t, item, obj.Size()))
+
+	// A second open while the first is still open does too
+	require.NoError(t, item.Open(obj))
+	assert.Equal(t, written, readAll(t, item, obj.Size()))
+	require.NoError(t, item.Close(nil))
+	require.NoError(t, item.Close(nil))
+
+	// Once closed the remote's data is read
+	require.NoError(t, item.Open(obj))
+	assert.Equal(t, rewriteHeader+written, readAll(t, item, obj.Size()))
+	require.NoError(t, item.Close(nil))
+}
+
+func TestItemUploadUnchangedKeepsCache(t *testing.T) {
+	r, c := newItemTestCache(t)
+
+	item, _ := c.get("plain.txt")
+	require.NoError(t, item.Open(nil))
+	_, err := item.WriteAt([]byte("plain"), 0)
+	require.NoError(t, err)
+	require.NoError(t, item.Close(nil))
+
+	obj, err := r.Fremote.NewObject(context.Background(), "plain.txt")
+	require.NoError(t, err)
+	require.NoError(t, item.Open(obj))
+	assert.True(t, item.present(), "cached data should be kept")
+	assert.Equal(t, "plain", readAll(t, item, obj.Size()))
+	require.NoError(t, item.Close(nil))
 }

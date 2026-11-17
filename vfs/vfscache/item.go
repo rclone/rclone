@@ -81,6 +81,7 @@ type Info struct {
 	Rs          ranges.Ranges // which parts of the file are present
 	Fingerprint string        // fingerprint of remote object
 	Dirty       bool          // set if the backing file has been modified
+	Stale       bool          // set if the remote changed the file on upload so the backing file doesn't hold its data
 }
 
 // Items are a slice of *Item ordered by ATime
@@ -663,6 +664,15 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		}
 		item.o = o
 		item._updateFingerprint()
+
+		// Some remotes change files on upload, e.g. SharePoint adds
+		// metadata to Office documents. The backing file then doesn't
+		// match the fingerprint of o, so mark it stale to be discarded
+		// on the next open rather than extended with the remote's data.
+		item.info.Stale = o != nil && o.Size() >= 0 && o.Size() != cacheObj.Size()
+		if item.info.Stale {
+			fs.Infof(item.name, "vfs cache: remote changed file on upload (size %d, uploaded %d) - will be reread", o.Size(), cacheObj.Size())
+		}
 	}
 
 	// Write the object back to the VFS layer before we mark it as
@@ -914,6 +924,10 @@ func (item *Item) _checkObject(o fs.Object) error {
 	} else {
 		remoteFingerprint := fs.Fingerprint(item.c.ctx, o, item.c.opt.FastFingerprint)
 		fs.Debugf(item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
+		// Don't remove the data from under open handles
+		if item.info.Stale && !item.info.Dirty && item.opens == 0 {
+			item._remove("stale (remote changed it on upload)")
+		}
 		if item.info.Fingerprint != "" {
 			// remote object && local object
 			if remoteFingerprint != item.info.Fingerprint {
@@ -1413,7 +1427,10 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	}
 
 	// Check to see if object has shrunk - if so don't read too much.
-	if item.o != nil && !item.info.Dirty && item.o.Size() != item.info.Size {
+	//
+	// A stale backing file isn't a prefix of the object so must not
+	// be extended with its data.
+	if item.o != nil && !item.info.Dirty && !item.info.Stale && item.o.Size() != item.info.Size {
 		fs.Debugf(item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
 		err = item._truncate(item.o.Size())
 		if err != nil {
