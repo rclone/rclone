@@ -801,6 +801,30 @@ func (f *Fs) dirFromStandardPath(dir string) string {
 	return f.opt.Enc.FromStandardPath(dir)
 }
 
+// listDir lists dir on c.
+//
+// With force_list_hidden some servers (e.g. FRITZ!Box) ignore the path
+// after "LIST -a" and list the current directory instead, so change
+// into dir, list it, then change back to where c was.
+func (f *Fs) listDir(c *ftp.ServerConn, dir string) (entries []*ftp.Entry, err error) {
+	if !f.opt.ForceListHidden || dir == "" {
+		return c.List(dir)
+	}
+	cwd, err := c.CurrentDir()
+	if err != nil {
+		return nil, err
+	}
+	err = c.ChangeDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	entries, err = c.List("")
+	if cdErr := c.ChangeDir(cwd); cdErr != nil && err == nil {
+		err = cdErr
+	}
+	return entries, err
+}
+
 // findItem finds a directory entry for the name in its parent directory
 func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
@@ -844,7 +868,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 	dir := path.Dir(remote)
 	base := path.Base(remote)
 
-	files, err := c.List(f.dirFromStandardPath(dir))
+	files, err := f.listDir(c, f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
@@ -916,7 +940,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	resultchan := make(chan []*ftp.Entry, 1)
 	errchan := make(chan error, 1)
 	go func(c *ftp.ServerConn) {
-		result, err := c.List(f.dirFromStandardPath(path.Join(f.root, dir)))
+		result, err := f.listDir(c, f.dirFromStandardPath(path.Join(f.root, dir)))
 		f.putFtpConnection(&c, err)
 		if err != nil {
 			errchan <- err
