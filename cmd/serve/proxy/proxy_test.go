@@ -6,6 +6,8 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,6 +20,8 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -32,13 +36,14 @@ func TestRun(t *testing.T) {
 	p := New(context.Background(), &opt, &vfscommon.Opt)
 
 	t.Run("Normal", func(t *testing.T) {
-		config, err := p.run(map[string]string{
+		config, rcParams, err := p.run(map[string]string{
 			"type": "ftp",
 			"user": "me",
 			"pass": "pass",
 			"host": "127.0.0.1",
 		})
 		require.NoError(t, err)
+		assert.Empty(t, rcParams)
 		assert.Equal(t, configmap.Simple{
 			"type":  "ftp",
 			"user":  "me-test",
@@ -49,7 +54,7 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("ClientIP", func(t *testing.T) {
-		config, err := p.run(map[string]string{
+		config, rcParams, err := p.run(map[string]string{
 			"type":      "ftp",
 			"user":      "me",
 			"pass":      "pass",
@@ -57,6 +62,7 @@ func TestRun(t *testing.T) {
 			"client_ip": "192.0.2.1",
 		})
 		require.NoError(t, err)
+		assert.Empty(t, rcParams)
 		assert.Equal(t, configmap.Simple{
 			"type":      "ftp",
 			"user":      "me-test",
@@ -68,16 +74,37 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		config, err := p.run(map[string]string{
+		config, rcParams, err := p.run(map[string]string{
 			"error": "potato",
 		})
 		assert.Nil(t, config)
+		assert.Nil(t, rcParams)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "potato")
 	})
 
+	t.Run("NonStringBackendValue", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			raw  string
+		}{
+			{"number", `{"type":"local","_root":"","port":22}`},
+			{"bool", `{"type":"local","_root":"","links":true}`},
+			{"object", `{"type":"local","_root":"","extra":{"k":"v"}}`},
+			{"array", `{"type":"local","_root":"","extra":["a"]}`},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Setenv("RCLONE_TEST_PROXY_RAW_JSON", tc.raw)
+				config, rcParams, err := p.run(map[string]string{"user": "me"})
+				assert.Nil(t, config)
+				assert.Nil(t, rcParams)
+				require.Error(t, err)
+			})
+		}
+	})
+
 	t.Run("Obscure", func(t *testing.T) {
-		config, err := p.run(map[string]string{
+		config, rcParams, err := p.run(map[string]string{
 			"type":     "ftp",
 			"user":     "me",
 			"pass":     "pass",
@@ -85,6 +112,7 @@ func TestRun(t *testing.T) {
 			"_obscure": "pass,user",
 		})
 		require.NoError(t, err)
+		assert.Empty(t, rcParams)
 		config["user"] = obscure.MustReveal(config["user"])
 		config["pass"] = obscure.MustReveal(config["pass"])
 		assert.Equal(t, configmap.Simple{
@@ -95,6 +123,31 @@ func TestRun(t *testing.T) {
 			"_obscure": "pass,user",
 			"_root":    "",
 		}, config)
+	})
+
+	t.Run("ConfigAndFilterExtracted", func(t *testing.T) {
+		t.Setenv("RCLONE_TEST_PROXY_FILTER", `{"IncludeRule":["data/**","backup/**"]}`)
+		t.Setenv("RCLONE_TEST_PROXY_CONFIG", `{"IgnoreCaseSync":true}`)
+		config, rcParams, err := p.run(map[string]string{
+			"type":  "local",
+			"user":  "me",
+			"pass":  "pass",
+			"links": "true",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, configmap.Simple{
+			"type":  "local",
+			"user":  "me-test",
+			"pass":  "pass",
+			"_root": "",
+			"links": "true",
+		}, config)
+		assert.NotContains(t, config, "_filter")
+		assert.NotContains(t, config, "_config")
+		assert.Equal(t, rc.Params{
+			"_filter": rc.Params{"IncludeRule": []any{"data/**", "backup/**"}},
+			"_config": rc.Params{"IgnoreCaseSync": true},
+		}, rcParams)
 	})
 
 	const testUser = "testUser"
@@ -612,4 +665,258 @@ func TestSimultaneousLogins(t *testing.T) {
 	}
 	assert.Equal(t, 1, p.vfsCache.Entries())
 	assert.Equal(t, int32(1), VFSes[0].Stats()["inUse"], "VFS referenced more than once")
+}
+
+func readVFSFile(t *testing.T, VFS *vfs.VFS, path string) string {
+	t.Helper()
+	f, err := VFS.OpenFile(path, os.O_RDONLY, 0)
+	require.NoError(t, err)
+	defer func() { _ = f.Close() }()
+	b, err := io.ReadAll(f)
+	require.NoError(t, err)
+	return string(b)
+}
+
+func makeFilterTestTree(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	files := map[string]string{
+		"allow/a.txt":     "alpha",
+		"allow/skip.bak":  "backup",
+		"allow/sub/c.txt": strings.Repeat("c", 256),
+		"deny/b.txt":      "beta",
+		"top.secret":      "secret",
+	}
+	for rel, body := range files {
+		full := filepath.Join(root, rel)
+		require.NoError(t, os.MkdirAll(filepath.Dir(full), 0777))
+		require.NoError(t, os.WriteFile(full, []byte(body), 0666))
+	}
+	return root
+}
+
+func TestConfigAndFilter(t *testing.T) {
+	root := makeFilterTestTree(t)
+
+	newTestProxy := func(ctx context.Context) *Proxy {
+		opt := Opt
+		opt.AuthProxy = "go run proxy_code.go " + root
+		p := New(ctx, &opt, &vfscommon.Opt)
+		t.Cleanup(p.Shutdown)
+		return p
+	}
+
+	t.Run("FilterRules", func(t *testing.T) {
+		p := newTestProxy(context.Background())
+
+		t.Setenv("RCLONE_TEST_PROXY_FILTER", `{"FilterRule":["- *.bak","+ allow/**","- **"]}`)
+		VFS, _, err := p.Call("u-include", "pass", false, "192.0.2.1:1001")
+		require.NoError(t, err)
+		assert.Equal(t, "alpha", readVFSFile(t, VFS, "allow/a.txt"))
+		_, err = VFS.Stat("allow/skip.bak")
+		assert.Equal(t, vfs.ENOENT, err)
+		_, err = VFS.Stat("deny/b.txt")
+		assert.Equal(t, vfs.ENOENT, err)
+
+		// IncludeRule + MinSize + IgnoreCase
+		t.Setenv("RCLONE_TEST_PROXY_FILTER", `{"IncludeRule":["ALLOW/SUB/**"],"MinSize":"100B","IgnoreCase":true}`)
+		VFS2, _, err := p.Call("u-rules", "pass", false, "192.0.2.1:1002")
+		require.NoError(t, err)
+		_, err = VFS2.Stat("allow/sub/c.txt")
+		assert.NoError(t, err)
+		_, err = VFS2.Stat("allow/a.txt")
+		assert.Equal(t, vfs.ENOENT, err)
+	})
+
+	t.Run("ConfigReachesNewFsAndVFS", func(t *testing.T) {
+		p := newTestProxy(context.Background())
+
+		// IgnoreCaseSync is read by vfs.Dir.stat from the VFS context
+		t.Setenv("RCLONE_TEST_PROXY_CONFIG", `{"IgnoreCaseSync":true}`)
+		VFS, _, err := p.Call("u-vfs-cfg", "pass", false, "192.0.2.1:1003")
+		require.NoError(t, err)
+		node, err := VFS.Stat("ALLOW/A.TXT")
+		require.NoError(t, err)
+		assert.True(t, node.IsFile())
+
+		// Links=true is read by local.NewFs via fs.GetConfig(ctx); combining it
+		// with copy_links=true triggers local's mutual-exclusion check only if
+		// userCtx reached cache.GetFn -> NewFs.
+		raw, err := json.Marshal(map[string]any{
+			"type":       "local",
+			"_root":      root,
+			"copy_links": "true",
+			"_config":    map[string]any{"Links": true},
+		})
+		require.NoError(t, err)
+		t.Setenv("RCLONE_TEST_PROXY_RAW_JSON", string(raw))
+		_, _, err = p.Call("u-newfs-cfg", "pass", false, "192.0.2.1:1004")
+		require.ErrorContains(t, err, "links")
+	})
+
+	t.Run("FlatBackendOptionNotHijackedByRC", func(t *testing.T) {
+		// Backend "links" has the same name as fs.ConfigInfo.Links; ParseOptions
+		// would consume it if passed the whole proxy output map.
+		raw, err := json.Marshal(map[string]any{
+			"type":       "local",
+			"_root":      root,
+			"copy_links": "true",
+			"links":      "true",
+		})
+		require.NoError(t, err)
+		t.Setenv("RCLONE_TEST_PROXY_RAW_JSON", string(raw))
+		p := newTestProxy(context.Background())
+		_, _, err = p.Call("u-flat", "pass", false, "192.0.2.1:1005")
+		require.ErrorContains(t, err, "links")
+	})
+
+	t.Run("CallAccessKey", func(t *testing.T) {
+		p := newTestProxy(context.Background())
+		t.Setenv("RCLONE_TEST_PROXY_FILTER", `{"IncludeRule":["allow/**"]}`)
+		t.Setenv("RCLONE_TEST_PROXY_CONFIG", `{"IgnoreCaseSync":true}`)
+
+		VFS, secret, err := p.CallAccessKey("AKID-FILTER", "192.0.2.1:1006", false)
+		require.NoError(t, err)
+		assert.Equal(t, "AKID-FILTER-secret", secret)
+		assert.Equal(t, "alpha", readVFSFile(t, VFS, "ALLOW/A.TXT"))
+		_, err = VFS.Stat("deny/b.txt")
+		assert.Equal(t, vfs.ENOENT, err)
+	})
+
+	t.Run("UserIsolationAndBaseCtxPreserved", func(t *testing.T) {
+		baseOpt := filter.Opt
+		baseOpt.ExcludeRule = []string{"*.secret"}
+		baseFi, err := filter.NewFilter(&baseOpt)
+		require.NoError(t, err)
+		baseCtx := filter.ReplaceConfig(context.Background(), baseFi)
+		baseCtx, baseCI := fs.AddConfig(baseCtx)
+		baseCI.UserAgent = "base-agent"
+
+		overrides, err := json.Marshal(map[string]any{
+			"alice": map[string]any{
+				"_filter": map[string]any{"IncludeRule": []string{"allow/**"}},
+				"_config": map[string]any{"IgnoreCaseSync": true},
+			},
+			"bob": map[string]any{
+				"_filter": map[string]any{"IncludeRule": []string{"deny/**"}},
+			},
+		})
+		require.NoError(t, err)
+		t.Setenv("RCLONE_TEST_PROXY_USER_OVERRIDES", string(overrides))
+
+		p := newTestProxy(baseCtx)
+
+		aliceVFS, _, err := p.Call("alice", "pw", false, "192.0.2.1:1007")
+		require.NoError(t, err)
+		bobVFS, _, err := p.Call("bob", "pw", false, "192.0.2.1:1008")
+		require.NoError(t, err)
+		carolVFS, _, err := p.Call("carol", "pw", false, "192.0.2.1:1009")
+		require.NoError(t, err)
+
+		// alice sees only allow/** and has IgnoreCaseSync
+		_, err = aliceVFS.Stat("ALLOW/A.TXT")
+		assert.NoError(t, err)
+		_, err = aliceVFS.Stat("deny/b.txt")
+		assert.Equal(t, vfs.ENOENT, err)
+
+		// bob sees only deny/** and did not inherit alice's IgnoreCaseSync
+		_, err = bobVFS.Stat("deny/b.txt")
+		assert.NoError(t, err)
+		_, err = bobVFS.Stat("DENY/B.TXT")
+		assert.Equal(t, vfs.ENOENT, err)
+		_, err = bobVFS.Stat("allow/a.txt")
+		assert.Equal(t, vfs.ENOENT, err)
+
+		// carol inherits baseCtx's *.secret filter without leaking alice/bob's rules
+		_, err = carolVFS.Stat("allow/a.txt")
+		assert.NoError(t, err)
+		_, err = carolVFS.Stat("deny/b.txt")
+		assert.NoError(t, err)
+		_, err = carolVFS.Stat("top.secret")
+		assert.Equal(t, vfs.ENOENT, err)
+
+		// baseCtx itself is untouched
+		assert.Same(t, baseFi, filter.GetConfig(baseCtx))
+		assert.Equal(t, "base-agent", fs.GetConfig(baseCtx).UserAgent)
+		assert.False(t, fs.GetConfig(baseCtx).IgnoreCaseSync)
+	})
+
+	t.Run("InvalidConfigAndFilter", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			raw  string
+		}{
+			{"filter_string", `{"type":"local","_root":` + `"` + root + `"` + `,"_filter":"not-an-object"}`},
+			{"filter_null", `{"type":"local","_root":` + `"` + root + `"` + `,"_filter":null}`},
+			{"filter_array", `{"type":"local","_root":` + `"` + root + `"` + `,"_filter":[]}`},
+			{"filter_bad_field_type", `{"type":"local","_root":` + `"` + root + `"` + `,"_filter":{"IncludeRule":"not-a-slice"}}`},
+			{"filter_bad_age", `{"type":"local","_root":` + `"` + root + `"` + `,"_filter":{"MinAge":"2h","MaxAge":"1h"}}`},
+			{"config_string", `{"type":"local","_root":` + `"` + root + `"` + `,"_config":"bad"}`},
+			{"config_bad_field_type", `{"type":"local","_root":` + `"` + root + `"` + `,"_config":{"Transfers":"not-an-int"}}`},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Setenv("RCLONE_TEST_PROXY_RAW_JSON", tc.raw)
+				p := newTestProxy(context.Background())
+				_, _, err := p.Call("bad-user", "pw", false, "192.0.2.1:1010")
+				require.Error(t, err)
+				assert.Equal(t, 0, p.vfsCache.Entries())
+			})
+		}
+	})
+
+	t.Run("ConcurrentLogins", func(t *testing.T) {
+		overrides, err := json.Marshal(map[string]any{
+			"alice": map[string]any{
+				"_filter": map[string]any{"IncludeRule": []string{"allow/**"}},
+				"_config": map[string]any{"IgnoreCaseSync": true},
+			},
+			"bob": map[string]any{
+				"_filter": map[string]any{"IncludeRule": []string{"deny/**"}},
+			},
+		})
+		require.NoError(t, err)
+		t.Setenv("RCLONE_TEST_PROXY_USER_OVERRIDES", string(overrides))
+
+		p := newTestProxy(context.Background())
+		var wg sync.WaitGroup
+		for range 4 {
+			wg.Go(func() {
+				v, _, err := p.Call("alice", "pw", false, "192.0.2.1:1020")
+				if assert.NoError(t, err) {
+					_, statErr := v.Stat("ALLOW/A.TXT")
+					assert.NoError(t, statErr)
+					_, denyErr := v.Stat("deny/b.txt")
+					assert.Equal(t, vfs.ENOENT, denyErr)
+				}
+			})
+			wg.Go(func() {
+				v, _, err := p.Call("bob", "pw", false, "192.0.2.1:1021")
+				if assert.NoError(t, err) {
+					_, statErr := v.Stat("deny/b.txt")
+					assert.NoError(t, statErr)
+					_, denyErr := v.Stat("allow/a.txt")
+					assert.Equal(t, vfs.ENOENT, denyErr)
+				}
+			})
+			wg.Go(func() {
+				v, _, err := p.Call("carol", "pw", false, "192.0.2.1:1022")
+				if assert.NoError(t, err) {
+					_, errA := v.Stat("allow/a.txt")
+					assert.NoError(t, errA)
+					_, errB := v.Stat("deny/b.txt")
+					assert.NoError(t, errB)
+				}
+			})
+			wg.Go(func() {
+				v, _, err := p.CallAccessKey("alice", "192.0.2.1:1023", false)
+				if assert.NoError(t, err) {
+					_, statErr := v.Stat("ALLOW/A.TXT")
+					assert.NoError(t, statErr)
+					_, denyErr := v.Stat("deny/b.txt")
+					assert.Equal(t, vfs.ENOENT, denyErr)
+				}
+			})
+		}
+		wg.Wait()
+	})
 }

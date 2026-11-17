@@ -11,6 +11,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"maps"
 	"os"
 	"strings"
 )
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	// Write the output
-	var out = map[string]string{
+	var out = map[string]any{
 		"type":     "local",
 		"_root":    root,
 		"_obscure": "pass",
@@ -43,12 +44,22 @@ func main() {
 				out["_secret_access_key"] = secret
 			}
 		}
-		if out["_secret_access_key"] == "" {
+		if out["_secret_access_key"] == nil || out["_secret_access_key"] == "" {
 			log.Fatalf("unknown access key ID %q", in["user"])
 		}
 	}
-	json.NewEncoder(os.Stdout).Encode(&out)
-	if err != nil {
+
+	if ovRaw := os.Getenv("RCLONE_TEST_PROXY_USER_OVERRIDES"); ovRaw != "" {
+		var overrides map[string]map[string]any
+		if err := json.Unmarshal([]byte(ovRaw), &overrides); err != nil {
+			log.Fatalf("RCLONE_TEST_PROXY_USER_OVERRIDES invalid JSON: %v", err)
+		}
+		if extra, ok := overrides[in["user"]]; ok {
+			maps.Copy(out, extra)
+		}
+	}
+
+	if err := json.NewEncoder(os.Stdout).Encode(&out); err != nil {
 		log.Fatal(err)
 	}
 }
