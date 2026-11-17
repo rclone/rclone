@@ -404,7 +404,7 @@ func SameObject(src, dst fs.Object) bool {
 		srcPath = strings.ToLower(srcPath)
 		dstPath = strings.ToLower(dstPath)
 	}
-	return srcPath == dstPath
+	return srcPath == dstPath || sameLocalPath(srcFs, dstFs, src.Remote(), dst.Remote())
 }
 
 // Move src object to dst or fdst if nil.  If dst is nil then it uses
@@ -437,7 +437,7 @@ func MoveTransfer(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string,
 func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, isTransfer bool) (newDst fs.Object, err error) {
 	origRemote := remote // avoid double-transform on fallback to copy
 	remote = transform.Path(ctx, remote, false)
-	if fs.FullPath(src) == fspath.JoinRootPath(fs.ConfigString(fdst), remote) {
+	if fs.FullPath(src) == fspath.JoinRootPath(fs.ConfigString(fdst), remote) || sameLocalPath(src.Fs(), fdst, src.Remote(), remote) {
 		// nothing to do, and copying an object onto itself then deleting the source would delete it
 		return src, nil
 	}
@@ -690,7 +690,21 @@ func SameConfigArr(fdst fs.Info, fsrcs []fs.Fs) bool {
 
 // Same returns true if fdst and fsrc point to the same underlying Fs
 func Same(fdst, fsrc fs.Info) bool {
-	return SameConfig(fdst, fsrc) && strings.Trim(fdst.Root(), "/") == strings.Trim(fsrc.Root(), "/")
+	return SameConfig(fdst, fsrc) && (strings.Trim(fdst.Root(), "/") == strings.Trim(fsrc.Root(), "/") || sameLocalPath(fsrc, fdst, "", ""))
+}
+
+// sameLocalPath reports whether two local paths resolve to the same path.
+func sameLocalPath(fsrc, fdst fs.Info, srcRemote, dstRemote string) bool {
+	srcCanonicalPath, dstCanonicalPath := fsrc.Features().CanonicalPath, fdst.Features().CanonicalPath
+	if srcCanonicalPath == nil || dstCanonicalPath == nil {
+		return false
+	}
+	srcPath, err := srcCanonicalPath(srcRemote)
+	if err != nil {
+		return false
+	}
+	dstPath, err := dstCanonicalPath(dstRemote)
+	return err == nil && srcPath == dstPath
 }
 
 // fixRoot returns the Root with a trailing / if not empty.
@@ -2108,7 +2122,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
-	if fdst.Name() == fsrc.Name() && dstFilePath == srcFilePath && !allowOverlap {
+	if fdst.Name() == fsrc.Name() && (dstFilePath == srcFilePath || sameLocalPath(fsrc, fdst, srcFileName, dstFileName)) && !allowOverlap {
 		fs.DebugfCtx(ctx, fdst, "don't need to copy/move %s, it is already at target location", dstFileName)
 		if usingLogger {
 			srcObj, _ := fsrc.NewObject(ctx, srcFileName)

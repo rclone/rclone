@@ -500,6 +500,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		UserMetadata:             xattrSupported, // can only R/W general purpose metadata if xattrs are supported
 		FilterAware:              true,
 		PartialUploads:           true,
+		CanonicalPath:            f.canonicalPath,
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -892,6 +893,19 @@ func (f *Fs) localPath(name string) (string, error) {
 		return "", fserrors.NoRetryError(fmt.Errorf("%q: %w", name, errPathEscapes))
 	}
 	return localPath, nil
+}
+
+// canonicalPath returns the absolute native path with symlinks resolved.
+func (f *Fs) canonicalPath(remote string) (string, error) {
+	localPath, err := f.localPath(remote)
+	if err != nil {
+		return "", err
+	}
+	localPath, err = filepath.Abs(localPath)
+	if err != nil {
+		return "", err
+	}
+	return filepath.EvalSymlinks(localPath)
 }
 
 // Put the Object to the local filesystem

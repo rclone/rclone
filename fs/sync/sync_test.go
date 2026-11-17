@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -686,6 +687,36 @@ func TestMoveOverSelf(t *testing.T) {
 	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	r.CheckLocalItems(t)
 	r.CheckRemoteItems(t, file2)
+}
+
+func TestMoveDirThroughSymlink(t *testing.T) {
+	ctx := context.Background()
+	for _, reverse := range []bool{false, true} {
+		t.Run(fmt.Sprintf("reverse=%v", reverse), func(t *testing.T) {
+			tempDir := t.TempDir()
+			realDir := filepath.Join(tempDir, "real")
+			linkDir := filepath.Join(tempDir, "link")
+			require.NoError(t, os.Mkdir(realDir, 0700))
+			require.NoError(t, os.WriteFile(filepath.Join(realDir, "file"), []byte("contents"), 0600))
+			if err := os.Symlink(realDir, linkDir); err != nil {
+				t.Skipf("Symlinks are unavailable: %v", err)
+			}
+
+			srcFs, err := fs.NewFs(ctx, realDir)
+			require.NoError(t, err)
+			dstFs, err := fs.NewFs(ctx, linkDir)
+			require.NoError(t, err)
+			if reverse {
+				srcFs, dstFs = dstFs, srcFs
+			}
+
+			err = MoveDir(ctx, dstFs, srcFs, false, false)
+			require.NoError(t, err)
+			contents, err := os.ReadFile(filepath.Join(realDir, "file"))
+			require.NoError(t, err)
+			assert.Equal(t, "contents", string(contents))
+		})
+	}
 }
 
 // Test server-side moving a file over itself
