@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -34,11 +35,11 @@ func sapiTLSContext(t *testing.T, server *httptest.Server) context.Context {
 	return ctx
 }
 
-func TestSAPITransportHTTP2(t *testing.T) {
+func TestSAPITransportDesktopClient(t *testing.T) {
 	hellos := make(chan *tls.ClientHelloInfo, 4)
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, 2, r.ProtoMajor)
-		assert.Equal(t, browserUA, r.UserAgent())
+		assert.Equal(t, 1, r.ProtoMajor)
+		assert.Equal(t, desktopUA, r.UserAgent())
 		assert.Equal(t, "present", r.Header.Get("X-Test"))
 		access := oauthHeaderData(t, r.Header.Get("Authorization"))["accesstoken"].(string)
 		w.Header().Set("Authorization", renewedHeader(access))
@@ -69,21 +70,21 @@ func TestSAPITransportHTTP2(t *testing.T) {
 		resp, err := session.client.Get(server.URL + "/sapi/test")
 		require.NoError(t, err)
 		require.NotNil(t, resp.TLS)
-		assert.Equal(t, "h2", resp.TLS.NegotiatedProtocol)
+		assert.Empty(t, resp.TLS.NegotiatedProtocol)
 		assert.NotEmpty(t, resp.TLS.VerifiedChains)
 		_, err = io.Copy(io.Discard, resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 	}
 	access, _ := savedToken(t, m)
-	assert.Equal(t, "at1rrr", access, "OAuth tokens are renewed over HTTP/2")
-	require.Len(t, hellos, 2, "HTTP/2 connections are reused")
+	assert.Equal(t, "at1rrr", access, "OAuth tokens are renewed over the desktop transport")
+	require.Len(t, hellos, 2, "HTTP/1.1 connections are reused")
 	for range 2 {
 		hello := <-hellos
-		assert.Equal(t, []string{"h2", "http/1.1"}, hello.SupportedProtos)
-		// Chrome's ClientHello starts with a GREASE cipher; crypto/tls doesn't.
+		// The official client offers no ALPN and starts with TLS 1.3 AES-256.
+		assert.Empty(t, hello.SupportedProtos)
 		require.NotEmpty(t, hello.CipherSuites)
-		assert.Equal(t, uint16(0x0a0a), hello.CipherSuites[0]&0x0f0f)
+		assert.Equal(t, uint16(0x1302), hello.CipherSuites[0])
 	}
 	session.client.CloseIdleConnections()
 	resp, err := session.client.Get(server.URL + "/sapi/test")
@@ -91,7 +92,7 @@ func TestSAPITransportHTTP2(t *testing.T) {
 	_, err = io.Copy(io.Discard, resp.Body)
 	require.NoError(t, err)
 	require.NoError(t, resp.Body.Close())
-	assert.Len(t, hellos, 1, "cleanup reaches HTTP/2 through the OAuth transport")
+	assert.Len(t, hellos, 1, "cleanup reaches the desktop transport through the OAuth transport")
 }
 
 func TestSAPITransportHTTP1Fallback(t *testing.T) {
@@ -101,7 +102,7 @@ func TestSAPITransportHTTP1Fallback(t *testing.T) {
 	}))
 	server.StartTLS()
 	defer server.Close()
-	client, err := newSAPIClient(sapiTLSContext(t, server), server.URL)
+	client, err := newSAPIClient(sapiTLSContext(t, server), server.URL, false)
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	for _, path := range []string{"/sapi/test", "/oauth/token", "/sapi"} {
@@ -133,7 +134,7 @@ func TestSAPITransportRouting(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 	ctx := sapiTLSContext(t, server)
-	client, err := newSAPIClient(ctx, server.URL)
+	client, err := newSAPIClient(ctx, server.URL, false)
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	for _, path := range []string{"/sapi/test", "/oauth/token", "/sapi"} {
@@ -145,7 +146,7 @@ func TestSAPITransportRouting(t *testing.T) {
 	assert.Equal(t, uint16(0x0a0a), (<-hellos).CipherSuites[0]&0x0f0f)
 	assert.NotEqual(t, uint16(0x0a0a), (<-hellos).CipherSuites[0]&0x0f0f, "OAuth uses the ordinary TLS handshake")
 	// A redirect to another host's SAPI path also uses the ordinary transport.
-	other, err := newSAPIClient(ctx, "https://other.example.com")
+	other, err := newSAPIClient(ctx, "https://other.example.com", false)
 	require.NoError(t, err)
 	t.Cleanup(other.CloseIdleConnections)
 	resp, err := other.Get(server.URL + "/sapi/test")
@@ -164,7 +165,7 @@ func TestSAPITransportDisableHTTP2(t *testing.T) {
 	defer server.Close()
 	ctx := sapiTLSContext(t, server)
 	fs.GetConfig(ctx).DisableHTTP2 = true
-	client, err := newSAPIClient(ctx, server.URL)
+	client, err := newSAPIClient(ctx, server.URL, false)
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	resp, err := client.Get(server.URL + "/sapi/test")
@@ -173,11 +174,16 @@ func TestSAPITransportDisableHTTP2(t *testing.T) {
 }
 
 func TestSAPITransportProxy(t *testing.T) {
-	for _, scheme := range []string{"http", "https"} {
-		t.Run(scheme, func(t *testing.T) {
+	for _, tc := range []struct {
+		scheme  string
+		desktop bool
+		proto   int
+	}{{"http", false, 2}, {"https", false, 2}, {"http", true, 1}, {"https", true, 1}} {
+		scheme := tc.scheme
+		t.Run(fmt.Sprintf("%s/desktop=%v", scheme, tc.desktop), func(t *testing.T) {
 			const body = "response through proxy"
 			server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, 2, r.ProtoMajor)
+				assert.Equal(t, tc.proto, r.ProtoMajor)
 				assert.Empty(t, r.Header.Get("Proxy-Authorization"))
 				_, _ = io.WriteString(w, body)
 			}))
@@ -215,7 +221,7 @@ func TestSAPITransportProxy(t *testing.T) {
 			ctx := sapiTLSContext(t, server)
 			// httptest uses the same CA for the origin and HTTPS proxy.
 			fs.GetConfig(ctx).HTTPProxy = strings.Replace(proxyServer.URL, "://", "://user:p%40ss%3Aword@", 1)
-			client, err := newSAPIClient(ctx, server.URL)
+			client, err := newSAPIClient(ctx, server.URL, tc.desktop)
 			require.NoError(t, err)
 			defer client.CloseIdleConnections()
 			resp, err := client.Get(server.URL + "/sapi/test")
@@ -238,7 +244,7 @@ func TestSAPITransportHandshakeTimeout(t *testing.T) {
 			return conn, nil
 		},
 	}
-	_, err := dialSAPITLS(context.Background(), "tcp", "example.com:443", &tls.Config{ServerName: "example.com"}, base)
+	_, err := dialSAPITLS(context.Background(), "tcp", "example.com:443", &tls.Config{ServerName: "example.com"}, base, nil)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 	_, err = io.Copy(io.Discard, peer)
 	require.NoError(t, err, "a failed handshake closes the connection")
@@ -249,7 +255,7 @@ func TestSAPITransportCertificateVerification(t *testing.T) {
 	server.EnableHTTP2 = true
 	server.StartTLS()
 	defer server.Close()
-	client, err := newSAPIClient(context.Background(), server.URL)
+	client, err := newSAPIClient(context.Background(), server.URL, false)
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	_, err = client.Get(server.URL + "/sapi/test")

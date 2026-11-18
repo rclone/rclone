@@ -1941,7 +1941,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = browserUA
 
-	client, err := newSAPIClient(ctx, opt.Endpoint)
+	client, err := newSAPIClient(ctx, opt.Endpoint, opt.usesOAuth())
 	if err != nil {
 		return nil, err
 	}

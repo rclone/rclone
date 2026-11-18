@@ -444,7 +444,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = browserUA
 
-	client, err := newSAPIClient(ctx, opt.Endpoint)
+	client, err := newSAPIClient(ctx, opt.Endpoint, opt.usesOAuth())
 	if err != nil {
 		return nil, err
 	}

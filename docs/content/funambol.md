@@ -17,9 +17,11 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
-HTTPS SAPI requests use a Chrome TLS handshake and HTTP/2 to work with the
-provider's browser checks. HTTP/1.1-only tenants are detected automatically.
-The global `--disable-http2` flag selects the standard HTTP/1.1 transport.
+HTTPS SAPI requests of remotes that log in with OAuth use the TLS handshake and
+User-Agent of the official desktop client over HTTP/1.1 to work with the
+provider's client checks. Other remotes use a Chrome TLS handshake and HTTP/2,
+detecting HTTP/1.1-only tenants automatically. The global `--disable-http2` flag
+selects the standard HTTP/1.1 transport for them.
 
 ## Configuration
 
