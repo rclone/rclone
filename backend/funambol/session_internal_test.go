@@ -103,6 +103,50 @@ func TestConfigNoContentLogsIn(t *testing.T) {
 	assert.Equal(t, testKey, f.validationKeyFromJar())
 }
 
+// A device id the service blocks is replaced before the login, which registers
+// the new one; an id that isn't blocked is kept.
+func TestConfigReplacesBlockedDeviceID(t *testing.T) {
+	const blocked = "web-blocked"
+	for _, tc := range []struct {
+		name    string
+		blocked bool
+	}{{"blocked", true}, {"not blocked", false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			info := func(w http.ResponseWriter, r *http.Request) {
+				if tc.blocked && r.Header.Get("X-deviceid") == blocked {
+					// The CDN's reply to a blocked id has no body.
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				_, _ = w.Write([]byte(`{}`))
+			}
+			var loginID string
+			generate := func(w http.ResponseWriter, r *http.Request) {
+				loginID = r.Header.Get("X-deviceid")
+				if requireCredentials(w, r) {
+					w.WriteHeader(http.StatusNoContent)
+				}
+			}
+			login := func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(`{"data":{"validationkey":"` + testKey + `","roles":[{"name":"standard"}]}}`))
+			}
+			m := newLoginServer(t, map[string]http.HandlerFunc{"/sapi/system/information": info, pathGenerate: generate, pathLogin: login})
+			m.Set("device_id", blocked)
+
+			_, err := Config(context.Background(), "test", m, fs.ConfigIn{})
+			require.NoError(t, err)
+			saved, _ := m.Get("device_id")
+			assert.Equal(t, saved, loginID, "the login uses the saved device id")
+			if tc.blocked {
+				assert.NotEqual(t, blocked, saved)
+				assert.True(t, strings.HasPrefix(saved, "web-"))
+			} else {
+				assert.Equal(t, blocked, saved)
+			}
+		})
+	}
+}
+
 // MFA-0001 from login means a code was sent after all.
 func TestConfigLoginRequiresCode(t *testing.T) {
 	generate := func(w http.ResponseWriter, r *http.Request) {

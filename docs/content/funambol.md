@@ -125,6 +125,10 @@ Password logins use the persistent-login cookie to obtain fresh validation
 keys. Other passwordless configurations without OAuth application credentials
 use temporary web SMS sessions, which may require another code when they expire.
 
+The provider can block the device id of a remote. Every request then fails, and
+rclone reports that the service blocks the device id. Run
+`rclone config reconnect remote:` to log in again with a new device id.
+
 ### Modification times and hashes
 
 The remote stores modification times to the nearest second.  Modification

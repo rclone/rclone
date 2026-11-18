@@ -50,6 +50,42 @@ func newDeviceID(oauth bool) string {
 	return "web-" + hex.EncodeToString(b)
 }
 
+// errDeviceBlocked is returned when the service blocks the remote's device id.
+var errDeviceBlocked = errors.New("the service blocks the device id of this remote")
+
+// deviceBlocked reports whether the service blocks the remote's device id.
+// Its CDN answers any request carrying a blocked id with an empty 401, even an
+// anonymous one, while the same request without the id goes through.
+func (f *Fs) deviceBlocked(ctx context.Context) bool {
+	status := func(id string) int {
+		opts := rest.Opts{
+			Method:     "GET",
+			Path:       "/sapi/system/information",
+			Parameters: url.Values{"action": {"get"}},
+			// An empty value drops the header set on the client.
+			ExtraHeaders: map[string]string{"X-deviceid": id},
+			IgnoreStatus: true,
+		}
+		resp, err := f.srv.Call(ctx, &opts)
+		if err != nil {
+			return 0
+		}
+		body, _ := readReply(resp)
+		if resp.StatusCode == http.StatusUnauthorized && len(body) > 0 {
+			return 0
+		}
+		return resp.StatusCode
+	}
+	return status(f.opt.DeviceID) == http.StatusUnauthorized && status("") == http.StatusOK
+}
+
+// setDeviceID makes id the remote's device id and saves it in the config.
+func (f *Fs) setDeviceID(id string) {
+	f.opt.DeviceID = id
+	f.m.Set("device_id", id)
+	f.srv.SetHeader("X-deviceid", id)
+}
+
 // configTmpSession holds the provisional cookies between the credentials step
 // and the verification-code step of interactive configuration.
 const configTmpSession = "tmp_session"
@@ -483,6 +519,12 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 
 	switch configIn.State {
 	case "":
+		// A new login registers a new device id, so replace a blocked one.
+		if f.deviceBlocked(ctx) {
+			fs.Logf(nil, "%s: the service blocks device id %q - using a new one", name, f.opt.DeviceID)
+			f.setDeviceID(newDeviceID(f.opt.usesOAuth()))
+		}
+
 		// Without a password, log in by SMS via Telefónica (O2 Spain),
 		// with OAuth when application credentials are available.
 		if f.opt.Pass == "" {

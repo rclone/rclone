@@ -1993,6 +1993,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	var rootRes api.FoldersResponse
 	opts := rest.Opts{Method: "GET", Path: "/sapi/media/folder/root", Parameters: url.Values{"action": {"get"}}}
 	if err := f.callJSON(ctx, &opts, nil, &rootRes); err != nil {
+		if f.deviceBlocked(ctx) {
+			return nil, fmt.Errorf("%w - run %q to register a new one", errDeviceBlocked, "rclone config reconnect "+name+":")
+		}
 		return nil, fmt.Errorf("couldn't find root folder: %w", err)
 	}
 	if len(rootRes.Data.Folders) == 0 {
