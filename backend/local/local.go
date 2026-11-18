@@ -455,6 +455,9 @@ var (
 	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
 	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
 	errLinkNameInvalid   = errors.New("translated link needs a file name before the \"" + fs.LinkSuffix + "\" suffix")
+
+	// listLstat reads the info of each directory entry in List, so tests can count the calls
+	listLstat = os.Lstat
 )
 
 // NewFs constructs an Fs from the path
@@ -722,17 +725,23 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				break
 			}
 		} else {
-			// For other OSes we read the names only (which shouldn't fail) then stat the
+			// For other OSes we read the names and types only (which shouldn't fail) then stat the
 			// individual ourselves so we can log errors but not fail the directory read.
-			var names []string
-			names, err = fd.Readdirnames(1024)
-			if err == io.EOF && len(names) == 0 {
+			var dirEntries []os.DirEntry
+			dirEntries, err = fd.ReadDir(1024)
+			if err == io.EOF && len(dirEntries) == 0 {
 				break
 			}
 			if err == nil {
-				for _, name := range names {
+				for _, dirEntry := range dirEntries {
+					name := dirEntry.Name()
+					// Skip excluded files before the stat, which dominates listing
+					// big directories when the inodes aren't cached
+					if useFilter && dirEntry.Type().IsRegular() && !filter.IncludeRemote(f.cleanRemote(dir, name)) {
+						continue
+					}
 					namepath := filepath.Join(fsDirPath, name)
-					fi, fierr := os.Lstat(namepath)
+					fi, fierr := listLstat(namepath)
 					if os.IsNotExist(fierr) {
 						// skip entry removed by a concurrent goroutine
 						continue
