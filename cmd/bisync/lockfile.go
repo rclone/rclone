@@ -2,6 +2,7 @@ package bisync
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -108,6 +109,9 @@ func (b *bisyncRun) lockFileIsExpired() bool {
 			}
 		}
 		b.handleErr(b.lockFile, "error closing file", rdf.Close(), true, true)
+		if decodeErr == nil && b.lockFileOpt.data.TimeExpires.IsZero() {
+			decodeErr = errors.New("lock file is empty or has no expiry time")
+		}
 		if decodeErr != nil {
 			if b.opt.MaxLock < basicallyforever {
 				fs.Infof(b.lockFile, Color(terminal.YellowFg, "Lock file is unreadable (decode error: %v) and --max-lock is set. Treating as expired."), decodeErr)
