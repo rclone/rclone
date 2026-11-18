@@ -679,7 +679,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 	// Dump request
 	if wantDump {
-		reqDump, _ = httputil.DumpRequestOut(req, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
+		reqDump, _ = dumpRequestOut(req, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
 		if t.dump&fs.DumpAuth == 0 {
 			reqDump = cleanAuths(reqDump)
 		}
@@ -759,4 +759,20 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		checkServerTime(req, resp)
 	}
 	return resp, err
+}
+
+func dumpRequestOut(req *http.Request, body bool) ([]byte, error) {
+	if body || req.Body == nil || req.Body == http.NoBody || req.ContentLength <= 1 {
+		return httputil.DumpRequestOut(req, body)
+	}
+	// Even with body=false, DumpRequestOut buffers ContentLength dummy bytes.
+	// Use one byte to preserve header framing, then restore the original length.
+	short := *req
+	short.ContentLength = 1
+	dump, err := httputil.DumpRequestOut(&short, false)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.Replace(dump, []byte("\r\nContent-Length: 1\r\n"),
+		fmt.Appendf(nil, "\r\nContent-Length: %d\r\n", req.ContentLength), 1), nil
 }

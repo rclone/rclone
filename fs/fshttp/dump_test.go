@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -62,6 +63,56 @@ func (c *captureBuf) String() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.buf.String()
+}
+
+func TestDumpHeadersLargeRequest(t *testing.T) {
+	const size = 16 << 20
+	const marker = "upload body marker"
+	body := marker + strings.Repeat("x", size-len(marker))
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, int64(size), r.ContentLength)
+		prefix := make([]byte, len(marker))
+		_, err := io.ReadFull(r.Body, prefix)
+		assert.NoError(t, err)
+		assert.Equal(t, marker, string(prefix))
+		n, err := io.Copy(io.Discard, r.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(size-len(marker)), n)
+		w.Header().Set("X-Upload-Receipt", "accepted")
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer srv.Close()
+
+	capture := &captureBuf{}
+	fs.SetLogger(slog.NewTextHandler(capture, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	defer fs.SetLogger(slog.NewTextHandler(io.Discard, nil))
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	oldDump, oldLevel := ci.Dump, ci.LogLevel
+	ci.Dump, ci.LogLevel = fs.DumpHeaders, fs.LogLevelDebug
+	defer func() { ci.Dump, ci.LogLevel = oldDump, oldLevel }()
+
+	client := NewClientCustom(ctx, nil)
+	defer client.CloseIdleConnections()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, srv.URL+"/upload", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("X-Upload-Marker", "headers-only")
+
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	resp, err := client.Do(req)
+	runtime.ReadMemStats(&after)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	// Allow ample headroom for HTTP and logging, but not a body-sized allocation.
+	assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(size/2))
+	log := capture.String()
+	assert.Contains(t, log, "PUT /upload HTTP/1.1")
+	assert.Contains(t, log, "Content-Length: 16777216")
+	assert.Contains(t, log, "X-Upload-Marker: headers-only")
+	assert.Contains(t, log, "X-Upload-Receipt: accepted")
+	assert.NotContains(t, log, marker)
 }
 
 // TestDumpErrors checks that --dump errors only dumps the transactions
