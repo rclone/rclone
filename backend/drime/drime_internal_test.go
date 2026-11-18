@@ -156,3 +156,38 @@ func TestGetItemListError(t *testing.T) {
 	assert.NotErrorIs(t, err, fs.ErrorObjectNotFound)
 	assert.Contains(t, err.Error(), "access denied")
 }
+
+// TestMoveToFolder checks that moveTo reads back a folder moved to a
+// new parent without being renamed.
+func TestMoveToFolder(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/file-entries/move":
+			var req api.MoveRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+			assert.Equal(t, []string{"2000"}, req.EntryIDs)
+			assert.Equal(t, "20", req.DestinationID)
+			require.NoError(t, json.NewEncoder(w).Encode(api.MoveResponse{Status: "success"}))
+		case "/drive/file-entries":
+			assert.Equal(t, "20", r.URL.Query().Get("folderId"))
+			require.NoError(t, json.NewEncoder(w).Encode(map[string]any{
+				"current_page": 1,
+				"last_page":    1,
+				"data": []api.Item{
+					{ID: "1000", Name: "file.txt", Type: "text"},
+					{ID: "2000", Name: "TestFolder", Type: api.ItemTypeFolder},
+				},
+			}))
+		default:
+			t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+	f := testFs(t, server)
+
+	info, err := f.moveTo(context.Background(), "2000", "TestFolder", "TestFolder", "10", "20")
+	require.NoError(t, err)
+	assert.Equal(t, "2000", info.ID.String())
+	assert.Equal(t, api.ItemTypeFolder, info.Type)
+}

@@ -314,7 +314,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 
 // getItem reads item for ID given
 func (f *Fs) getItem(ctx context.Context, id string, dirID string, leaf string) (info *api.Item, err error) {
-	found, err := f.listAll(ctx, dirID, false, true, leaf, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, dirID, false, false, leaf, func(item *api.Item) bool {
 		if item.ID.String() == id {
 			info = item
 			return true
