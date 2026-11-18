@@ -256,6 +256,10 @@ func splitExtension(remote string) (base, exts string) {
 		ext   = path.Ext(remote)
 	)
 	for ext != "" {
+		// The leading dot of a name like ".bashrc" isn't an extension
+		if ext == path.Base(base) {
+			break
+		}
 		// Look second and subsequent extensions in mime types.
 		// If they aren't found then don't keep it as an extension.
 		if !first && mime.TypeByExtension(ext) == "" {
