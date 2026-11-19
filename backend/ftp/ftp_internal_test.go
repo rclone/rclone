@@ -307,3 +307,40 @@ func TestFtpReadCloserClose(t *testing.T) {
 		_ = f.pool[0].Quit()
 	})
 }
+
+// A 550 or 450 reply doesn't always mean the file is missing - the
+// server may be reporting a permission problem - so the translated
+// not-found errors keep the server's reply text while still matching
+// the not-found sentinels with errors.Is.
+func TestTranslateErrorFileAndDir(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		code     int
+		msg      string
+		wantFile error // sentinel translateErrorFile must match, nil if the error passes through unchanged
+		wantDir  error // sentinel translateErrorDir must match, nil if the error passes through unchanged
+	}{
+		{name: "550 file unavailable", code: ftp.StatusFileUnavailable, msg: "Permission denied", wantFile: fs.ErrorObjectNotFound, wantDir: fs.ErrorDirNotFound},
+		{name: "450 file action ignored", code: ftp.StatusFileActionIgnored, msg: "File busy", wantFile: fs.ErrorObjectNotFound, wantDir: fs.ErrorDirNotFound},
+		{name: "530 not logged in", code: 530, msg: "Login incorrect"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			in := &textproto.Error{Code: test.code, Msg: test.msg}
+
+			gotFile := translateErrorFile(in)
+			gotDir := translateErrorDir(in)
+
+			if test.wantFile == nil {
+				assert.True(t, gotFile == error(in), "translateErrorFile: expected unchanged error, got %v", gotFile)
+				assert.True(t, gotDir == error(in), "translateErrorDir: expected unchanged error, got %v", gotDir)
+			} else {
+				assert.ErrorIs(t, gotFile, test.wantFile)
+				assert.ErrorIs(t, gotDir, test.wantDir)
+				assert.Contains(t, gotFile.Error(), test.msg)
+				assert.Contains(t, gotDir.Error(), test.msg)
+				assert.NotEqual(t, test.wantFile, gotFile)
+				assert.NotEqual(t, test.wantDir, gotDir)
+			}
+		})
+	}
+}

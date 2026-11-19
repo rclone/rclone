@@ -741,7 +741,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if err == fs.ErrorObjectNotFound || errors.Is(err, fs.ErrorNotAFile) {
+			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorNotAFile) {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil
@@ -765,7 +765,7 @@ func translateErrorFile(err error) error {
 	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
-			err = fs.ErrorObjectNotFound
+			err = fmt.Errorf("%w: %s", fs.ErrorObjectNotFound, errX.Msg)
 		}
 	}
 	return err
@@ -776,7 +776,7 @@ func translateErrorDir(err error) error {
 	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
-			err = fs.ErrorDirNotFound
+			err = fmt.Errorf("%w: %s", fs.ErrorDirNotFound, errX.Msg)
 		}
 	}
 	return err
@@ -824,7 +824,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 		f.putFtpConnection(&c, err)
 		if err != nil {
 			err = translateErrorFile(err)
-			if err == fs.ErrorObjectNotFound {
+			if errors.Is(err, fs.ErrorObjectNotFound) {
 				return nil, nil
 			}
 			if errX := textprotoError(err); errX != nil {
@@ -1056,7 +1056,7 @@ func (f *Fs) mkdir(ctx context.Context, abspath string) error {
 			return nil
 		}
 		return fs.ErrorIsFile
-	} else if err != fs.ErrorObjectNotFound {
+	} else if !errors.Is(err, fs.ErrorObjectNotFound) {
 		return fmt.Errorf("mkdir %q failed: %w", abspath, err)
 	}
 	parent := path.Dir(abspath)
@@ -1164,7 +1164,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			return fs.ErrorDirExists
 		}
 		return fs.ErrorIsFile
-	} else if err != fs.ErrorObjectNotFound {
+	} else if !errors.Is(err, fs.ErrorObjectNotFound) {
 		return fmt.Errorf("DirMove getInfo failed: %w", err)
 	}
 
