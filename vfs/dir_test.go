@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"os"
 	"runtime"
@@ -612,6 +613,110 @@ func TestDirRemoveName(t *testing.T) {
 	vfs.Opt.ReadOnly = true
 	err = dir.RemoveName("potato")
 	assert.Equal(t, EROFS, err)
+}
+
+// Keep a pointer to dir, as the kernel keeps a process's current directory.
+// Forget the root's cache, then rename dir to dir2 through its path. The dir
+// we kept must be the one renamed: it is now dir2, and a directory made in
+// it ends up in dir2.
+func TestDirForgetHeldDir(t *testing.T) {
+	r, vfs, dir, _ := dirCreate(t)
+
+	features := r.Fremote.Features()
+	if features.DirMove == nil && features.Move == nil && features.Copy == nil {
+		t.Skip("can't rename directories")
+	}
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	root.ForgetAll()
+
+	require.NoError(t, root.Rename("dir", "dir2", root))
+	assert.Equal(t, "dir2", dir.Path())
+
+	node, err := vfs.Stat("dir2")
+	require.NoError(t, err)
+	assert.Same(t, dir, node)
+
+	// The held directory works on its new path.
+	_, err = dir.Mkdir("sub")
+	require.NoError(t, err)
+	_, err = vfs.Stat("dir2/sub")
+	assert.NoError(t, err)
+}
+
+// Keep a pointer to dir/file1, as an open file keeps it. Forget dir's cache,
+// then rename file1 to file2 through its path. The file we kept must be the
+// one renamed: it is now dir/file2.
+func TestDirForgetHeldFile(t *testing.T) {
+	r, vfs, dir, _ := dirCreate(t)
+
+	features := r.Fremote.Features()
+	if features.Move == nil && features.Copy == nil {
+		t.Skip("can't rename files")
+	}
+
+	node, err := vfs.Stat("dir/file1")
+	require.NoError(t, err)
+	file := node.(*File)
+
+	dir.ForgetAll()
+
+	require.NoError(t, dir.Rename("file1", "file2", dir))
+	assert.Equal(t, "dir/file2", file.Path())
+
+	node, err = vfs.Stat("dir/file2")
+	require.NoError(t, err)
+	assert.Same(t, file, node)
+}
+
+// Open dir/file1 without reading it. Forget dir's cache, then rename file1
+// to file2 through its path. Reading the open file must still give its
+// contents.
+func TestDirForgetHeldFileRenamedRead(t *testing.T) {
+	r, vfs, dir, _ := dirCreate(t)
+
+	features := r.Fremote.Features()
+	if features.Move == nil && features.Copy == nil {
+		t.Skip("can't rename files")
+	}
+
+	fd, err := vfs.OpenFile("dir/file1", os.O_RDONLY, 0)
+	require.NoError(t, err)
+	defer func() { _ = fd.Close() }()
+
+	dir.ForgetAll()
+
+	require.NoError(t, dir.Rename("file1", "file2", dir))
+
+	buf := make([]byte, 64)
+	n, err := fd.Read(buf)
+	if err != io.EOF {
+		require.NoError(t, err)
+	}
+	assert.Equal(t, "file1 contents", string(buf[:n]))
+}
+
+// Keep a pointer to dir/file1. Forget dir's cache, then overwrite file1
+// through its path with longer contents. The file we kept must report the
+// new size.
+func TestDirForgetHeldFileChanged(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+
+	node, err := vfs.Stat("dir/file1")
+	require.NoError(t, err)
+	file := node.(*File)
+
+	dir.ForgetAll()
+
+	contents := "longer contents than before"
+	fd, err := vfs.OpenFile("dir/file1", os.O_WRONLY|os.O_TRUNC, 0777)
+	require.NoError(t, err)
+	_, err = fd.Write([]byte(contents))
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+
+	assert.Equal(t, int64(len(contents)), file.Size())
 }
 
 func TestDirRename(t *testing.T) {
