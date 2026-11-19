@@ -356,3 +356,15 @@ func TestSAPITransportMacClient(t *testing.T) {
 		})
 	}
 }
+
+func TestSAPITransportUnusedDefaultTransport(t *testing.T) {
+	// fshttp copies http.DefaultTransport, which gets an "h2" entry on first
+	// use. Use an unused one so the SAPI transport is built as in a fresh process.
+	old := http.DefaultTransport
+	t.Cleanup(func() { http.DefaultTransport = old })
+	for _, platform := range []string{"", "macos"} {
+		http.DefaultTransport = &http.Transport{ForceAttemptHTTP2: true}
+		_, err := newSAPIClient(context.Background(), "https://cloud.example.com/sapi", platform)
+		require.NoError(t, err, "platform %q", platform)
+	}
+}
