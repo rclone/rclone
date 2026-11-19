@@ -1,0 +1,10 @@
+name: Blomp
+description: Blomp Cloud Storage
+region:
+  us-east-1: Default region
+endpoint:
+  storage.blomp.com: Blomp Cloud Storage
+quirks:
+  force_path_style: true # virtual-hosted style requests are not supported
+  no_check_bucket: true # each account has one bucket, made with the account
+  use_multipart_etag: false # multipart ETags are not the MD5 of the part MD5s
