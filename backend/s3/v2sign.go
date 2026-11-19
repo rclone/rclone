@@ -45,6 +45,54 @@ type v2Signer struct {
 	opt *Options
 }
 
+// canonicalResourceBucket returns the bucket named by host, or "" if host
+// addresses the endpoint directly and the bucket is already in the path.
+//
+// v2 signs "/bucket/key" regardless of addressing style, so with virtual host
+// style the bucket has to come from the Host header. endpoint may be empty,
+// in which case host is assumed to be AWS.
+//
+// See https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+func canonicalResourceBucket(host, endpoint string) string {
+	if host == "" {
+		return ""
+	}
+	if i := strings.IndexByte(host, ':'); i >= 0 {
+		host = host[:i]
+	}
+	base := endpoint
+	if base != "" {
+		// Strip the scheme and any port to get the endpoint host
+		if i := strings.Index(base, "://"); i >= 0 {
+			base = base[i+3:]
+		}
+		base = strings.TrimSuffix(base, "/")
+		if i := strings.IndexByte(base, '/'); i >= 0 {
+			base = base[:i]
+		}
+		if i := strings.IndexByte(base, ':'); i >= 0 {
+			base = base[:i]
+		}
+	} else {
+		// AWS hosts are bucket.s3.amazonaws.com or
+		// bucket.s3.region.amazonaws.com, so the s3 label starts the endpoint
+		labels := strings.Split(host, ".")
+		for i, label := range labels {
+			if label == "s3" || strings.HasPrefix(label, "s3-") {
+				base = strings.Join(labels[i:], ".")
+				break
+			}
+		}
+		if base == "" {
+			return ""
+		}
+	}
+	if !strings.HasSuffix(host, "."+base) {
+		return ""
+	}
+	return strings.TrimSuffix(host, "."+base)
+}
+
 // SignHTTP signs requests using v2 auth.
 //
 // Cobbled together from goamz and aws-sdk-go.
@@ -59,6 +107,11 @@ func (v2 *v2Signer) SignHTTP(ctx context.Context, credentials aws.Credentials, r
 	uri := req.URL.EscapedPath()
 	if uri == "" {
 		uri = "/"
+	}
+	// v2 signs the bucket as part of the resource, but with virtual host
+	// style addressing it is in the Host header rather than the path
+	if bucket := canonicalResourceBucket(req.URL.Host, v2.opt.Endpoint); bucket != "" {
+		uri = "/" + bucket + uri
 	}
 
 	// Look through headers of interest
