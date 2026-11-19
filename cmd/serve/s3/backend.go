@@ -227,7 +227,10 @@ func (b *s3Backend) SetObjectTagging(ctx context.Context, bucketName, objectName
 		return err
 	}
 	node, err := _vfs.Stat(fp)
-	if err != nil || !node.IsFile() {
+	if err != nil {
+		return notFound(err, gofakes3.KeyNotFound(objectName))
+	}
+	if !node.IsFile() {
 		return gofakes3.KeyNotFound(objectName)
 	}
 	t := b.tenant(ctx)
@@ -524,7 +527,10 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 // objectName stands for if its directory fp exists.
 func (b *s3Backend) dirMarkerObject(_vfs *vfs.VFS, fp, objectName string) (*gofakes3.Object, error) {
 	node, err := _vfs.Stat(fp)
-	if err != nil || !node.IsDir() {
+	if err != nil {
+		return nil, notFound(err, gofakes3.KeyNotFound(objectName))
+	}
+	if !node.IsDir() {
 		return nil, gofakes3.KeyNotFound(objectName)
 	}
 	return &gofakes3.Object{

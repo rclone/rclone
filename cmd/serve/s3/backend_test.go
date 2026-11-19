@@ -540,6 +540,12 @@ func TestStatErrors(t *testing.T) {
 		assert.ErrorContains(t, err, "listing failed", "GetObject")
 		_, err = b.CopyObject(ctx, "bucket", "object.txt", "bucket", "copy.txt", map[string]string{})
 		assert.ErrorContains(t, err, "listing failed", "CopyObject")
+		err = b.SetObjectTagging(ctx, "bucket", "object.txt", "a=1")
+		assert.ErrorContains(t, err, "listing failed", "SetObjectTagging")
+		_, err = b.HeadObject(ctx, "bucket", "dir/")
+		assert.ErrorContains(t, err, "listing failed", "HeadObject dir marker")
+		_, err = b.GetObject(ctx, "bucket", "dir/", nil)
+		assert.ErrorContains(t, err, "listing failed", "GetObject dir marker")
 	})
 
 	t.Run("Bucket", func(t *testing.T) {
