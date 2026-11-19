@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"weak"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
@@ -38,6 +39,10 @@ type Dir struct {
 	read    time.Time         // time directory entry last read
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
+
+	// forgotten holds child directories dropped by ForgetAll so a re-read
+	// can reuse any which are still referenced (e.g. by the kernel) - may be nil
+	forgotten map[string]weak.Pointer[Dir]
 
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
@@ -209,6 +214,12 @@ func (d *Dir) addVirtual(n int32) {
 //
 // It does not invalidate or clear the cache of the parent directory.
 //
+// Child directories dropped here are held weakly, so a later re-read
+// reuses the same nodes (and inode numbers) while they are still
+// referenced elsewhere, e.g. by the kernel as a process working
+// directory, and a new node for the same path would make getcwd fail.
+// Directories nobody references are freed.
+//
 // It returns true if the directory or any of its children had virtual
 // entries so could not be forgotten. Children which didn't have
 // virtual entries will be forgotten even if true is returned.
@@ -239,6 +250,17 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	hasVirtual = d.hasVirtual()
 	if !hasVirtual {
 		d.read = time.Time{}
+		// Hold dropped child directories weakly so a re-read can
+		// reuse any still referenced elsewhere. Replacing the map
+		// frees the file entries and their backing storage.
+		for name, node := range d.items {
+			if dir, ok := node.(*Dir); ok {
+				if d.forgotten == nil {
+					d.forgotten = make(map[string]weak.Pointer[Dir])
+				}
+				d.forgotten[name] = weak.Make(dir)
+			}
+		}
 		d.items = make(map[string]Node)
 		d.cleanupTimer.Stop()
 	} else {
@@ -753,10 +775,15 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		case fs.Directory:
 			// Reuse old dir value if it exists
 			if node == nil || !node.IsDir() {
-				node = newDir(d.vfs, d.f, d, item)
+				if old := d.forgotten[name].Value(); old != nil {
+					node = old
+				} else {
+					node = newDir(d.vfs, d.f, d, item)
+				}
 			}
 			dir := node.(*Dir)
 			dir.mu.Lock()
+			dir.path = item.Remote()
 			dir.modTime = item.ModTime(d.vfs.ctx)
 			dir.entry = item
 			if dirTree != nil {
@@ -780,6 +807,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		d.items[name] = node
 	}
 	mv.end(d)
+	d.forgotten = nil
 	return nil
 }
 
