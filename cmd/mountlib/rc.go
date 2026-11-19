@@ -9,6 +9,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
@@ -61,6 +62,7 @@ This takes the following parameters:
 - mountType: one of the values (mount, cmount, mount2) specifies the mount implementation to use
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
+- vfsId: ID of an existing active VFS to reuse.
 
 Alternatively, you can pass VFS and Mount options flat at the top level of the parameter map. The option names are the same as their CLI flags without '--' and with '-' replaced by '_' (e.g. 'vfs_cache_mode' instead of 'CacheMode' inside 'vfsOpt', and 'volname' instead of 'VolName' inside 'mountOpt').
 
@@ -76,6 +78,7 @@ This returns the following values:
 - mountPoint: the actual mount point that was used (this may differ
   from the input, e.g. on Windows when "*" is passed the allocated
   drive letter is returned)
+- vfsId: unique identifier for the VFS instance used by this mount point
 
 Example:
 
@@ -139,17 +142,33 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	var reusedVFS *vfs.VFS
+	inVfsID, err := in.GetString("vfsId")
+	if err == nil && inVfsID != "" {
+		reusedVFS, err = vfs.GetVFSByID(inVfsID)
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+
 	// Clean up consumed keys and check for leftovers
 	delete(in, "mountPoint")
 	delete(in, "mountType")
 	delete(in, "fs")
+	delete(in, "vfsId")
 	err = rc.CheckParamsUsed(in)
 	if err != nil {
+		if reusedVFS != nil {
+			reusedVFS.Shutdown()
+		}
 		return nil, err
 	}
 
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
 	mnt.Ctx = ctx
+	mnt.VFS = reusedVFS
 	_, err = mnt.Mount()
 	if err != nil {
 		fs.Logf(nil, "mount FAILED: %v", err)
@@ -171,8 +190,13 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	liveMounts[actualMountPoint] = mnt
 
 	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), actualMountPoint, mountType)
+	var vfsID string
+	if mnt.VFS != nil {
+		vfsID = mnt.VFS.ID
+	}
 	return rc.Params{
 		"mountPoint": actualMountPoint,
+		"vfsId":      vfsID,
 	}, nil
 }
 
@@ -274,6 +298,7 @@ type MountInfo struct {
 	Fs         string    `json:"Fs"`
 	MountPoint string    `json:"MountPoint"`
 	MountedOn  time.Time `json:"MountedOn"`
+	VfsID      string    `json:"vfsId"`
 }
 
 // listMountsRc returns a list of current mounts sorted by mount path
@@ -288,10 +313,15 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	mountPoints := []MountInfo{}
 	for _, k := range keys {
 		m := liveMounts[k]
+		var vfsID string
+		if m.VFS != nil {
+			vfsID = m.VFS.ID
+		}
 		info := MountInfo{
 			Fs:         fs.ConfigString(m.Fs),
 			MountPoint: m.MountPoint,
 			MountedOn:  m.MountedOn,
+			VfsID:      vfsID,
 		}
 		mountPoints = append(mountPoints, info)
 	}
