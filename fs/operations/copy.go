@@ -417,8 +417,8 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		doUpdate:    dst != nil,
 	}
 	c.hashType, c.hashOption = CommonHash(ctx, f, src.Fs())
-	if c.dst != nil {
-		c.remote = transform.Path(ctx, c.dst.Remote(), false)
+	if c.dst != nil && !transform.Transforming(ctx) {
+		c.remote = c.dst.Remote()
 	}
 	// Are we using partials?
 	//

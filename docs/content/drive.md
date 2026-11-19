@@ -173,16 +173,27 @@ folders it creates.
 So if you uploaded files to drive via the web interface (or any other
 means) they will not be visible to rclone.
 
-This can be useful if you are using rclone to backup data and you want
-to be sure confidential data on your drive is not visible to rclone.
-
 Files created with this scope are visible in the web interface.
+
+Access is tied to the client_id used to create the files, not to your
+account. If you deauthorize the app or its client_id is revoked,
+rclone loses access to these files. If you change client_id, for
+example when [making your own client_id](#making-your-own-client-id),
+rclone will not see the files created with the previous one, although
+they remain visible in the web interface. A sync may then upload them
+again as duplicates. If you later switch to the `drive` scope, you can
+remove these with `rclone dedupe`.
 
 #### drive.appfolder
 
 This gives rclone its own private area to store files.  Rclone will
 not be able to see any other files on your drive and you won't be able
 to see rclone's files from the web interface either.
+
+As with `drive.file`, these files are tied to the client_id. If it is
+revoked, rclone can no longer access them, and as they aren't shown in
+the web interface they cannot be reached any other way. If you change
+it, switch back to the original client_id to regain access.
 
 #### drive.metadata.readonly
 
@@ -1962,6 +1973,16 @@ users.
 client_id, so creating one is now required rather than merely
 recommended.  New remotes created with `rclone config` will warn you if
 you leave the client_id blank.
+
+If your remote uses the `drive.file` [scope](#scopes), files created
+with your previous client_id will not be visible after you switch. To
+access them, set your new client_id with the `drive` scope and keep
+using that scope (note this gives rclone access to all your files).
+This also re-authorizes rclone:
+
+```console
+rclone config update remote client_id YOUR_ID client_secret YOUR_SECRET scope drive
+```
 
 Using your own client_id has other benefits too. There is a global
 rate limit on the number of queries per second that each client_id can

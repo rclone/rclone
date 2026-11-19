@@ -143,6 +143,9 @@ func (s *StatsInfo) RemoteStats(short bool) (out rc.Params, err error) {
 	} else {
 		out["eta"] = nil
 	}
+	if s.errors > 0 && s.lastError != nil {
+		out["lastError"] = s.lastError.Error()
+	}
 	s.mu.RUnlock()
 
 	if !short && !s.checking.empty() {
@@ -150,9 +153,6 @@ func (s *StatsInfo) RemoteStats(short bool) (out rc.Params, err error) {
 	}
 	if !short && !s.transferring.empty() {
 		out["transferring"] = s.transferring.rcStats(s.inProgress)
-	}
-	if s.errors > 0 {
-		out["lastError"] = s.lastError.Error()
 	}
 
 	return out, nil
