@@ -28,12 +28,16 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
+	err := f.mkdirParent(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
 	// Temporary Object under construction
 	dstObj := &Object{
 		fs:     f,
 		remote: remote,
 	}
-	err := f.copy(ctx, dstObj, srcObj)
+	err = f.copy(ctx, dstObj, srcObj)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +64,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if srcBucket != dstBucket {
 		return nil, fs.ErrorCantMove
 	}
-	err := f.renameObject(ctx, srcBucket, srcPath, dstPath)
+	err := f.mkdirParent(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	err = f.renameObject(ctx, srcBucket, srcPath, dstPath)
 	if err != nil {
 		return nil, err
 	}
