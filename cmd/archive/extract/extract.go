@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"path"
 	"strings"
 
@@ -118,9 +119,6 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	}
 
 	fs.Debugf(dst, "Destination for extracted files: %q", dstDir)
-	// start accounting
-	tr := accounting.Stats(ctx).NewTransfer(srcObj, nil)
-	defer tr.Done(ctx, err)
 	// open source
 	var options []fs.OpenOption
 	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
@@ -130,12 +128,20 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %w", srcFile, err)
 	}
-	// account and buffer the transfer
-	// in = tr.Account(ctx, in).WithBuffer()
-	acc := tr.Account(ctx, in0)
-	in, err := acc.WithReadAtSeeker()
-	if err != nil {
-		return err
+	// The extracted files are accounted as Rcat writes them, so only
+	// account reading the archive when --dry-run writes nothing.
+	var in io.Reader = in0
+	if ci.DryRun {
+		tr := accounting.Stats(ctx).NewTransfer(srcObj, nil)
+		defer tr.Done(ctx, err)
+		in, err = tr.Account(ctx, in0).WithReadAtSeeker()
+		if err != nil {
+			return err
+		}
+	} else {
+		defer func() {
+			_ = in0.Close()
+		}()
 	}
 	// identify format
 	format, _, err := archives.Identify(ctx, "", in)
