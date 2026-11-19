@@ -3,6 +3,8 @@ package internxt
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/internxt/rclone-adapter/config"
 	"github.com/internxt/rclone-adapter/endpoints"
+	"github.com/internxt/rclone-adapter/files"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -188,4 +191,45 @@ func TestFindFileIgnoresStale(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, file, "moved here")
 	assert.Equal(t, "uuid-renamed", file.UUID)
+}
+
+func TestChunkWriterReplace(t *testing.T) {
+	ctx := context.Background()
+	createErr := errors.New("create meta: File already exists (status 409)")
+	for _, exists := range []bool{true, false} {
+		t.Run(fmt.Sprintf("exists=%v", exists), func(t *testing.T) {
+			var stored []storedFile
+			if exists {
+				stored = []storedFile{{uuid: "uuid-old", plainName: "big", fileType: "bin"}}
+			}
+			lookups := existenceServer(t, stored)
+			defer lookups.Close()
+			var replaced []string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPut {
+					lookups.Config.Handler.ServeHTTP(w, r)
+					return
+				}
+				var req files.ReplaceFileRequest
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+				replaced = append(replaced, fmt.Sprintf("%s %s %d", strings.TrimPrefix(r.URL.Path, "/drive/files/"), req.FileID, req.Size))
+				w.Header().Set("Content-Type", "application/json")
+				require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"uuid": "uuid-old"}))
+			}))
+			defer server.Close()
+			w := &internxtChunkWriter{f: testFs(t, server), remote: "dir/big.bin", dirID: "dir-uuid", size: 1234}
+
+			meta, err := w.replace(ctx, "new-file-id", createErr)
+			if !exists {
+				assert.Equal(t, createErr, err)
+				assert.Nil(t, meta)
+				assert.Empty(t, replaced)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, []string{"uuid-old new-file-id 1234"}, replaced)
+			assert.Equal(t, "uuid-old", meta.UUID)
+			assert.Equal(t, "new-file-id", meta.FileID)
+		})
+	}
 }
