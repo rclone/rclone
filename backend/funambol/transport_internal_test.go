@@ -39,7 +39,7 @@ func TestSAPITransportDesktopClient(t *testing.T) {
 	hellos := make(chan *tls.ClientHelloInfo, 4)
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, 1, r.ProtoMajor)
-		assert.Equal(t, desktopUA, r.UserAgent())
+		assert.Equal(t, windowsUA, r.UserAgent())
 		assert.Equal(t, "present", r.Header.Get("X-Test"))
 		access := oauthHeaderData(t, r.Header.Get("Authorization"))["accesstoken"].(string)
 		w.Header().Set("Authorization", renewedHeader(access))
@@ -102,7 +102,7 @@ func TestSAPITransportHTTP1Fallback(t *testing.T) {
 	}))
 	server.StartTLS()
 	defer server.Close()
-	client, err := newSAPIClient(sapiTLSContext(t, server), server.URL, false)
+	client, err := newSAPIClient(sapiTLSContext(t, server), server.URL, "")
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	for _, path := range []string{"/sapi/test", "/oauth/token", "/sapi"} {
@@ -134,7 +134,7 @@ func TestSAPITransportRouting(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 	ctx := sapiTLSContext(t, server)
-	client, err := newSAPIClient(ctx, server.URL, false)
+	client, err := newSAPIClient(ctx, server.URL, "")
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	for _, path := range []string{"/sapi/test", "/oauth/token", "/sapi"} {
@@ -146,7 +146,7 @@ func TestSAPITransportRouting(t *testing.T) {
 	assert.Equal(t, uint16(0x0a0a), (<-hellos).CipherSuites[0]&0x0f0f)
 	assert.NotEqual(t, uint16(0x0a0a), (<-hellos).CipherSuites[0]&0x0f0f, "OAuth uses the ordinary TLS handshake")
 	// A redirect to another host's SAPI path also uses the ordinary transport.
-	other, err := newSAPIClient(ctx, "https://other.example.com", false)
+	other, err := newSAPIClient(ctx, "https://other.example.com", "")
 	require.NoError(t, err)
 	t.Cleanup(other.CloseIdleConnections)
 	resp, err := other.Get(server.URL + "/sapi/test")
@@ -165,7 +165,7 @@ func TestSAPITransportDisableHTTP2(t *testing.T) {
 	defer server.Close()
 	ctx := sapiTLSContext(t, server)
 	fs.GetConfig(ctx).DisableHTTP2 = true
-	client, err := newSAPIClient(ctx, server.URL, false)
+	client, err := newSAPIClient(ctx, server.URL, "")
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	resp, err := client.Get(server.URL + "/sapi/test")
@@ -175,12 +175,15 @@ func TestSAPITransportDisableHTTP2(t *testing.T) {
 
 func TestSAPITransportProxy(t *testing.T) {
 	for _, tc := range []struct {
-		scheme  string
-		desktop bool
-		proto   int
-	}{{"http", false, 2}, {"https", false, 2}, {"http", true, 1}, {"https", true, 1}} {
+		scheme   string
+		platform string
+		proto    int
+	}{
+		{"http", "", 2}, {"https", "", 2}, {"http", "windows", 1}, {"https", "windows", 1},
+		{"http", "macos", 2}, {"https", "macos", 2},
+	} {
 		scheme := tc.scheme
-		t.Run(fmt.Sprintf("%s/desktop=%v", scheme, tc.desktop), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s/platform=%q", scheme, tc.platform), func(t *testing.T) {
 			const body = "response through proxy"
 			server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, tc.proto, r.ProtoMajor)
@@ -221,7 +224,7 @@ func TestSAPITransportProxy(t *testing.T) {
 			ctx := sapiTLSContext(t, server)
 			// httptest uses the same CA for the origin and HTTPS proxy.
 			fs.GetConfig(ctx).HTTPProxy = strings.Replace(proxyServer.URL, "://", "://user:p%40ss%3Aword@", 1)
-			client, err := newSAPIClient(ctx, server.URL, tc.desktop)
+			client, err := newSAPIClient(ctx, server.URL, tc.platform)
 			require.NoError(t, err)
 			defer client.CloseIdleConnections()
 			resp, err := client.Get(server.URL + "/sapi/test")
@@ -244,7 +247,7 @@ func TestSAPITransportHandshakeTimeout(t *testing.T) {
 			return conn, nil
 		},
 	}
-	_, err := dialSAPITLS(context.Background(), "tcp", "example.com:443", &tls.Config{ServerName: "example.com"}, base, nil)
+	_, err := dialSAPITLS(context.Background(), "tcp", "example.com:443", &tls.Config{ServerName: "example.com"}, base, nil, true)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 	_, err = io.Copy(io.Discard, peer)
 	require.NoError(t, err, "a failed handshake closes the connection")
@@ -255,10 +258,101 @@ func TestSAPITransportCertificateVerification(t *testing.T) {
 	server.EnableHTTP2 = true
 	server.StartTLS()
 	defer server.Close()
-	client, err := newSAPIClient(context.Background(), server.URL, false)
+	client, err := newSAPIClient(context.Background(), server.URL, "")
 	require.NoError(t, err)
 	t.Cleanup(client.CloseIdleConnections)
 	_, err = client.Get(server.URL + "/sapi/test")
 	var certErr x509.UnknownAuthorityError
 	require.ErrorAs(t, err, &certErr)
+}
+
+// helloListener records the first bytes each accepted connection sends.
+type helloListener struct {
+	net.Listener
+	hellos chan []byte
+}
+
+func (l *helloListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+	return &helloConn{Conn: conn, hellos: l.hellos}, nil
+}
+
+type helloConn struct {
+	net.Conn
+	hellos chan []byte
+	done   bool
+}
+
+func (c *helloConn) Read(p []byte) (int, error) {
+	n, err := c.Conn.Read(p)
+	if !c.done && n > 0 {
+		c.done = true
+		c.hellos <- append([]byte(nil), p[:n]...)
+	}
+	return n, err
+}
+
+func TestSAPITransportMacClient(t *testing.T) {
+	for _, h2 := range []bool{true, false} {
+		t.Run(fmt.Sprintf("h2=%v", h2), func(t *testing.T) {
+			infos := make(chan *tls.ClientHelloInfo, 4)
+			server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if h2 {
+					assert.Equal(t, 2, r.ProtoMajor)
+				} else {
+					assert.Equal(t, 1, r.ProtoMajor)
+				}
+				assert.Equal(t, macosUA, r.UserAgent())
+				_, _ = io.WriteString(w, `{"data":{"folders":[{"id":1,"name":"root"}]}}`)
+			}))
+			server.EnableHTTP2 = h2
+			server.TLS = &tls.Config{GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
+				infos <- hello
+				return nil, nil
+			}}
+			raw := &helloListener{Listener: server.Listener, hellos: make(chan []byte, 4)}
+			server.Listener = raw
+			server.StartTLS()
+			defer server.Close()
+			ctx := sapiTLSContext(t, server)
+			m := configmap.Simple{
+				"user": testUser, "endpoint": server.URL, "oauth_platform": "macos",
+				"client_id": testClient, "token": `{"access_token":"at1","refresh_token":"rt1"}`,
+				"cookies": base64.StdEncoding.EncodeToString([]byte(`[{"n":"validationKey","v":"test"}]`)),
+			}
+			f, err := NewFs(ctx, "test", "", m)
+			require.NoError(t, err)
+			client := f.(*Fs).client
+			t.Cleanup(client.CloseIdleConnections)
+			resp, err := client.Get(server.URL + "/sapi/test")
+			require.NoError(t, err)
+			_, err = io.Copy(io.Discard, resp.Body)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			wantProtos := [][]string{{"h2", "http/1.1"}}
+			if !h2 {
+				// The first connection offers HTTP/2, the retry only HTTP/1.1.
+				wantProtos = append(wantProtos, []string{"http/1.1"})
+			}
+			require.Len(t, infos, len(wantProtos))
+			for _, protos := range wantProtos {
+				info := <-infos
+				hello := <-raw.hellos
+				// Byte 43 is the session ID length after the record and handshake
+				// headers, the version and the random.
+				require.Greater(t, len(hello), 43)
+				assert.Equal(t, byte(0), hello[43], "Secure Transport offers no session ID")
+				assert.Equal(t, []byte{0x03, 0x03}, hello[9:11], "client version TLS 1.2")
+				assert.Equal(t, o2MacHello().CipherSuites, info.CipherSuites)
+				assert.Equal(t, protos, info.SupportedProtos)
+				// There is no SNI for an IP address.
+				assert.Equal(t, []uint16{10, 11, 13, 16, 5, 18, 23}, info.Extensions)
+				assert.Equal(t, []tls.CurveID{tls.CurveP256, tls.CurveP384, tls.CurveP521}, info.SupportedCurves)
+			}
+		})
+	}
 }

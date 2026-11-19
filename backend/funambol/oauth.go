@@ -79,6 +79,15 @@ func (opt *Options) usesOAuth() bool {
 	return opt.ClientID != "" && opt.Pass == ""
 }
 
+// sapiPlatform returns the platform of the desktop client whose traits SAPI
+// calls copy, or "" if the remote does not log in with OAuth.
+func (opt *Options) sapiPlatform() string {
+	if !opt.usesOAuth() {
+		return ""
+	}
+	return opt.OAuthPlatform
+}
+
 // isMovistar reports whether the remote is on Movistar Cloud.  Its OAuth
 // login runs in a browser, as rclone can't drive its login page.
 func (opt *Options) isMovistar() bool {

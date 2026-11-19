@@ -24,47 +24,98 @@ import (
 
 var errSAPIHTTP1 = errors.New("SAPI endpoint does not support HTTP/2")
 
-// desktopUA is the User-Agent of the official O2 Cloud desktop client. SAPI
-// calls of OAuth remotes send it together with the client's ClientHello, as the
-// service's CDN rejects a mix of browser and desktop client traits.
-const desktopUA = "omh windows client 4.0.1"
+// User-Agents of the official O2 Cloud desktop clients ("omh <platform> client
+// <version>"). SAPI calls of OAuth remotes send the one of the OAuth platform
+// together with that client's ClientHello, as the service's CDN rejects a mix
+// of browser and desktop client traits.
+const (
+	windowsUA = "omh windows client 4.0.1"
+	macosUA   = "omh macos client 4.0.1"
+)
 
 // newSAPIClient keeps fshttp's logging, headers and accounting around SAPI's
-// fingerprinted transport: the desktop client's ClientHello and User-Agent over
-// HTTP/1.1 if desktop is set, otherwise Chrome's ClientHello over HTTP/2. Other
-// requests use fshttp unchanged.
-func newSAPIClient(ctx context.Context, endpoint string, desktop bool) (*http.Client, error) {
+// fingerprinted transport. It copies the desktop client of platform: on
+// "macos" the Apple ClientHello over HTTP/2, on any other platform the Windows
+// ClientHello over HTTP/1.1. Without a platform (no OAuth) it uses Chrome's
+// ClientHello over HTTP/2. Other requests use fshttp unchanged.
+func newSAPIClient(ctx context.Context, endpoint, platform string) (*http.Client, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SAPI endpoint: %w", err)
 	}
 	client := fshttp.NewClient(ctx)
-	if u.Scheme != "https" || !desktop && fs.GetConfig(ctx).DisableHTTP2 {
+	if u.Scheme != "https" {
 		return client, nil
 	}
-	if desktop {
-		ctx, ci := fs.AddConfig(ctx)
-		ci.UserAgent = desktopUA
-		sapi := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
-			// The dialer does its own proxying and TLS, so keep a copy of the
-			// settings it needs and stop net/http proxying by itself. A custom
-			// TLS dialer also leaves net/http speaking HTTP/1.1.
-			base := t.Clone()
-			t.Proxy = nil
-			t.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-				cfg := base.TLSClientConfig.Clone()
-				cfg.ServerName, _, _ = net.SplitHostPort(addr)
-				spec := o2WindowsHello()
-				return dialSAPITLS(ctx, network, addr, cfg, base, &spec)
-			}
-		})
-		client.Transport = &sapiClientTransport{base: client.Transport, sapi: sapi, endpoint: u}
-		return client, nil
+	noHTTP2 := fs.GetConfig(ctx).DisableHTTP2
+	userAgent := func(ua string) {
+		var ci *fs.ConfigInfo
+		ctx, ci = fs.AddConfig(ctx)
+		ci.UserAgent = ua
 	}
+	switch {
+	case platform == "" && noHTTP2:
+		return client, nil
+	case platform == "":
+		return newSAPIHTTP2Client(ctx, client, u, nil)
+	case platform == "macos" && noHTTP2:
+		// Qt offers only HTTP/1.1 when HTTP/2 is not allowed.
+		userAgent(macosUA)
+		return newSAPIHTTP1Client(ctx, client, u, func() utls.ClientHelloSpec { return o2MacHello("http/1.1") }), nil
+	case platform == "macos":
+		userAgent(macosUA)
+		return newSAPIHTTP2Client(ctx, client, u, o2MacHello)
+	default:
+		userAgent(windowsUA)
+		return newSAPIHTTP1Client(ctx, client, u, o2WindowsHello), nil
+	}
+}
+
+// newSAPIHTTP1Client sends SAPI calls over HTTP/1.1 with the ClientHello of hello.
+func newSAPIHTTP1Client(ctx context.Context, client *http.Client, u *url.URL, hello func() utls.ClientHelloSpec) *http.Client {
+	sapi := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+		// The dialer does its own proxying and TLS, so keep a copy of the
+		// settings it needs and stop net/http proxying by itself. A custom
+		// TLS dialer also leaves net/http speaking HTTP/1.1.
+		base := t.Clone()
+		t.Proxy = nil
+		t.DialTLSContext = sapiDialTLS(base, hello, false)
+	})
+	client.Transport = &sapiClientTransport{base: client.Transport, sapi: sapi, endpoint: u}
+	return client
+}
+
+// sapiDialTLS returns a TLS dialer for http.Transport that sends the
+// ClientHello of hello, or Chrome's if hello is nil.
+func sapiDialTLS(base *http.Transport, hello func() utls.ClientHelloSpec, needH2 bool) func(context.Context, string, string) (net.Conn, error) {
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		cfg := base.TLSClientConfig.Clone()
+		cfg.ServerName, _, _ = net.SplitHostPort(addr)
+		var spec *utls.ClientHelloSpec
+		if hello != nil {
+			s := hello()
+			spec = &s
+		}
+		return dialSAPITLS(ctx, network, addr, cfg, base, spec, needH2)
+	}
+}
+
+// newSAPIHTTP2Client sends SAPI calls over HTTP/2 with the ClientHello of
+// hello, offering "h2" and "http/1.1", or with Chrome's if hello is nil. If the
+// server does not negotiate HTTP/2, the calls fall back to HTTP/1.1: with
+// hello offering only "http/1.1", or with Go's own ClientHello for Chrome.
+func newSAPIHTTP2Client(ctx context.Context, client *http.Client, u *url.URL, hello func(alpn ...string) utls.ClientHelloSpec) (*http.Client, error) {
+	var h2Hello, http1Hello func() utls.ClientHelloSpec
+	if hello != nil {
+		h2Hello = func() utls.ClientHelloSpec { return hello(http2.NextProtoTLS, "http/1.1") }
+		http1Hello = func() utls.ClientHelloSpec { return hello("http/1.1") }
+	}
+	var err error
 	// http.Transport only speaks HTTP/2 over a *tls.Conn, so the deprecated
 	// http2.Transport is still needed for uTLS connections.
 	var h2 *http2.Transport //nolint:staticcheck // see above
 	sapi := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+		base := t.Clone()
 		// ConfigureTransports carries HTTP/1 transport settings into HTTP/2,
 		// including response-header timeouts and disabled keep-alives.
 		settings := &http.Transport{
@@ -84,12 +135,22 @@ func newSAPIClient(ctx context.Context, endpoint string, desktop bool) (*http.Cl
 		h2.ConnPool = nil                             //nolint:staticcheck // see above
 		h2.TLSClientConfig = settings.TLSClientConfig //nolint:staticcheck // see above
 		h2.DialTLSContext = func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-			return dialSAPITLS(ctx, network, addr, cfg, t, nil)
+			var spec *utls.ClientHelloSpec
+			if h2Hello != nil {
+				s := h2Hello()
+				spec = &s
+			}
+			return dialSAPITLS(ctx, network, addr, cfg, base, spec, true)
 		}
 		// This transport handles SAPI only. Disable net/http's automatic
 		// HTTP/2 registration so it does not replace our uTLS transport.
 		t.TLSNextProto = make(map[string]func(string, *tls.Conn) http.RoundTripper)
 		t.RegisterProtocol("https", &sapiHTTP2Transport{h2: h2})
+		if http1Hello != nil {
+			// The HTTP/1.1 fallback keeps the client's ClientHello too.
+			t.Proxy = nil
+			t.DialTLSContext = sapiDialTLS(base, http1Hello, false)
+		}
 	})
 	if err != nil {
 		return nil, fmt.Errorf("configure SAPI HTTP/2: %w", err)
@@ -102,7 +163,7 @@ type sapiClientTransport struct {
 	base     http.RoundTripper
 	sapi     *fshttp.Transport
 	endpoint *url.URL
-	h2       *http2.Transport //nolint:staticcheck // see newSAPIClient
+	h2       *http2.Transport //nolint:staticcheck // see newSAPIHTTP2Client
 }
 
 // RoundTrip implements http.RoundTripper.
@@ -119,7 +180,7 @@ func (t *sapiClientTransport) CloseIdleConnections() {
 	t.base.(interface{ CloseIdleConnections() }).CloseIdleConnections()
 	t.sapi.CloseIdleConnections()
 	if t.h2 != nil {
-		t.h2.CloseIdleConnections() //nolint:staticcheck // see newSAPIClient
+		t.h2.CloseIdleConnections() //nolint:staticcheck // see newSAPIHTTP2Client
 	}
 }
 
@@ -163,8 +224,36 @@ func o2WindowsHello() utls.ClientHelloSpec {
 	}
 }
 
+// o2MacHello returns the ClientHello of the official O2 Cloud macOS client
+// (Qt 6 with Apple Secure Transport), which offers TLS 1.2 only, offering the
+// alpn protocols.
+func o2MacHello(alpn ...string) utls.ClientHelloSpec {
+	return utls.ClientHelloSpec{
+		TLSVersMin: utls.VersionTLS10,
+		TLSVersMax: utls.VersionTLS12,
+		CipherSuites: []uint16{
+			0x00ff, 0xc02c, 0xc02b, 0xc024, 0xc023, 0xc030, 0xc02f, 0xc028, 0xc027, 0x006b,
+			0x0067, 0x0039, 0x0033, 0x0016, 0x009d, 0x003d, 0x003c, 0x0035, 0x002f, 0x000a,
+			0x009d, // sent twice by the client
+		},
+		CompressionMethods: []byte{0},
+		Extensions: []utls.TLSExtension{
+			&utls.SNIExtension{},
+			&utls.SupportedCurvesExtension{Curves: []utls.CurveID{utls.CurveP256, utls.CurveP384, utls.CurveP521}},
+			&utls.SupportedPointsExtension{SupportedPoints: []byte{0}},
+			&utls.SignatureAlgorithmsExtension{SupportedSignatureAlgorithms: []utls.SignatureScheme{
+				0x0401, 0x0201, 0x0501, 0x0601, 0x0403, 0x0203, 0x0503, 0x0603,
+			}},
+			&utls.ALPNExtension{AlpnProtocols: alpn},
+			&utls.StatusRequestExtension{},
+			&utls.SCTExtension{},
+			&utls.ExtendedMasterSecretExtension{},
+		},
+	}
+}
+
 type sapiHTTP2Transport struct {
-	h2        *http2.Transport //nolint:staticcheck // see newSAPIClient
+	h2        *http2.Transport //nolint:staticcheck // see newSAPIHTTP2Client
 	http1Only atomic.Bool
 }
 
@@ -179,7 +268,7 @@ func (t *sapiHTTP2Transport) RoundTrip(req *http.Request) (*http.Response, error
 		req = req.WithContext(req.Context())
 		req.Body = body
 	}
-	resp, err := t.h2.RoundTrip(req) //nolint:staticcheck // see newSAPIClient
+	resp, err := t.h2.RoundTrip(req) //nolint:staticcheck // see newSAPIHTTP2Client
 	if errors.Is(err, errSAPIHTTP1) {
 		// ALPN failed before any HTTP bytes or request body were sent.
 		// The body stays open, so net/http can send it over HTTP/1.1.
@@ -238,9 +327,9 @@ func (b *heldBody) release() {
 	}
 }
 
-// dialSAPITLS dials addr with a uTLS ClientHello: spec if set, else Chrome's,
-// in which case the server must negotiate HTTP/2 or errSAPIHTTP1 is returned.
-func dialSAPITLS(ctx context.Context, network, addr string, cfg *tls.Config, base *http.Transport, spec *utls.ClientHelloSpec) (net.Conn, error) {
+// dialSAPITLS dials addr with a uTLS ClientHello: spec if set, else Chrome's.
+// If needH2 is set, the server must negotiate HTTP/2 or errSAPIHTTP1 is returned.
+func dialSAPITLS(ctx context.Context, network, addr string, cfg *tls.Config, base *http.Transport, spec *utls.ClientHelloSpec, needH2 bool) (net.Conn, error) {
 	if base.TLSHandshakeTimeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, base.TLSHandshakeTimeout)
@@ -278,12 +367,17 @@ func dialSAPITLS(ctx context.Context, network, addr string, cfg *tls.Config, bas
 			_ = conn.Close()
 			return nil, fmt.Errorf("SAPI TLS hello: %w", err)
 		}
+		// uTLS always offers a session ID, but clients without TLS 1.3 and
+		// session tickets (such as Secure Transport) offer none.
+		if spec.TLSVersMax < utls.VersionTLS13 {
+			uConn.HandshakeState.Hello.SessionId = nil
+		}
 	}
 	if err := uConn.HandshakeContext(ctx); err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("SAPI TLS handshake: %w", err)
 	}
-	if spec == nil && uConn.ConnectionState().NegotiatedProtocol != http2.NextProtoTLS {
+	if needH2 && uConn.ConnectionState().NegotiatedProtocol != http2.NextProtoTLS {
 		_ = uConn.Close()
 		return nil, errSAPIHTTP1
 	}

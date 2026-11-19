@@ -103,17 +103,23 @@ func TestConfigNoContentLogsIn(t *testing.T) {
 	assert.Equal(t, testKey, f.validationKeyFromJar())
 }
 
-// A device id the service blocks is replaced before the login, which registers
-// the new one; an id that isn't blocked is kept.
+// A device id the service blocks, or one generated for another client, is
+// replaced before the login, which registers the new one; other ids are kept.
 func TestConfigReplacesBlockedDeviceID(t *testing.T) {
-	const blocked = "web-blocked"
 	for _, tc := range []struct {
-		name    string
-		blocked bool
-	}{{"blocked", true}, {"not blocked", false}} {
+		name     string
+		id       string
+		blocked  bool
+		replaced bool
+	}{
+		{"blocked", "web-blocked", true, true},
+		{"not blocked", "web-blocked", false, false},
+		{"other client", "mox-old", false, true},
+		{"set by user", "my-device", false, false},
+	} {
 		t.Run(tc.name, func(t *testing.T) {
 			info := func(w http.ResponseWriter, r *http.Request) {
-				if tc.blocked && r.Header.Get("X-deviceid") == blocked {
+				if tc.blocked && r.Header.Get("X-deviceid") == tc.id {
 					// The CDN's reply to a blocked id has no body.
 					w.WriteHeader(http.StatusUnauthorized)
 					return
@@ -131,17 +137,17 @@ func TestConfigReplacesBlockedDeviceID(t *testing.T) {
 				_, _ = w.Write([]byte(`{"data":{"validationkey":"` + testKey + `","roles":[{"name":"standard"}]}}`))
 			}
 			m := newLoginServer(t, map[string]http.HandlerFunc{"/sapi/system/information": info, pathGenerate: generate, pathLogin: login})
-			m.Set("device_id", blocked)
+			m.Set("device_id", tc.id)
 
 			_, err := Config(context.Background(), "test", m, fs.ConfigIn{})
 			require.NoError(t, err)
 			saved, _ := m.Get("device_id")
 			assert.Equal(t, saved, loginID, "the login uses the saved device id")
-			if tc.blocked {
-				assert.NotEqual(t, blocked, saved)
-				assert.True(t, strings.HasPrefix(saved, "web-"))
+			if tc.replaced {
+				assert.NotEqual(t, tc.id, saved)
+				assert.True(t, strings.HasPrefix(saved, "web-"), "the password login copies the web app")
 			} else {
-				assert.Equal(t, blocked, saved)
+				assert.Equal(t, tc.id, saved)
 			}
 		})
 	}

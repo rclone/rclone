@@ -25,7 +25,7 @@ func TestO2OAuthDefaultCredentials(t *testing.T) {
 			assert.NotEmpty(t, c.ClientID)
 			assert.True(t, c.ClientSecret != "", "the bundled application needs its matching secret")
 			assert.Equal(t, "macos", f.opt.OAuthPlatform)
-			assert.True(t, strings.HasPrefix(m["device_id"], "fol-"))
+			assert.True(t, strings.HasPrefix(m["device_id"], "mox-"), "like the macOS app")
 			assert.Empty(t, m["client_id"])
 			assert.Empty(t, m["client_secret"])
 

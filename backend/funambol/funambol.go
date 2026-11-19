@@ -84,7 +84,8 @@ two-factor step) so it can be reused.  When it expires, reconnect with
 
 This identifies the rclone "device" to the service and appears in your
 account's device list.  Leave it empty: rclone generates a stable
-"web-<hex>" id ("fol-<base64>" with OAuth) on first login and saves it
+"web-<hex>" id ("mox-<base64>" or "fol-<base64>" with OAuth, like the
+macOS or other desktop app) on first login and saves it
 here, registering itself just like the official app.  Set it only to reuse a specific existing id.`,
 			Advanced:  true,
 			Sensitive: true,
@@ -1932,7 +1933,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	opt.Endpoint = strings.TrimRight(opt.Endpoint, "/")
 	opt.setOAuthDefaults()
 	if opt.DeviceID == "" {
-		opt.DeviceID = newDeviceID(opt.usesOAuth())
+		opt.DeviceID = newDeviceID(opt.sapiPlatform())
 		m.Set("device_id", opt.DeviceID)
 	}
 
@@ -1941,7 +1942,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = browserUA
 
-	client, err := newSAPIClient(ctx, opt.Endpoint, opt.usesOAuth())
+	client, err := newSAPIClient(ctx, opt.Endpoint, opt.sapiPlatform())
 	if err != nil {
 		return nil, err
 	}

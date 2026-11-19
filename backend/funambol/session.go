@@ -36,18 +36,42 @@ const persistentLoginCookie = "PLC"
 // It also rejects any User-Agent starting with "rclone" on all calls.
 const browserUA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
+// deviceIDPrefix returns the device id prefix of the client that SAPI calls
+// copy for platform (see Options.sapiPlatform): "web-" for the web app,
+// "mox-" for the macOS app and "fol-" for the other desktop apps.
+func deviceIDPrefix(platform string) string {
+	switch platform {
+	case "":
+		return "web-"
+	case "macos":
+		return "mox-"
+	default:
+		return "fol-"
+	}
+}
+
 // newDeviceID generates a fresh device id in the format the service expects:
-// "web-<hex>" like the web app, or "fol-<base64>" like the desktop apps whose
-// OAuth client the OAuth login uses.  A brand-new id registers itself during
-// the first (two-factor) login as long as the login request carries
-// browser-like headers.
-func newDeviceID(oauth bool) string {
+// "web-<hex>" like the web app, or the desktop app's prefix and 16 bytes in
+// base64.  A brand-new id registers itself during the first (two-factor)
+// login as long as the login request carries browser-like headers.
+func newDeviceID(platform string) string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
-	if oauth {
-		return "fol-" + base64.StdEncoding.EncodeToString(b)
+	if platform == "" {
+		return deviceIDPrefix(platform) + hex.EncodeToString(b)
 	}
-	return "web-" + hex.EncodeToString(b)
+	return deviceIDPrefix(platform) + base64.StdEncoding.EncodeToString(b)
+}
+
+// foreignDeviceID reports whether id was generated for another client than
+// the one of platform.  An id without a generated prefix was set by the user.
+func foreignDeviceID(id, platform string) bool {
+	for _, prefix := range []string{"web-", "mox-", "fol-"} {
+		if strings.HasPrefix(id, prefix) {
+			return prefix != deviceIDPrefix(platform)
+		}
+	}
+	return false
 }
 
 // errDeviceBlocked is returned when the service blocks the remote's device id.
@@ -470,7 +494,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	// Generate and persist a device id on first use; a fresh one registers
 	// itself during the login below thanks to the browser-like headers.
 	if opt.DeviceID == "" {
-		opt.DeviceID = newDeviceID(opt.usesOAuth())
+		opt.DeviceID = newDeviceID(opt.sapiPlatform())
 		m.Set("device_id", opt.DeviceID)
 	}
 
@@ -480,7 +504,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = browserUA
 
-	client, err := newSAPIClient(ctx, opt.Endpoint, opt.usesOAuth())
+	client, err := newSAPIClient(ctx, opt.Endpoint, opt.sapiPlatform())
 	if err != nil {
 		return nil, err
 	}
@@ -519,10 +543,15 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 
 	switch configIn.State {
 	case "":
-		// A new login registers a new device id, so replace a blocked one.
-		if f.deviceBlocked(ctx) {
+		// A new login registers a new device id, so replace one of another
+		// client or a blocked one.
+		switch {
+		case foreignDeviceID(f.opt.DeviceID, f.opt.sapiPlatform()):
+			fs.Logf(nil, "%s: device id %q belongs to another client - using a new one", name, f.opt.DeviceID)
+			f.setDeviceID(newDeviceID(f.opt.sapiPlatform()))
+		case f.deviceBlocked(ctx):
 			fs.Logf(nil, "%s: the service blocks device id %q - using a new one", name, f.opt.DeviceID)
-			f.setDeviceID(newDeviceID(f.opt.usesOAuth()))
+			f.setDeviceID(newDeviceID(f.opt.sapiPlatform()))
 		}
 
 		// Without a password, log in by SMS via Telefónica (O2 Spain),
