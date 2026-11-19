@@ -254,6 +254,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		ChunkWriterDoesntSeek:   true,
+		CaseInsensitive:         true,
 	}).Fill(ctx, fileSystem)
 
 	fileSystem.root = Directory{
@@ -928,7 +929,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	defer f.filen.Unlock()
-	if oldParentPath == newParentPath {
+	if sdk.NamesEqual(oldParentPath, newParentPath) {
 		err = f.rename(ctx, obj.file, newPath, newName)
 	} else if newName == oldName {
 		err = f.move(ctx, obj.file, newPath, newParentPath)
@@ -1103,7 +1104,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirNotFound
 	}
 
-	if dstDir != nil {
+	// Filen names are case-insensitive, so for a case-only rename
+	// the destination is found and is the source directory itself
+	if dstDir != nil && dstDir.GetUUID() != srcDirInt.GetUUID() {
 		return fs.ErrorDirExists
 	}
 
@@ -1123,7 +1126,7 @@ func (f *Fs) dirMoveEntireDir(ctx context.Context, srcDir *types.Directory, oldP
 	var err error
 	if oldPath == newPath {
 		return fs.ErrorDirExists
-	} else if oldParentPath == newParentPath {
+	} else if sdk.NamesEqual(oldParentPath, newParentPath) {
 		err = f.rename(ctx, srcDir, newPath, newName)
 	} else if newName == oldName {
 		err = f.move(ctx, srcDir, newPath, newParentPath)
