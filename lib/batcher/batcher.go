@@ -29,6 +29,7 @@ type Options struct {
 	DefaultTimeoutSync    time.Duration // default time to kick off the batch if nothing added for this long (sync)
 	DefaultTimeoutAsync   time.Duration // default time to kick off the batch if nothing added for this long (async)
 	DefaultBatchSizeAsync int           // default batch size if async
+	DefaultMode           string        // default for the batch_mode option, "sync" if empty
 }
 
 // CommitBatchFn is called to commit a batch of Item and return Result to the callers.

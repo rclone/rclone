@@ -310,6 +310,53 @@ http://my.seafile.server/d/9ea2455f6f55478bbb0d/
 Please note a share link is unique for each file or directory. If you run a link
 command on a file/dir that has already been shared, you will get the exact same link.
 
+### Batch mode uploads {#batch-mode}
+
+The Seafile server stores every upload request as a new commit of the
+library, and it writes the commits of a library one after another. When
+uploading lots of small files this limits the transfer to a few dozen
+files per second whatever `--transfers` is set to.
+
+An upload request can carry several files of the same directory, which
+the server stores as a single commit. Rclone can use this with
+`--seafile-batch-mode`. Files up to 1 MiB are then held in memory and
+uploaded together, one request per directory. Bigger files are
+uploaded on their own as before.
+
+There are 3 modes rclone can use for uploads.
+
+#### --seafile-batch-mode off
+
+In this mode rclone will not use upload batching. This is the default.
+
+#### --seafile-batch-mode sync
+
+In this mode rclone will batch up uploads to the size specified by
+`--seafile-batch-size` (by default the same as `--transfers`) and
+upload them together. Each file waits for its batch to be uploaded,
+so rclone checks every upload as usual.
+
+As every transfer waits for its batch, raising `--transfers` (for
+example to 32) also raises the size of the batches.
+
+#### --seafile-batch-mode async
+
+In this mode rclone will batch up uploads to the size specified by
+`--seafile-batch-size` (by default 100) and upload them together.
+
+However it will not wait for the batch to be uploaded before going on
+with the next file. This means rclone can use a much bigger batch
+size than `--transfers`, at the cost of not being able to check the
+upload of each file. Errors are only logged. Using `rclone check`
+after the transfer is recommended.
+
+In both batch modes rclone uploads any outstanding batch when it
+exits, which may make a delay on quit.
+
+If the server refuses a batch, for example because of an invalid file
+name, rclone uploads the files of that batch one by one so that every
+file gets its own result.
+
 ### Compatibility
 
 It has been actively developed using the [seafile docker image](https://github.com/haiwen/seafile-docker)
