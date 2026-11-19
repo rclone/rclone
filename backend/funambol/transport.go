@@ -115,6 +115,9 @@ func newSAPIHTTP2Client(ctx context.Context, client *http.Client, u *url.URL, he
 	// http2.Transport is still needed for uTLS connections.
 	var h2 *http2.Transport //nolint:staticcheck // see above
 	sapi := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+		// Set before Clone, which would otherwise install net/http's own
+		// HTTP/2 "https" protocol and make RegisterProtocol below panic.
+		t.TLSNextProto = make(map[string]func(string, *tls.Conn) http.RoundTripper)
 		base := t.Clone()
 		// ConfigureTransports carries HTTP/1 transport settings into HTTP/2,
 		// including response-header timeouts and disabled keep-alives.
@@ -142,9 +145,8 @@ func newSAPIHTTP2Client(ctx context.Context, client *http.Client, u *url.URL, he
 			}
 			return dialSAPITLS(ctx, network, addr, cfg, base, spec, true)
 		}
-		// This transport handles SAPI only. Disable net/http's automatic
-		// HTTP/2 registration so it does not replace our uTLS transport.
-		t.TLSNextProto = make(map[string]func(string, *tls.Conn) http.RoundTripper)
+		// This transport handles SAPI only, so net/http's automatic HTTP/2
+		// registration is disabled above and must not replace our uTLS transport.
 		t.RegisterProtocol("https", &sapiHTTP2Transport{h2: h2})
 		if http1Hello != nil {
 			// The HTTP/1.1 fallback keeps the client's ClientHello too.
