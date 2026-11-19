@@ -158,6 +158,12 @@ func TestVarious(t *testing.T) {
 		// the extension alone exceeds the limit, so there is nothing valid to return
 		{"stories/photo.jpeg", "stories/photo.jpeg", []string{"all,truncate_keep_extension=3"}},
 		{"stories/a.tar.gz", "stories/a.tar.gz", []string{"all,truncate_keep_extension=2"}},
+		// a failed transform falls back to the original name at the top level too,
+		// where the segment-count check cannot detect it
+		{"photo.jpeg", "photo.jpeg", []string{"all,truncate_keep_extension=3"}},
+		{"a.tar.gz", "a.tar.gz", []string{"all,truncate_keep_extension=2"}},
+		{"photo.jpeg", "photo.jpeg", []string{"truncate_keep_extension=3"}},
+		{"a.tar.gz", "a.tar.gz", []string{"truncate_keep_extension=2"}},
 		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt", []string{"all,command=echo"}},
 		{"stories/The Quick Brown Fox!.txt", "ababababababab/ababab ababababab ababababab ababab!abababab", []string{"all,regex=[\\.\\w]/ab"}},
 	} {
