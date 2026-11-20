@@ -146,7 +146,7 @@ Blob tags (`x-ms-tags` metadata) aren't supported on these accounts.
 When uploading large files, increasing the value of
 `--azureblob-upload-concurrency` will increase performance at the cost
 of using more memory. The default of 16 is set quite conservatively to
-use less memory. It maybe be necessary raise it to 64 or higher to
+use less memory. It may be necessary to raise it to 64 or higher to
 fully utilize a 1 GBit/s link with a single file transfer.
 
 ### Restricted filename characters

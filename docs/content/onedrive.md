@@ -1361,7 +1361,7 @@ Shared with me files is not supported by rclone
 [currently](https://github.com/rclone/rclone/issues/4062), but there is a workaround:
 
 1. Visit [https://onedrive.live.com](https://onedrive.live.com/)
-2. Right click a item in `Shared`, then click `Add shortcut to My files` in the context
+2. Right click an item in `Shared`, then click `Add shortcut to My files` in the context
     ![make_shortcut](https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png "Screenshot (Shared with me)")
 3. The shortcut will appear in `My files`, you can access it with rclone, it
    behaves like a normal folder/file.

@@ -207,7 +207,7 @@ documents. These files need to be converted to another format in
 order to be downloaded. Often multiple formats are available for
 conversion.
 
-When rclone downloads a exportable file, it chooses the format to
+When rclone downloads an exportable file, it chooses the format to
 download based on the `--dropbox-export-formats` setting. By
 default, the export formats are `html,md`, which are sensible
 defaults for Dropbox Paper.
