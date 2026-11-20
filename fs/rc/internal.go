@@ -87,7 +87,7 @@ func init() {
 	Add(Call{
 		Path:  "rc/fatal",
 		Fn:    rcFatal,
-		Title: "This returns an fatal error",
+		Title: "This returns a fatal error",
 		Help: `
 This returns an error with the input as part of its error string.
 Useful for testing error handling.`,

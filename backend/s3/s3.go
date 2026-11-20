@@ -498,7 +498,7 @@ It reads the following items from the response for a single part PUT:
 
 For multipart uploads these items aren't read.
 
-If an source object of unknown length is uploaded then rclone **will** do a
+If a source object of unknown length is uploaded then rclone **will** do a
 HEAD request.
 
 Setting this flag increases the chance for undetected upload failures,
