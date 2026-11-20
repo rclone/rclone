@@ -309,7 +309,7 @@ service, for the official service on https://www.jottacloud.com/web/secure.`)
 	case "legacy": // configure a jottacloud backend using legacy authentication
 		m.Set(configVersionKey, fmt.Sprint(legacyConfigVersion))
 		return fs.ConfigConfirm("legacy_api", false, "config_machine_specific", `Do you want to create a machine specific API key?
-Rclone has it's own Jottacloud API KEY which works fine as long as one
+Rclone has its own Jottacloud API KEY which works fine as long as one
 only uses rclone on a single machine. When you want to use rclone with
 this account on more than one machine it's recommended to create a
 machine specific API key. These keys can NOT be shared between
