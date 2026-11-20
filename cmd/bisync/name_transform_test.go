@@ -47,8 +47,13 @@ func TestBisyncRejectsNameTransform(t *testing.T) {
 			got, err := os.ReadFile(report)
 			require.NoError(t, err)
 			assert.Equal(t, "report\n", string(got))
-			_, err = os.Stat(filepath.Join(path1, "report.txt"))
-			assert.ErrorIs(t, err, os.ErrNotExist)
+			entries, err := os.ReadDir(path1)
+			require.NoError(t, err)
+			names := make([]string, len(entries))
+			for i, e := range entries {
+				names[i] = e.Name()
+			}
+			assert.ElementsMatch(t, []string{"Report.TXT", "note.txt"}, names)
 			got, err = os.ReadFile(note)
 			require.NoError(t, err)
 			assert.Equal(t, "1\n", string(got))
