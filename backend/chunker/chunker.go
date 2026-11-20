@@ -15,6 +15,7 @@ import (
 	"math/rand"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -1511,8 +1512,14 @@ func removeStaleChunks(ctx context.Context, oldObject *Object, currentChunks []f
 	for _, chunk := range currentChunks {
 		currentRemotes[chunk.Remote()] = struct{}{}
 	}
+	caseInsensitive := oldObject.f.features.CaseInsensitive
 	for _, chunk := range oldObject.chunks {
 		if _, found := currentRemotes[chunk.Remote()]; found {
+			continue
+		}
+		if caseInsensitive && slices.ContainsFunc(currentChunks, func(current fs.Object) bool {
+			return strings.EqualFold(current.Remote(), chunk.Remote())
+		}) {
 			continue
 		}
 		if err := chunk.Remove(ctx); err != nil {
