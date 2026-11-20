@@ -501,9 +501,26 @@ func (item *Item) _createFile(osPath string) (err error) {
 // Open the local file from the object passed in.  Wraps open()
 // to provide recovery from out of space error.
 func (item *Item) Open(o fs.Object) (err error) {
+	return item.openRetry(o, false)
+}
+
+// OpenForRW opens the local file from the object passed in like Open,
+// but if o is nil and the item has a clean object then use the item's
+// object instead.
+//
+// The object passed in may have been read before a writeback
+// completed, in which case it can still be nil even though the item
+// has been written back, so it must not be taken as the remote object
+// having been deleted.
+func (item *Item) OpenForRW(o fs.Object) (err error) {
+	return item.openRetry(o, true)
+}
+
+// Open the local file from the object passed in with retries
+func (item *Item) openRetry(o fs.Object, useItemObject bool) (err error) {
 	for range fs.GetConfig(item.c.ctx).LowLevelRetries {
 		item.preAccess()
-		err = item.open(o)
+		err = item.open(o, useItemObject)
 		item.postAccess()
 		if err == nil {
 			break
@@ -520,7 +537,10 @@ func (item *Item) Open(o fs.Object) (err error) {
 
 // Open the local file from the object passed in (which may be nil)
 // which implies we are about to create the file
-func (item *Item) open(o fs.Object) (err error) {
+//
+// If useItemObject is set and o is nil but the item has a clean object
+// then use the item's object instead as the nil may be stale.
+func (item *Item) open(o fs.Object, useItemObject bool) (err error) {
 	// defer log.Trace(o, "item=%p", item)("err=%v", &err)
 	item.mu.Lock()
 	defer item.mu.Unlock()
@@ -539,6 +559,13 @@ func (item *Item) open(o fs.Object) (err error) {
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
 	if err != nil {
 		return fmt.Errorf("vfs cache item: createItemDir failed: %w", err)
+	}
+
+	// If the caller's object is nil but the item has a clean object
+	// then the nil object is stale as a writeback completed after
+	// the caller read it, so use the item's object instead.
+	if useItemObject && o == nil && item.o != nil && !item.info.Dirty {
+		o = item.o
 	}
 
 	err = item._checkObject(o)
