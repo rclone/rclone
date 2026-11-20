@@ -307,3 +307,106 @@ func TestFtpReadCloserClose(t *testing.T) {
 		_ = f.pool[0].Quit()
 	})
 }
+
+// hiddenListFTPServer is a minimal FTP server which, like a FRITZ!Box,
+// ignores the path after "LIST -a" and lists the current directory.
+type hiddenListFTPServer struct {
+	ln  net.Listener
+	mu  sync.Mutex
+	cwd string
+}
+
+func startHiddenListFTPServer(t *testing.T) *hiddenListFTPServer {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	s := &hiddenListFTPServer{ln: ln, cwd: "/"}
+	go s.serve()
+	t.Cleanup(func() { _ = ln.Close() })
+	return s
+}
+
+func (s *hiddenListFTPServer) dir() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.cwd
+}
+
+func (s *hiddenListFTPServer) serve() {
+	conn, err := s.ln.Accept()
+	if err != nil {
+		return
+	}
+	defer func() { _ = conn.Close() }()
+	listings := map[string]string{
+		"/":    "drwxr-xr-x 1 u g 0 Jan 01 2024 sub\r\n-rw-r--r-- 1 u g 1 Jan 01 2024 root.txt\r\n",
+		"/sub": "-rw-r--r-- 1 u g 1 Jan 01 2024 sub.txt\r\n",
+	}
+	var data net.Listener
+	reply := func(format string, a ...any) { _, _ = fmt.Fprintf(conn, format+"\r\n", a...) }
+	reply("220 fake FTP server")
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		cmd, arg, _ := strings.Cut(scanner.Text(), " ")
+		switch cmd {
+		case "PWD":
+			reply(`257 "%s"`, s.dir())
+		case "CWD":
+			s.mu.Lock()
+			if !strings.HasPrefix(arg, "/") {
+				arg = strings.TrimSuffix(s.cwd, "/") + "/" + arg
+			}
+			_, ok := listings[arg]
+			if ok {
+				s.cwd = arg
+			}
+			s.mu.Unlock()
+			if ok {
+				reply("250 OK")
+			} else {
+				reply("550 not found")
+			}
+		case "EPSV":
+			data, err = net.Listen("tcp", "127.0.0.1:0")
+			if err != nil {
+				reply("425 no data connection")
+				continue
+			}
+			reply("229 Entering Extended Passive Mode (|||%d|)", data.Addr().(*net.TCPAddr).Port)
+		case "LIST":
+			dc, err := data.Accept()
+			_ = data.Close()
+			if err != nil {
+				reply("425 no data connection")
+				continue
+			}
+			reply("150 listing")
+			_, _ = fmt.Fprint(dc, listings[s.dir()])
+			_ = dc.Close()
+			reply("226 done")
+		default:
+			reply("200 OK")
+		}
+	}
+}
+
+// TestListDirForceListHidden checks that with force_list_hidden the
+// requested directory is listed on a server which ignores the path after
+// "LIST -a", and that the connection is left in its original directory.
+func TestListDirForceListHidden(t *testing.T) {
+	server := startHiddenListFTPServer(t)
+	c, err := ftp.Dial(server.ln.Addr().String(), ftp.DialWithForceListHidden(true))
+	require.NoError(t, err)
+	defer func() { _ = c.Quit() }()
+
+	f := &Fs{opt: Options{ForceListHidden: true}}
+	entries, err := f.listDir(c, "sub")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "sub.txt", entries[0].Name)
+	assert.Equal(t, "/", server.dir())
+
+	_, err = f.listDir(c, "missing")
+	require.Error(t, err)
+	assert.Equal(t, "/", server.dir())
+}
