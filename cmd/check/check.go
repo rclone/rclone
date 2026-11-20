@@ -105,7 +105,7 @@ sizes and hashes (MD5 or SHA1) and logs a report of files that don't
 match.  It doesn't alter the source or destination.
 
 For the [crypt](/crypt/) remote there is a dedicated command,
-[cryptcheck](/commands/rclone_cryptcheck/), that are able to check
+[cryptcheck](/commands/rclone_cryptcheck/), that is able to check
 the checksums of the encrypted files.
 
 If you supply the |--size-only| flag, it will only compare the sizes not
