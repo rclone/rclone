@@ -4,7 +4,9 @@ package fs
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"testing"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
@@ -79,21 +81,36 @@ func (r *regInfoValues) Get(key string) (value string, ok bool) {
 	return "", false
 }
 
-// A configmap.Setter to read from the config file
-type setConfigFile string
+// A configmap.Setter to write to the config file
+type setConfigFile struct {
+	section string
+	options Options // if set, keys written must be one of these
+}
 
 // Set a config item into the config file
 //
 // The item is only saved if the remote is defined in the config file,
 // so remotes defined on the fly or with environment variables aren't
 // written to it.
-func (section setConfigFile) Set(key, value string) {
-	if !ConfigFileHasSection(string(section)) {
+//
+// Writing a key which isn't in options is an internal error as it
+// won't be redacted or settable with flags or environment variables.
+// It panics in tests so these are caught.
+func (s setConfigFile) Set(key, value string) {
+	section := s.section
+	if s.options != nil && s.options.Get(key) == nil {
+		msg := fmt.Sprintf("internal error: saving config %q in section %q which has no config option", key, section)
+		if testing.Testing() {
+			panic(msg)
+		}
+		Errorf(nil, "%s", msg)
+	}
+	if !ConfigFileHasSection(section) {
 		Debugf(nil, "Not saving config %q as section %q is not in the config file", key, section)
 		return
 	}
 	Debugf(nil, "Saving config %q in section %q of the config file", key, section)
-	err := ConfigFileSet(string(section), key, value)
+	err := ConfigFileSet(section, key, value)
 	if err != nil {
 		Errorf(nil, "Failed saving config %q in section %q of the config file: %v", key, section, err)
 	}
@@ -157,6 +174,6 @@ func ConfigMap(prefix string, options Options, configName string, connectionStri
 	}
 
 	// Set Config
-	config.AddSetter(setConfigFile(configName))
+	config.AddSetter(setConfigFile{section: configName, options: options})
 	return config
 }

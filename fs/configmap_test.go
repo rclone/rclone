@@ -104,9 +104,33 @@ func TestSetConfigFileOnlyExistingSection(t *testing.T) {
 		return nil
 	}
 
-	setConfigFile("remote").Set("key", "value")
-	setConfigFile(":backend").Set("key", "value")
-	setConfigFile("envremote").Set("key", "value")
+	setConfigFile{section: "remote"}.Set("key", "value")
+	setConfigFile{section: ":backend"}.Set("key", "value")
+	setConfigFile{section: "envremote"}.Set("key", "value")
 
 	assert.Equal(t, map[string]string{"remote.key": "value"}, saved)
+}
+
+// TestSetConfigFileUndefinedKey checks that saving a key with no
+// config option is caught.
+func TestSetConfigFileUndefinedKey(t *testing.T) {
+	oldHasSection, oldSet := ConfigFileHasSection, ConfigFileSet
+	t.Cleanup(func() { ConfigFileHasSection, ConfigFileSet = oldHasSection, oldSet })
+	ConfigFileHasSection = func(section string) bool { return true }
+	saved := map[string]string{}
+	ConfigFileSet = func(section, key, value string) error {
+		saved[section+"."+key] = value
+		return nil
+	}
+
+	s := setConfigFile{section: "remote", options: Options{{Name: "token"}}}
+	s.Set("token", "value")
+	assert.PanicsWithValue(t, `internal error: saving config "undefined" in section "remote" which has no config option`, func() {
+		s.Set("undefined", "value")
+	})
+
+	// With no options any key may be saved
+	setConfigFile{section: "remote"}.Set("anything", "value")
+
+	assert.Equal(t, map[string]string{"remote.token": "value", "remote.anything": "value"}, saved)
 }
