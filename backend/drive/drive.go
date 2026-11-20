@@ -260,7 +260,7 @@ func init() {
 				return fs.ConfigInput("client_id_set", config.ConfigClientID, "Google Application Client Id")
 			case "client_id_set":
 				m.Set(config.ConfigClientID, configIn.Result)
-				return fs.ConfigInput("client_secret_set", config.ConfigClientSecret, "Google Application Client Secret")
+				return fs.ConfigInputSensitive("client_secret_set", config.ConfigClientSecret, "Google Application Client Secret")
 			case "client_secret_set":
 				m.Set(config.ConfigClientSecret, configIn.Result)
 				return fs.ConfigGoto("oauth")

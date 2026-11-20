@@ -753,7 +753,7 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 			oauthCancelMu.Lock()
 			oauthVerifier = pkceVerifier
 			oauthCancelMu.Unlock()
-			return fs.ConfigInput(newState("*oauth-do"), "config_verification_code", fmt.Sprintf("Verification code\n\nGo to this URL, authenticate then paste the code here.\n\n%s\n", authURL))
+			return fs.ConfigInputSensitive(newState("*oauth-do"), "config_verification_code", fmt.Sprintf("Verification code\n\nGo to this URL, authenticate then paste the code here.\n\n%s\n", authURL))
 		}
 		var out strings.Builder
 		fmt.Fprintf(&out, `For this to work, you will need rclone available on a machine that has
@@ -784,7 +784,7 @@ version recommended):
 			fmt.Fprintf(&out, "\trclone authorize %q\n", ri.Name)
 		}
 		fmt.Fprintln(&out, "\nThen paste the result.")
-		return fs.ConfigInput(newState("*oauth-authorize"), "config_token", out.String())
+		return fs.ConfigInputSensitive(newState("*oauth-authorize"), "config_token", out.String())
 	case "*oauth-authorize":
 		// Read the updates to the config
 		outM := configmap.Simple{}

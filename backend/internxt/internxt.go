@@ -163,7 +163,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 		}
 
 		if loginResp.TFA {
-			return fs.ConfigInput("2fa", "config_2fa", "Two-factor authentication code")
+			return fs.ConfigInputSensitive("2fa", "config_2fa", "Two-factor authentication code")
 		}
 
 		// No 2FA required, do login directly
