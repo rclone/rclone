@@ -711,8 +711,14 @@ func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.F
 		return nil, nil
 	}
 
+	return f.getFile(ctx, uuid)
+}
+
+// getFile reads the metadata of the file with the given UUID. Returns
+// (nil, nil) if the service returns no metadata.
+func (f *Fs) getFile(ctx context.Context, uuid string) (*folders.File, error) {
 	var fileMeta *files.FileMeta
-	err = f.pacer.Call(func() (bool, error) {
+	err := f.pacer.Call(func() (bool, error) {
 		var err error
 		fileMeta, err = files.GetFileMeta(ctx, f.cfg, uuid)
 		return f.shouldRetry(ctx, err)
@@ -724,6 +730,34 @@ func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.F
 		return nil, nil
 	}
 	return convertFileMetaToFile(fileMeta), nil
+}
+
+// waitForFile waits for findFile to return the file with the given UUID.
+//
+// Lookups are served by read replicas which can lag behind the write that
+// created the file, so a lookup straight after an upload can report that it
+// doesn't exist. It polls using the pacer so gives up after --low-level-retries attempts.
+//
+// Returns nil if the file is still not visible by then. That isn't an error
+// as the upload has succeeded.
+func (f *Fs) waitForFile(ctx context.Context, leaf, directoryID, uuid string) *folders.File {
+	var file *folders.File
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		file, err = f.findFile(ctx, leaf, directoryID)
+		if err != nil {
+			return false, err
+		}
+		if file == nil || file.UUID != uuid {
+			return true, fs.ErrorObjectNotFound
+		}
+		return false, nil
+	})
+	if err != nil {
+		fs.Infof(f, "Uploaded file %q (UUID: %s) is not visible yet, carrying on: %v", leaf, uuid, err)
+		return nil
+	}
+	return file
 }
 
 // convertFileMetaToFile converts files.FileMeta to folders.File
@@ -891,6 +925,14 @@ func newObjectWithFile(f *Fs, remote string, file *folders.File) fs.Object {
 		size:    size,
 		modTime: file.ModificationTime,
 	}
+}
+
+// setMetaData sets the object's metadata from file
+func (o *Object) setMetaData(file *folders.File) {
+	o.id = file.FileID
+	o.uuid = file.UUID
+	o.size, _ = file.Size.Int64()
+	o.modTime = file.ModificationTime
 }
 
 // Fs returns the parent Fs
@@ -1136,6 +1178,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	size := src.Size()
 
 	var meta *buckets.CreateMetaResponse
+	var file *folders.File // the new file as the service holds it, if known
 	if size < 0 || size >= int64(o.f.opt.UploadCutoff) {
 		chunkWriter, uploadErr := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 			Open:        o.f,
@@ -1156,6 +1199,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		w := chunkWriter.(*internxtChunkWriter)
 		meta = w.meta
+		file = w.file
 	} else {
 		// Use single-part upload for small files
 		err = o.f.pacer.CallNoRetry(func() (bool, error) {
@@ -1194,13 +1238,30 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			o.restoreBackupFile(ctx, backupUUID, origName, origType)
 			return err
 		}
+
+		// A single lookup is enough to fill in the object, waiting
+		// for the lookup by name would slow down small files.
+		file, err = o.f.getFile(ctx, meta.UUID)
+		if err != nil {
+			fs.Debugf(o.f, "Could not read back metadata of uploaded file (UUID: %s): %v", meta.UUID, err)
+		}
 	}
 
 	// Update object metadata
-	o.uuid = meta.UUID
-	o.id = meta.FileID
-	o.size = src.Size()
 	o.remote = remote
+	if file != nil {
+		o.setMetaData(file)
+	} else {
+		o.uuid = meta.UUID
+		o.id = meta.FileID
+		o.size = src.Size()
+		if o.size < 0 {
+			if n, err := meta.Size.Int64(); err == nil {
+				o.size = n
+			}
+		}
+		o.modTime = src.ModTime(ctx)
+	}
 
 	// Step 3: Upload succeeded - delete the backup file
 	if backupUUID != "" {
