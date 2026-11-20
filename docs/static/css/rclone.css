@@ -80,6 +80,8 @@
 
 /* ===== Reset / Base ===== */
 *, *::before, *::after { box-sizing: border-box; }
+/* Stop mobile browsers from enlarging the text in some blocks only */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
     margin: 0;
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
