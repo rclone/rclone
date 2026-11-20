@@ -41,6 +41,7 @@ type FolderListResponse struct {
 			FldID    json.Number `json:"fld_id"`
 			Path     string      `json:"path"`
 			FileCode string      `json:"file_code"`
+			MD5      string      `json:"md5"`
 			Size     int64       `json:"size"`
 		} `json:"files"`
 		Folders []struct {
@@ -70,6 +71,7 @@ type FileInfoResponse struct {
 		Name     string `json:"name"`
 		FileCode string `json:"filecode"`
 		Hash     string `json:"hash"`
+		MD5      string `json:"md5"`
 		Status   int    `json:"status"`
 	} `json:"result"`
 }
