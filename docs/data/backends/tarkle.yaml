@@ -1,0 +1,28 @@
+backend: tarkle
+name: Tarkle
+tier: Tier 2
+maintainers: External
+features_score: 6
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: No usage
+docs: Full
+security: High
+virtual: false
+remote: 'TestTarkle:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- Copy
+- DirCacheFlush
+- DirMove
+- ListR
+- Move
+- OpenChunkWriter
+- Purge
+- ReadMetadata
+hashes:
+- sha256
+precision: 1000000000
