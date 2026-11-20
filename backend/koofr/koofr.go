@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,12 +18,20 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
 
 	httpclient "github.com/koofr/go-httpclient"
 	koofrclient "github.com/koofr/go-koofrclient"
+)
+
+const (
+	minSleep      = 10 * time.Millisecond
+	maxSleep      = 2 * time.Second
+	decayConstant = 2 // bigger for slower decay, exponential
 )
 
 // Register Fs with rclone
@@ -114,6 +123,7 @@ type Fs struct {
 	opt      Options
 	features *fs.Features
 	client   *koofrclient.KoofrClient
+	pacer    *fs.Pacer // pacer for API calls
 }
 
 // An Object on the remote Koofr Fs
@@ -227,7 +237,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	fullPath := o.fullPath()
 	dirPath := dir(fullPath)
 	name := base(fullPath)
-	err := o.fs.mkdir(dirPath)
+	err := o.fs.mkdir(ctx, dirPath)
 	if err != nil {
 		return err
 	}
@@ -324,15 +334,21 @@ func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff 
 	basicAuth := fmt.Sprintf("Basic %s",
 		base64.StdEncoding.EncodeToString([]byte(opt.User+":"+pass)))
 	client.HTTPClient.Headers.Set("Authorization", basicAuth)
-	mounts, err := client.Mounts()
-	if err != nil {
-		return nil, err
-	}
 	f := &Fs{
 		name:   name,
 		root:   root,
 		opt:    *opt,
 		client: client,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+	}
+	var mounts []koofrclient.Mount
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		mounts, err = client.Mounts()
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -357,7 +373,7 @@ func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff 
 		}
 		return nil, errors.New("failed to find mount " + opt.MountID)
 	}
-	rootFile, err := f.client.FilesInfo(f.mountID, f.opt.Enc.FromStandardPath("/"+f.root))
+	rootFile, err := f.filesInfo(ctx, f.opt.Enc.FromStandardPath("/"+f.root))
 	if err == nil && rootFile.Type != "dir" {
 		f.root = dir(f.root)
 		err = fs.ErrorIsFile
@@ -369,7 +385,7 @@ func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff 
 
 // List returns a list of items in a directory
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	files, err := f.client.FilesList(f.mountID, f.fullPath(dir))
+	files, err := f.filesList(ctx, f.fullPath(dir))
 	if err != nil {
 		return nil, translateErrorsDir(err)
 	}
@@ -391,7 +407,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // NewObject creates a new remote Object for a given remote path
 func (f *Fs) NewObject(ctx context.Context, remote string) (obj fs.Object, err error) {
-	info, err := f.client.FilesInfo(f.mountID, f.fullPath(remote))
+	info, err := f.filesInfo(ctx, f.fullPath(remote))
 	if err != nil {
 		return nil, translateErrorsObject(err)
 	}
@@ -417,7 +433,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	fullPath := f.fullPath(src.Remote())
 	dirPath := dir(fullPath)
 	name := base(fullPath)
-	err = f.mkdir(dirPath)
+	err = f.mkdir(ctx, dirPath)
 	if err != nil {
 		return nil, err
 	}
@@ -435,6 +451,50 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // PutStream updates a remote Object with a stream of unknown size
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return f.Put(ctx, in, src, options...)
+}
+
+// shouldRetry returns a boolean as to whether this err deserves to be
+// retried. It returns the err as a convenience.
+//
+// Rate limiting (429) and service unavailable (503) are retried, honouring
+// any Retry-After header, as well as errors fserrors.ShouldRetry considers
+// transient.
+func shouldRetry(ctx context.Context, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	if ise, ok := httpclient.IsInvalidStatusError(err); ok && (ise.Got == http.StatusTooManyRequests || ise.Got == http.StatusServiceUnavailable) {
+		if after, parseErr := strconv.Atoi(ise.Headers.Get("Retry-After")); parseErr == nil && after > 0 {
+			return true, pacer.RetryAfterError(err, time.Duration(after)*time.Second)
+		}
+		return true, err
+	}
+	return fserrors.ShouldRetry(err), err
+}
+
+// filesInfo calls client.FilesInfo with retries
+func (f *Fs) filesInfo(ctx context.Context, fullPath string) (info koofrclient.FileInfo, err error) {
+	err = f.pacer.Call(func() (bool, error) {
+		info, err = f.client.FilesInfo(f.mountID, fullPath)
+		return shouldRetry(ctx, err)
+	})
+	return info, err
+}
+
+// filesList calls client.FilesList with retries
+func (f *Fs) filesList(ctx context.Context, fullPath string) (files []koofrclient.FileInfo, err error) {
+	err = f.pacer.Call(func() (bool, error) {
+		files, err = f.client.FilesList(f.mountID, fullPath)
+		return shouldRetry(ctx, err)
+	})
+	return files, err
+}
+
+// call runs fn with retries
+func (f *Fs) call(ctx context.Context, fn func() error) error {
+	return f.pacer.Call(func() (bool, error) {
+		return shouldRetry(ctx, fn())
+	})
 }
 
 // isBadRequest is a predicate which holds true iff the error returned was
@@ -474,11 +534,11 @@ func translateErrorsObject(err error) error {
 
 // mkdir creates a directory at the given remote path. Creates ancestors if
 // necessary
-func (f *Fs) mkdir(fullPath string) error {
+func (f *Fs) mkdir(ctx context.Context, fullPath string) error {
 	if fullPath == "/" {
 		return nil
 	}
-	info, err := f.client.FilesInfo(f.mountID, fullPath)
+	info, err := f.filesInfo(ctx, fullPath)
 	if err == nil && info.Type == "dir" {
 		return nil
 	}
@@ -492,13 +552,13 @@ func (f *Fs) mkdir(fullPath string) error {
 		if part == "" {
 			continue
 		}
-		info, err = f.client.FilesInfo(f.mountID, path.Join(parent, part))
+		info, err = f.filesInfo(ctx, path.Join(parent, part))
 		if err != nil || info.Type != "dir" {
 			err = translateErrorsDir(err)
 			if err != nil && err != fs.ErrorDirNotFound {
 				return err
 			}
-			err = f.client.FilesNewFolder(f.mountID, parent, part)
+			err = f.call(ctx, func() error { return f.client.FilesNewFolder(f.mountID, parent, part) })
 			if err != nil && !isBadRequest(err) {
 				return err
 			}
@@ -512,19 +572,19 @@ func (f *Fs) mkdir(fullPath string) error {
 // necessary
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	fullPath := f.fullPath(dir)
-	return f.mkdir(fullPath)
+	return f.mkdir(ctx, fullPath)
 }
 
 // Rmdir removes an (empty) directory at the given remote path
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	files, err := f.client.FilesList(f.mountID, f.fullPath(dir))
+	files, err := f.filesList(ctx, f.fullPath(dir))
 	if err != nil {
 		return translateErrorsDir(err)
 	}
 	if len(files) > 0 {
 		return fs.ErrorDirectoryNotEmpty
 	}
-	err = f.client.FilesDelete(f.mountID, f.fullPath(dir))
+	err = f.call(ctx, func() error { return f.client.FilesDelete(f.mountID, f.fullPath(dir)) })
 	if err != nil {
 		return translateErrorsDir(err)
 	}
@@ -535,14 +595,16 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstFullPath := f.fullPath(remote)
 	dstDir := dir(dstFullPath)
-	err := f.mkdir(dstDir)
+	err := f.mkdir(ctx, dstDir)
 	if err != nil {
 		return nil, fs.ErrorCantCopy
 	}
 	mtime := src.ModTime(ctx).UnixNano() / 1000 / 1000
-	err = f.client.FilesCopy((src.(*Object)).fs.mountID,
-		(src.(*Object)).fs.fullPath((src.(*Object)).remote),
-		f.mountID, dstFullPath, koofrclient.CopyOptions{SetModified: &mtime})
+	err = f.call(ctx, func() error {
+		return f.client.FilesCopy((src.(*Object)).fs.mountID,
+			(src.(*Object)).fs.fullPath((src.(*Object)).remote),
+			f.mountID, dstFullPath, koofrclient.CopyOptions{SetModified: &mtime})
+	})
 	if err != nil {
 		return nil, fs.ErrorCantCopy
 	}
@@ -554,12 +616,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcObj := src.(*Object)
 	dstFullPath := f.fullPath(remote)
 	dstDir := dir(dstFullPath)
-	err := f.mkdir(dstDir)
+	err := f.mkdir(ctx, dstDir)
 	if err != nil {
 		return nil, fs.ErrorCantMove
 	}
-	err = f.client.FilesMove(srcObj.fs.mountID,
-		srcObj.fs.fullPath(srcObj.remote), f.mountID, dstFullPath)
+	err = f.call(ctx, func() error {
+		return f.client.FilesMove(srcObj.fs.mountID,
+			srcObj.fs.fullPath(srcObj.remote), f.mountID, dstFullPath)
+	})
 	if err != nil {
 		return nil, fs.ErrorCantMove
 	}
@@ -575,11 +639,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 	dstDir := dir(dstFullPath)
-	err := f.mkdir(dstDir)
+	err := f.mkdir(ctx, dstDir)
 	if err != nil {
 		return fs.ErrorCantDirMove
 	}
-	err = f.client.FilesMove(srcFs.mountID, srcFullPath, f.mountID, dstFullPath)
+	err = f.call(ctx, func() error {
+		return f.client.FilesMove(srcFs.mountID, srcFullPath, f.mountID, dstFullPath)
+	})
 	if err != nil {
 		return fs.ErrorCantDirMove
 	}
@@ -588,7 +654,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // About reports space usage (with a MiB precision)
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	mount, err := f.client.MountsDetails(f.mountID)
+	var mount koofrclient.Mount
+	err := f.call(ctx, func() (err error) {
+		mount, err = f.client.MountsDetails(f.mountID)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
