@@ -202,6 +202,25 @@ func (f *Fs) InternalTestHasChildren(t *testing.T) {
 	assert.False(t, found, "a missing path should not report children")
 }
 
+func TestPathEscape(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{in: "bucket/file.txt", want: "bucket/file.txt"},
+		{in: "bucket/dir/a b.txt", want: "bucket/dir/a%20b.txt"},
+		{in: "bucket/a+b.txt", want: "bucket/a%2Bb.txt"},
+		{in: "bucket/a,b.txt", want: "bucket/a%2Cb.txt"},
+		{in: "bucket/d,1/a,b,c.txt", want: "bucket/d%2C1/a%2Cb%2Cc.txt"},
+		{in: "bucket/a+,b.txt", want: "bucket/a%2B%2Cb.txt"},
+		{in: "bucket/a%2Cb.txt", want: "bucket/a%252Cb.txt"},
+		{in: "bucket/a&b;c=d.txt", want: "bucket/a&b;c=d.txt"},
+		{in: "bucket/é.txt", want: "bucket/%C3%A9.txt"},
+	} {
+		assert.Equal(t, test.want, pathEscape(test.in), test.in)
+	}
+}
+
 func TestVersionLess(t *testing.T) {
 	key1 := "key1"
 	key2 := "key2"
