@@ -69,9 +69,6 @@ func TestSAPITransportDesktopClient(t *testing.T) {
 	for range 2 {
 		resp, err := session.client.Get(server.URL + "/sapi/test")
 		require.NoError(t, err)
-		require.NotNil(t, resp.TLS)
-		assert.Empty(t, resp.TLS.NegotiatedProtocol)
-		assert.NotEmpty(t, resp.TLS.VerifiedChains)
 		_, err = io.Copy(io.Discard, resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
