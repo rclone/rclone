@@ -1608,7 +1608,7 @@ personal files between one's home network, one's personal notebook when on the
 road, and with one's work computer. The routine data is not sensitive.
 For the sensitive data, configure an rclone [crypt remote](/crypt/) to point to
 a subdirectory within the local disk tree that is bisync'd to Dropbox,
-and then set up an bisync for this local crypt directory to a directory
+and then set up a bisync for this local crypt directory to a directory
 outside of the main sync tree.
 
 ### Linux server setup

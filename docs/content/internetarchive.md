@@ -24,7 +24,7 @@ Make a new item
 rclone mkdir remote:item
 ```
 
-List the contents of a item
+List the contents of an item
 
 ```console
 rclone ls remote:item
@@ -42,8 +42,8 @@ rclone sync --interactive /home/local/directory remote:item
 Because of Internet Archive's architecture, it enqueues write operations (and
 extra post-processings) in a per-item queue. You can check item's queue at
 <https://catalogd.archive.org/history/item-name-here>. Because of that, all
-uploads/deletes will not show up immediately and takes some time to be available.
-The per-item queue is enqueued to an another queue, Item Deriver Queue.
+uploads/deletes will not show up immediately and take some time to be available.
+The per-item queue is enqueued to another queue, Item Deriver Queue.
 [You can check the status of Item Deriver Queue here.](https://catalogd.archive.org/catalog.php?whereami=1)
 This queue has a limit, and it may block you from uploading, or even deleting.
 You should avoid uploading a lot of small files for better behavior.

@@ -75,7 +75,7 @@ List directories and files in the top level of your Gofile
 rclone lsf remote:
 ```
 
-To copy a local directory to an Gofile directory called backup
+To copy a local directory to a Gofile directory called backup
 
 ```console
 rclone copy /home/source remote:backup
