@@ -318,6 +318,11 @@ func init() {
 			Sensitive: true,
 			Hide:      fs.OptionHideBoth,
 		}, {
+			Name:      configAuthSession,
+			Help:      "Authentication session in progress - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
 			Name:     configClientID,
 			Help:     "Client ID for iCloud API access.",
 			Required: false,
