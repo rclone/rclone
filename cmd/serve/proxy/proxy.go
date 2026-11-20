@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/netip"
 	"os/exec"
@@ -24,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/rc"
 	libcache "github.com/rclone/rclone/lib/cache"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
@@ -62,6 +64,8 @@ And it may have these parameters
 
 - |_obscure| - comma separated strings for parameters to obscure
 - |_secret_access_key| - the secret for S3 access key auth (see below)
+- |_config| - a JSON object of global config options (as used by the rc |_config| parameter)
+- |_filter| - a JSON object of filter rules (as used by the rc |_filter| parameter)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -136,6 +140,29 @@ the |user| and |pass|/|public_key| returned in the output to the host given.  No
 that since |_obscure| is set to |pass|, rclone will obscure the |pass|
 parameter before creating the backend (which is required for sftp
 backends).
+
+You can also set per-user global options with |_config| and per-user
+filter rules with |_filter|, using the same JSON object format as
+[the rc](https://rclone.org/rc/#setting-filter-flags-with-filter):
+
+|||json
+{
+  "type": "local",
+  "_root": "/",
+  "_config": {
+    "IgnoreCaseSync": true
+  },
+  "_filter": {
+    "IncludeRule": [
+      "data/**",
+      "backup/**"
+    ]
+  }
+}
+|||
+
+These apply only to the backend and VFS created for that user and do
+not affect other users or the server's defaults.
 
 The program can manipulate the supplied |user| in any way, for example
 to make proxy to many different sftp backends, you could make the
@@ -253,12 +280,65 @@ func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
 	return p
 }
 
-// run the proxy command returning a config map
-func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
+// parseProxyResponse decodes proxy stdout JSON into backend config strings and
+// optional _config/_filter rc parameter blocks.
+func parseProxyResponse(data []byte) (config configmap.Simple, rcParams rc.Params, err error) {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, nil, fmt.Errorf("proxy: failed to read output: %q: %w", string(data), err)
+	}
+	config = make(configmap.Simple, len(raw))
+	for key, rawVal := range raw {
+		if key == "_config" || key == "_filter" {
+			var block rc.Params
+			if err := json.Unmarshal(rawVal, &block); err != nil {
+				return nil, nil, fmt.Errorf("proxy: %s must be a JSON object: %w", key, err)
+			}
+			if block == nil {
+				return nil, nil, fmt.Errorf("proxy: %s must be a JSON object", key)
+			}
+			if rcParams == nil {
+				rcParams = make(rc.Params, 2)
+			}
+			rcParams[key] = block
+			continue
+		}
+		var val string
+		if err := json.Unmarshal(rawVal, &val); err != nil {
+			return nil, nil, fmt.Errorf("proxy: failed to read output: %q: %w", string(data), err)
+		}
+		config[key] = val
+	}
+	return config, rcParams, nil
+}
+
+// applyUserContext returns a per-user context derived from base with any
+// _config and _filter blocks applied, without mutating base.
+func applyUserContext(base context.Context, rcParams rc.Params) (context.Context, error) {
+	if len(rcParams) == 0 {
+		return base, nil
+	}
+	// Pass a copy holding only _config/_filter so rc.ParseOptions deletes
+	// nothing needed elsewhere and cannot consume flat backend options of the
+	// same name.
+	in := maps.Clone(rcParams)
+	ctx, err := rc.AddConfig(base, in)
+	if err != nil {
+		return nil, fmt.Errorf("proxy: failed to parse _config: %w", err)
+	}
+	ctx, err = rc.AddFilter(ctx, in)
+	if err != nil {
+		return nil, fmt.Errorf("proxy: failed to parse _filter: %w", err)
+	}
+	return ctx, nil
+}
+
+// run the proxy command returning a backend config map and optional rc params
+func (p *Proxy) run(in map[string]string) (config configmap.Simple, rcParams rc.Params, err error) {
 	cmd := exec.Command(p.cmdLine[0], p.cmdLine[1:]...)
 	inBytes, err := json.MarshalIndent(in, "", "\t")
 	if err != nil {
-		return nil, fmt.Errorf("proxy: failed to marshal input: %w", err)
+		return nil, nil, fmt.Errorf("proxy: failed to marshal input: %w", err)
 	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdin = bytes.NewBuffer(inBytes)
@@ -269,11 +349,11 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	fs.Debugf(nil, "Calling proxy %v", p.cmdLine)
 	duration := time.Since(start)
 	if err != nil {
-		return nil, fmt.Errorf("proxy: failed on %v: %q: %w", p.cmdLine, strings.TrimSpace(stderr.String()), err)
+		return nil, nil, fmt.Errorf("proxy: failed on %v: %q: %w", p.cmdLine, strings.TrimSpace(stderr.String()), err)
 	}
-	err = json.Unmarshal(stdout.Bytes(), &config)
+	config, rcParams, err = parseProxyResponse(stdout.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("proxy: failed to read output: %q: %w", stdout.String(), err)
+		return nil, nil, err
 	}
 	fs.Debugf(nil, "Proxy returned in %v", duration)
 
@@ -285,13 +365,13 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 			if ok {
 				obscuredValue, err := obscure.Obscure(value)
 				if err != nil {
-					return nil, fmt.Errorf("proxy: %w", err)
+					return nil, nil, fmt.Errorf("proxy: %w", err)
 				}
 				config.Set(key, obscuredValue)
 			}
 		}
 	}
-	return config, nil
+	return config, rcParams, nil
 }
 
 // cacheKeyHMACKey is a per-process random key used to derive cache keys
@@ -346,7 +426,7 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 	if clientIP != "" {
 		in["client_ip"] = clientIP
 	}
-	config, err := p.run(in)
+	config, rcParams, err := p.run(in)
 	if err != nil {
 		return nil, err
 	}
@@ -372,6 +452,10 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 		}
 		// Keep the secret out of the backend config
 		delete(config, "_secret_access_key")
+	}
+	userCtx, err := applyUserContext(p.ctx, rcParams)
+	if err != nil {
+		return nil, err
 	}
 
 	// Find the backend
@@ -414,7 +498,7 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 	// Look for fs in the VFS cache
 	value, err = p.vfsCache.Get(cacheKey, func(key string) (value any, ok bool, err error) {
 		// Create the Fs from the cache
-		f, err := cache.GetFn(p.ctx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
+		f, err := cache.GetFn(userCtx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
 			// Update the config with the default values
 			for i := range fsInfo.Options {
 				o := &fsInfo.Options[i]
@@ -432,7 +516,7 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:       vfs.New(p.ctx, f, &p.vfsOpt),
+			vfs:       vfs.New(userCtx, f, &p.vfsOpt),
 			kind:      kind,
 			pwHash:    sha256.Sum256([]byte(auth)),
 			secret:    secret,

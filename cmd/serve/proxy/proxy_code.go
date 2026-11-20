@@ -6,10 +6,30 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"maps"
 	"os"
 )
 
+func applyEnvJSON(out map[string]any, key, envName string) {
+	raw := os.Getenv(envName)
+	if raw == "" {
+		return
+	}
+	var v json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		log.Fatalf("%s invalid JSON: %v", envName, err)
+	}
+	out[key] = v
+}
+
 func main() {
+	if raw := os.Getenv("RCLONE_TEST_PROXY_RAW_JSON"); raw != "" {
+		if _, err := os.Stdout.WriteString(raw); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	// Read the input
 	var in map[string]string
 	err := json.NewDecoder(os.Stdin).Decode(&in)
@@ -28,7 +48,7 @@ func main() {
 	}
 
 	// Write the output
-	var out = map[string]string{}
+	var out = map[string]any{}
 	for k, v := range in {
 		switch k {
 		case "user":
@@ -47,11 +67,18 @@ func main() {
 		}
 		out[k] = v
 	}
-	if out["type"] == "" {
+	if out["type"] == nil || out["type"] == "" {
 		out["type"] = "local"
 	}
-	if out["_root"] == "" {
-		out["_root"] = ""
+	if out["_root"] == nil || out["_root"] == "" {
+		switch {
+		case os.Getenv("RCLONE_TEST_PROXY_ROOT") != "":
+			out["_root"] = os.Getenv("RCLONE_TEST_PROXY_ROOT")
+		case len(os.Args) > 1:
+			out["_root"] = os.Args[1]
+		default:
+			out["_root"] = ""
+		}
 	}
 	// A user or access key ID can be revoked
 	if revoked := os.Getenv("RCLONE_TEST_PROXY_REVOKED"); revoked != "" && in["user"] == revoked {
@@ -74,8 +101,20 @@ func main() {
 		}
 		out["_secret_access_key"] = in["user"] + suffix
 	}
-	json.NewEncoder(os.Stdout).Encode(&out)
-	if err != nil {
+
+	applyEnvJSON(out, "_filter", "RCLONE_TEST_PROXY_FILTER")
+	applyEnvJSON(out, "_config", "RCLONE_TEST_PROXY_CONFIG")
+	if ovRaw := os.Getenv("RCLONE_TEST_PROXY_USER_OVERRIDES"); ovRaw != "" {
+		var overrides map[string]map[string]any
+		if err := json.Unmarshal([]byte(ovRaw), &overrides); err != nil {
+			log.Fatalf("RCLONE_TEST_PROXY_USER_OVERRIDES invalid JSON: %v", err)
+		}
+		if extra, ok := overrides[in["user"]]; ok {
+			maps.Copy(out, extra)
+		}
+	}
+
+	if err := json.NewEncoder(os.Stdout).Encode(&out); err != nil {
 		log.Fatal(err)
 	}
 }
