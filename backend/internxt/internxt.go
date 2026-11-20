@@ -136,6 +136,16 @@ func init() {
 				encoder.EncodeRightPeriod |
 				encoder.EncodeDot |
 				encoder.EncodeCrLf,
+		}, {
+			Name:      "2fa_code",
+			Help:      "Two-factor authentication code used during setup - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      "bucket",
+			Help:      "Bucket ID - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
 		}},
 	})
 }
