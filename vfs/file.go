@@ -226,6 +226,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	oldPendingRenameFun := f.pendingRenameFun
 	oldPath := f._cachePath()
 	newCacheName := f._fixCachePath(newName)
+	oldLeaf := f.leaf
+	oldDPath := f.dPath
 	f.mu.RUnlock()
 
 	if features := d.Fs().Features(); features.Move == nil && features.Copy == nil {
@@ -313,7 +315,15 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		return nil
 	}
 
-	return renameCall(ctx)
+	err := renameCall(ctx)
+	if err != nil {
+		f.mu.Lock()
+		f.d = d
+		f.dPath = oldDPath
+		f.leaf = oldLeaf
+		f.mu.Unlock()
+	}
+	return err
 }
 
 // addWriter adds a write handle to the file
