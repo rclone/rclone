@@ -87,6 +87,7 @@ type syncCopyMove struct {
 	backupDir              fs.Fs                  // place to store overwrites/deletes
 	checkFirst             bool                   // if set run all the checkers before starting transfers
 	maxDurationEndTime     time.Time              // end time if --max-duration is set
+	notDeleting            sync.Once              // for logging once that files aren't being deleted because of errors
 	logger                 operations.LoggerFn    // LoggerFn used to report the results of a sync (or bisync) to an io.Writer
 	usingLogger            bool                   // whether we are using logger
 	setDirMetadata         bool                   // if set we set the directory metadata
@@ -923,6 +924,16 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 			s.dstFiles[x.Remote()] = x
 			s.dstFilesMu.Unlock()
 		case fs.DeleteModeDuring, fs.DeleteModeOnly:
+			if accounting.Stats(s.ctx).Errored() && !s.ci.IgnoreErrors {
+				// As when deleting after, the file may only be missing
+				// from the source because the source couldn't be read
+				s.notDeleting.Do(func() {
+					fs.ErrorfCtx(s.ctx, s.fdst, "%v", fs.ErrorNotDeleting)
+					s.processError(fs.ErrorNotDeleting)
+				})
+				s.logger(s.ctx, operations.TransferError, nil, x, fs.ErrorNotDeleting)
+				return false
+			}
 			select {
 			case <-s.ctx.Done():
 				return
