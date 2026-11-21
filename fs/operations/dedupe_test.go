@@ -284,6 +284,25 @@ func TestDeduplicateRenameManyExisting(t *testing.T) {
 	assert.ElementsMatch(t, []int64{file1.Size, file2.Size}, []int64{size1, size2})
 }
 
+// Renaming duplicates found by hash would move them to the root
+// under their hash, losing names and directories, so it is not
+// allowed
+func TestDeduplicateRenameByHash(t *testing.T) {
+	r := fstest.NewRun(t)
+	skipIfNoHash(t, r.Fremote)
+	contents := random.String(100)
+
+	file1 := r.WriteObject(context.Background(), "photos/2024/pic.jpg", contents, t1)
+	file2 := r.WriteObject(context.Background(), "docs/report.jpg", contents, t2)
+	file3 := r.WriteObject(context.Background(), "docs/unique.txt", "stuff", t3)
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateRename, true)
+	require.Error(t, err)
+
+	r.CheckRemoteItems(t, file1, file2, file3)
+}
+
 // This should really be a unit test, but the test framework there
 // doesn't have enough tools to make it easy
 func TestMergeDirs(t *testing.T) {
