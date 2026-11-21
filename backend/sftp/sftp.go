@@ -250,7 +250,7 @@ E.g. the second example above should be rewritten as:
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encoder.Base,
+			Default:  encoder.Display,
 		}, {
 			Name:     "set_modtime",
 			Default:  true,

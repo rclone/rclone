@@ -524,13 +524,16 @@ your RClone backend configuration to disable this behaviour.
 
 ### Restricted filename characters
 
-SFTP servers on Unix-like systems can store any character in a file name
-except NUL and `/`, so by default only these are replaced:
+By default, SFTP uses rclone's standard filename encoding
+(`Slash,Del,Ctl,Dot`), passing names through unchanged. This preserves
+compatibility with existing remotes, including crypt remotes using
+`base32768` filename encoding.
 
-| Character | Value | Replacement |
-| --------- |:-----:|:-----------:|
-| NUL       | 0x00  | ␀           |
-| /         | 0x2F  | ／           |
+For files created by other tools with raw control characters in their names,
+use `--sftp-encoding Slash,Dot` to convert these characters to and from
+rclone's standard form. Changing the encoding of an existing remote can
+make its filenames incompatible. Remotes written with the v1.76.0 default
+can retain that encoding with `encoding = Slash,Dot` in their configuration.
 
 If the server runs on Windows, which can't store many more characters,
 add the Windows restricted characters with `--sftp-encoding`, as in the
