@@ -387,6 +387,10 @@ func TestBwTimetableUnmarshalJSONReplaces(t *testing.T) {
 	assert.Equal(t, BwTimetable{
 		BwTimeSlot{DayOfTheWeek: 1, HHMM: 1000, Bandwidth: BwPair{Tx: 1024 * 1024, Rx: 1024 * 1024}},
 	}, tt)
+
+	// an empty timetable marshals as "" so that must clear it
+	require.NoError(t, json.Unmarshal([]byte(`""`), &tt))
+	assert.Equal(t, BwTimetable(nil), tt)
 }
 
 func TestBwTimetableLimitAt(t *testing.T) {
@@ -658,6 +662,10 @@ func TestBwTimetableMarshalJSON(t *testing.T) {
 		in   BwTimetable
 		want string
 	}{
+		{
+			BwTimetable(nil),
+			`""`,
+		},
 		{
 			BwTimetable{
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 0, Rx: 0}},
