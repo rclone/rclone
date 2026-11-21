@@ -21,7 +21,6 @@ import (
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -541,7 +540,6 @@ type CaptchaTokenSource struct {
 	m     configmap.Mapper
 	opt   *Options
 	token *api.CaptchaToken
-	ctx   context.Context
 	rst   *pikpakClient
 }
 
@@ -560,7 +558,6 @@ func newCaptchaTokenSource(ctx context.Context, opt *Options, m configmap.Mapper
 		m:     m,
 		opt:   opt,
 		token: token,
-		ctx:   ctx,
 		rst:   newPikpakClient(getClient(ctx, opt), opt),
 	}
 }
@@ -581,7 +578,7 @@ func (cts *CaptchaTokenSource) requestToken(ctx context.Context, req *api.Captch
 	return
 }
 
-func (cts *CaptchaTokenSource) refreshToken(opts *rest.Opts) (string, error) {
+func (cts *CaptchaTokenSource) refreshToken(ctx context.Context, opts *rest.Opts) (string, error) {
 	oldToken := ""
 	if cts.token != nil {
 		oldToken = cts.token.CaptchaToken
@@ -593,7 +590,7 @@ func (cts *CaptchaTokenSource) refreshToken(opts *rest.Opts) (string, error) {
 		action = fmt.Sprintf("%s:%s", opts.Method, u.Path)
 	}
 	req := newCaptchaTokenRequest(action, oldToken, cts.opt)
-	if err := cts.requestToken(cts.ctx, req); err != nil {
+	if err := cts.requestToken(ctx, req); err != nil {
 		return "", fmt.Errorf("failed to retrieve captcha token from api: %w", err)
 	}
 
@@ -614,13 +611,18 @@ func (cts *CaptchaTokenSource) Invalidate() {
 }
 
 // Token returns a valid captcha token
-func (cts *CaptchaTokenSource) Token(opts *rest.Opts) (string, error) {
+//
+// ctx is the context of the request needing the token, not the one the Fs was
+// created with: reusing a long-lived context here means one cancelled context
+// (e.g. at Fs creation) fails every later refresh with "context canceled" and
+// the mount never recovers.
+func (cts *CaptchaTokenSource) Token(ctx context.Context, opts *rest.Opts) (string, error) {
 	cts.mu.Lock()
 	defer cts.mu.Unlock()
 	if cts.token.Valid() {
 		return cts.token.CaptchaToken, nil
 	}
-	return cts.refreshToken(opts)
+	return cts.refreshToken(ctx, opts)
 }
 
 // pikpakClient wraps rest.Client with a handle of captcha token
@@ -667,9 +669,12 @@ func (c *pikpakClient) SetCaptchaTokener(ctx context.Context, m configmap.Mapper
 
 func (c *pikpakClient) CallJSON(ctx context.Context, opts *rest.Opts, request any, response any) (resp *http.Response, err error) {
 	if c.captcha != nil {
-		token, err := c.captcha.Token(opts)
+		token, err := c.captcha.Token(ctx, opts)
 		if err != nil || token == "" {
-			return nil, fserrors.FatalError(fmt.Errorf("couldn't get captcha token: %v", err))
+			// Not fatal: a failed fetch used to be final for the whole process,
+			// leaving a running mount broken until it was restarted. Let the
+			// normal retry machinery handle it.
+			return nil, fmt.Errorf("couldn't get captcha token: %v", err)
 		}
 		if opts.ExtraHeaders == nil {
 			opts.ExtraHeaders = make(map[string]string)
