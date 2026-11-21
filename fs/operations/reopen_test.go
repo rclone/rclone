@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -20,6 +21,7 @@ var (
 	_ io.ReadSeekCloser      = (*ReOpen)(nil)
 	_ io.ReaderAt            = (*ReOpen)(nil)
 	_ pool.DelayAccountinger = (*ReOpen)(nil)
+	_ io.WriterTo            = (*ReOpen)(nil)
 )
 
 var errorTestError = errors.New("test error")
@@ -410,6 +412,32 @@ func TestReOpen(t *testing.T) {
 				rewind()
 			})
 
+			t.Run("WriteTo", func(t *testing.T) {
+				h, _, err := testReOpen([]int64{2, 1, 3}, 10)
+				require.NoError(t, err)
+
+				// Hide ReadFrom so WriteTo does the copy
+				var buf bytes.Buffer
+				n, err := h.WriteTo(struct{ io.Writer }{&buf})
+				require.NoError(t, err)
+				assert.Equal(t, int64(len(expectedRead)), n)
+				assert.Equal(t, expectedRead, buf.Bytes())
+				assert.NoError(t, h.Close())
+			})
+
+			t.Run("WriteToReaderFrom", func(t *testing.T) {
+				h, _, err := testReOpen([]int64{2, 1, 3}, 10)
+				require.NoError(t, err)
+
+				w := &readFromRecorder{}
+				n, err := h.WriteTo(w)
+				require.NoError(t, err)
+				assert.Equal(t, int64(len(expectedRead)), n)
+				assert.Equal(t, expectedRead, w.buf.Bytes())
+				assert.True(t, w.readFrom)
+				assert.NoError(t, h.Close())
+			})
+
 			t.Run("AccountReadError", func(t *testing.T) {
 				// Test accounting errors
 				h, _, err := testReOpen(nil, 10)
@@ -424,6 +452,96 @@ func TestReOpen(t *testing.T) {
 				assert.Equal(t, 3, n)
 				assert.Equal(t, errorTestError, err)
 			})
+		})
+	}
+}
+
+// readFromRecorder is an io.Writer with io.ReaderFrom which records
+// whether ReadFrom was used
+type readFromRecorder struct {
+	buf      bytes.Buffer
+	readFrom bool
+}
+
+func (w *readFromRecorder) Write(p []byte) (int, error) {
+	return w.buf.Write(p)
+}
+
+func (w *readFromRecorder) ReadFrom(r io.Reader) (int64, error) {
+	w.readFrom = true
+	if _, ok := r.(io.WriterTo); ok {
+		return 0, errors.New("ReadFrom passed a WriterTo")
+	}
+	return w.buf.ReadFrom(r)
+}
+
+// poolInUseRecorder is an io.Writer which records the maximum number
+// of global pool buffers in use when it is written to
+type poolInUseRecorder struct {
+	buf      bytes.Buffer
+	maxInUse int
+}
+
+func (w *poolInUseRecorder) Write(p []byte) (int, error) {
+	w.maxInUse = max(w.maxInUse, pool.Global().InUse())
+	return w.buf.Write(p)
+}
+
+func TestReOpenWriteToPool(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		name     string
+		size     int
+		breaks   []int64
+		wantPool bool
+	}{
+		{"Small", pool.BufferSize - 1, []int64{1000, 2000}, false},
+		{"Large", 3*pool.BufferSize + 17, []int64{1000, int64(pool.BufferSize) + 5}, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			contents := make([]byte, test.size)
+			for i := range contents {
+				contents[i] = byte(i * 7)
+			}
+			srcOrig := mockobject.New("potato").WithContent(contents, mockobject.SeekModeNone)
+			src := &reOpenTestObject{
+				Object: srcOrig,
+				t:      t,
+				breaks: test.breaks,
+			}
+			h, err := NewReOpen(ctx, src, 10)
+			require.NoError(t, err)
+
+			var total int
+			h.SetAccounting(func(n int) error {
+				total += n
+				return nil
+			})
+			h.DelayAccounting(2)
+
+			// First pass isn't accounted
+			inUse := pool.Global().InUse()
+			w := &poolInUseRecorder{}
+			n, err := h.WriteTo(w)
+			require.NoError(t, err)
+			assert.Equal(t, int64(test.size), n)
+			assert.Equal(t, contents, w.buf.Bytes())
+			assert.Equal(t, 0, total)
+			assert.Equal(t, test.wantPool, w.maxInUse > inUse)
+			assert.Equal(t, inUse, pool.Global().InUse())
+
+			// Second pass is accounted
+			src.wantStart = 0
+			_, err = h.Seek(0, io.SeekStart)
+			require.NoError(t, err)
+			w = &poolInUseRecorder{}
+			n, err = h.WriteTo(w)
+			require.NoError(t, err)
+			assert.Equal(t, int64(test.size), n)
+			assert.Equal(t, contents, w.buf.Bytes())
+			assert.Equal(t, test.size, total)
+
+			require.NoError(t, h.Close())
 		})
 	}
 }
