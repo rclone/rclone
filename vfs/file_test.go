@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/rclone/rclone/fs"
@@ -434,4 +436,209 @@ func TestFileRename(t *testing.T) {
 
 func TestFileStructSize(t *testing.T) {
 	t.Logf("File struct has size %d bytes", unsafe.Sizeof(File{}))
+}
+
+// A FUSE lookup and the open which follows it are separate requests, so
+// another process can unlink the name in between and the open then arrives on
+// the removed node. That open must not put the removed file back into the
+// directory, or the name is stuck pointing at a deleted object.
+func TestFileOpenAfterRemove(t *testing.T) {
+	r, vfs, oldFile, _ := fileCreate(t, vfscommon.CacheModeFull)
+	ctx := context.Background()
+
+	require.NoError(t, oldFile.Remove())
+
+	fd, err := oldFile.Open(os.O_RDONLY)
+	if err == nil {
+		_, _ = io.ReadAll(fd)
+		_ = fd.Close()
+	}
+
+	_, err = vfs.Stat("dir/file1")
+	assert.Equal(t, ENOENT, err, "removed file came back into the directory")
+
+	// The name can be used again and the new contents get uploaded
+	require.NoError(t, vfs.WriteFile("dir/file1", []byte("new contents"), 0600))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	got, err := vfs.ReadFile("dir/file1")
+	require.NoError(t, err)
+	assert.Equal(t, "new contents", string(got))
+
+	o, err := r.Fremote.NewObject(ctx, "dir/file1")
+	require.NoError(t, err)
+	in, err := o.Open(ctx)
+	require.NoError(t, err)
+	remote, err := io.ReadAll(in)
+	require.NoError(t, err)
+	require.NoError(t, in.Close())
+	assert.Equal(t, "new contents", string(remote))
+}
+
+// A handle opened before the remove which is first read after it must not
+// put the removed file back into the directory either.
+func TestFileReadAfterRemove(t *testing.T) {
+	_, vfs, oldFile, _ := fileCreate(t, vfscommon.CacheModeFull)
+
+	fd, err := oldFile.Open(os.O_RDONLY)
+	require.NoError(t, err)
+
+	require.NoError(t, oldFile.Remove())
+
+	_, err = io.ReadAll(fd)
+	assert.Equal(t, ENOENT, err)
+	_ = fd.Close()
+
+	_, err = vfs.Stat("dir/file1")
+	assert.Equal(t, ENOENT, err, "removed file came back into the directory")
+}
+
+func TestFileOpenAfterFailedRemove(t *testing.T) {
+	for _, handleCaching := range []fs.Duration{0, fs.Duration(time.Second)} {
+		t.Run(fmt.Sprintf("HandleCaching=%v", handleCaching), func(t *testing.T) {
+			testFileOpenAfterFailedRemove(t, handleCaching)
+		})
+	}
+}
+
+func testFileOpenAfterFailedRemove(t *testing.T, handleCaching fs.Duration) {
+	r := fstest.NewRun(t)
+	ctx := context.Background()
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = writeBackDelay
+	opt.HandleCaching = handleCaching
+	// Use the local backend so the delete failure doesn't depend on remote permissions.
+	vfs := New(ctx, r.Flocal, &opt)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	r.WriteFile("dir/file1", "file1 contents", t1)
+
+	warm, err := vfs.ReadFile("dir/file1")
+	require.NoError(t, err)
+	require.Equal(t, "file1 contents", string(warm))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	node, err := vfs.Stat("dir/file1")
+	require.NoError(t, err)
+	fd, err := node.Open(os.O_RDONLY)
+	require.NoError(t, err)
+	writer, err := node.Open(os.O_RDWR)
+	require.NoError(t, err)
+
+	// A non-directory parent makes deletion fail even on Windows or as root,
+	// where chmod cannot reliably deny deletion.
+	dirPath := filepath.Join(r.LocalName, "dir")
+	require.NoError(t, os.Rename(dirPath, dirPath+".saved"))
+	require.NoError(t, os.WriteFile(dirPath, nil, 0600))
+	err = node.Remove()
+	require.NoError(t, os.Remove(dirPath))
+	require.NoError(t, os.Rename(dirPath+".saved", dirPath))
+	require.Error(t, err)
+
+	_, err = vfs.Stat("dir/file1")
+	require.NoError(t, err)
+
+	// The deferred open must not revive a deleted item, whose writes cannot upload.
+	_, err = io.ReadAll(fd)
+	assert.Error(t, err)
+	n, err := writer.Write([]byte("stale write"))
+	assert.Zero(t, n)
+	assert.Error(t, err)
+	assert.Error(t, writer.Truncate(0))
+	require.NoError(t, writer.Close())
+
+	require.NoError(t, vfs.WriteFile("dir/file1", []byte("new contents"), 0600))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// The stale handle must also leave a replacement item's data and metadata alone.
+	_, err = io.ReadAll(fd)
+	assert.Error(t, err)
+	require.NoError(t, fd.Close())
+	got, err := vfs.ReadFile("dir/file1")
+	require.NoError(t, err)
+	assert.Equal(t, "new contents", string(got))
+
+	o, err := r.Flocal.NewObject(ctx, "dir/file1")
+	require.NoError(t, err)
+	in, err := o.Open(ctx)
+	require.NoError(t, err)
+	remote, err := io.ReadAll(in)
+	require.NoError(t, err)
+	require.NoError(t, in.Close())
+	assert.Equal(t, "new contents", string(remote))
+}
+
+// The same for a file which hasn't been uploaded yet, so has no object.
+// Reading it must fail rather than return no data.
+func TestFileReadAfterRemoveNotUploaded(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = fs.Duration(time.Hour)
+	_, vfs := newTestVFSOpt(t, &opt)
+
+	require.NoError(t, vfs.WriteFile("file1", []byte("file1 contents"), 0600))
+	node, err := vfs.Stat("file1")
+	require.NoError(t, err)
+	oldFile := node.(*File)
+
+	fd, err := oldFile.Open(os.O_RDONLY)
+	require.NoError(t, err)
+
+	require.NoError(t, oldFile.Remove())
+
+	_, err = io.ReadAll(fd)
+	assert.Equal(t, ENOENT, err)
+	_ = fd.Close()
+
+	_, err = vfs.Stat("file1")
+	assert.Equal(t, ENOENT, err)
+}
+
+// The same for a --links symlink which is replaced by unlink then symlink.
+//
+// A program which tests the link before replacing it gets EIO from the
+// resurrected link, skips the unlink and then gets EEXIST from symlink, so
+// the link stays broken.
+func TestFileSymlinkOpenAfterRemove(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = writeBackDelay
+	opt.Links = true
+	r, vfs := newTestVFSOpt(t, &opt)
+	ctx := context.Background()
+
+	require.NoError(t, vfs.Mkdir("dir", 0777))
+	require.NoError(t, vfs.Symlink("old-target", "dir/link"))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	node, err := vfs.Stat("dir/link")
+	require.NoError(t, err)
+	oldLink := node.(*File)
+
+	require.NoError(t, oldLink.Remove())
+
+	fd, err := oldLink.Open(os.O_RDONLY | o_SYMLINK)
+	if err == nil {
+		_, _ = io.ReadAll(fd)
+		_ = fd.Close()
+	}
+
+	_, err = vfs.Stat("dir/link")
+	assert.Equal(t, ENOENT, err, "removed link came back into the directory")
+
+	require.NoError(t, vfs.Symlink("new-target", "dir/link"))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	target, err := vfs.Readlink("dir/link")
+	require.NoError(t, err)
+	assert.Equal(t, "new-target", target)
+
+	o, err := r.Fremote.NewObject(ctx, "dir/link"+fs.LinkSuffix)
+	require.NoError(t, err)
+	in, err := o.Open(ctx)
+	require.NoError(t, err)
+	remote, err := io.ReadAll(in)
+	require.NoError(t, err)
+	require.NoError(t, in.Close())
+	assert.Equal(t, "new-target", string(remote))
 }
