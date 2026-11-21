@@ -869,3 +869,60 @@ func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, contents, string(buf[:n]))
 }
+
+// Reading a file then replacing it with a rename must keep the
+// modtime and metadata of the replacement - the deferred close of
+// the displaced item must not write to the cache paths which now
+// belong to the renamed item.
+func TestItemHandleCachingRenameKeepsModTime(t *testing.T) {
+	r, c := newItemTestCacheHandleCaching(t, 10*time.Second)
+	ctx := context.Background()
+
+	// Read a remote file via the cache and close it, parking its
+	// item in the grace period
+	contents := random.String(9)
+	oldTime := time.Now().Add(-24 * time.Hour)
+	r.WriteObject(ctx, "b.txt", contents, oldTime)
+	obj, err := r.Fremote.NewObject(ctx, "b.txt")
+	require.NoError(t, err)
+	oldItem := c.Item("b.txt")
+	require.NoError(t, oldItem.Open(obj))
+	buf := make([]byte, len(contents))
+	n, err := oldItem.ReadAt(buf, 0)
+	require.NoError(t, err)
+	require.Equal(t, contents, string(buf[:n]))
+	require.NoError(t, oldItem.Close(nil))
+	oldItem.mu.Lock()
+	require.NotNil(t, oldItem.graceTimer, "grace timer should be set after close")
+	oldItem.mu.Unlock()
+
+	// Write the replacement file and rename it over the file just read
+	tmpItem := c.Item("b.txt.tmp")
+	require.NoError(t, tmpItem.Open(nil))
+	_, err = tmpItem.WriteAt([]byte("x\natomic\n"), 0)
+	require.NoError(t, err)
+	require.NoError(t, tmpItem.Close(nil))
+	require.NoError(t, c.Rename("b.txt.tmp", "b.txt", nil))
+
+	// Record the replacement's modtime and fingerprint
+	osPath := c.toOSPath("b.txt")
+	fi, err := os.Stat(osPath)
+	require.NoError(t, err)
+	newModTime := fi.ModTime()
+	tmpItem.mu.Lock()
+	newFingerprint := tmpItem.info.Fingerprint
+	tmpItem.mu.Unlock()
+
+	// Run the displaced item's deferred close - it must not touch
+	// the cache paths which now belong to the renamed item
+	oldItem.closeAfterGrace()
+
+	// The replacement's modtime must be unchanged
+	fi, err = os.Stat(osPath)
+	require.NoError(t, err)
+	assert.Equal(t, newModTime, fi.ModTime())
+
+	// and its metadata must still be the renamed item's
+	freshItem := newItem(c, "b.txt")
+	assert.Equal(t, newFingerprint, freshItem.info.Fingerprint)
+}

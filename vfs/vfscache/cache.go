@@ -420,6 +420,20 @@ func rename(osOldPath, osNewPath string) error {
 // Rename the item in cache
 func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error) {
 	item, _ := c.get(name)
+
+	// Release the displaced item's backing handle before the rename:
+	// the os.Rename in item.rename replaces newName's cache file and
+	// fails on platforms which cannot replace an open file while the
+	// displaced item still holds it (e.g. parked in the handle-caching
+	// grace period). An actively used displaced item keeps its handle
+	// and the rename fails as it would have anyway.
+	c.mu.Lock()
+	displaced := c.item[newName]
+	c.mu.Unlock()
+	if displaced != nil && displaced != item {
+		displaced.releaseForRename()
+	}
+
 	err = item.rename(name, newName, newObj)
 	if err != nil {
 		return err
@@ -428,6 +442,11 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 	// Move the item in the cache
 	c.mu.Lock()
 	if item, ok := c.item[name]; ok {
+		// The renamed item takes over newName's cache paths so
+		// mark any displaced item as stolen
+		if displaced := c.item[newName]; displaced != nil && displaced != item {
+			displaced.steal()
+		}
 		c.item[newName] = item
 		delete(c.item, name)
 	}
