@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"slices"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 	"unsafe"
@@ -286,6 +287,205 @@ func checkListing(t *testing.T, dir *Dir, want []string) {
 		got = append(got, fmt.Sprintf("%s,%d,%v", node.Name(), node.Size(), node.IsDir()))
 	}
 	assert.Equal(t, want, got)
+}
+
+// blockedListingFs wraps an Fs and blocks one directory listing until released.
+type blockedListingFs struct {
+	fs.Fs
+	slowDir     string
+	started     chan struct{}
+	release     chan struct{}
+	startedOnce sync.Once
+	releaseOnce sync.Once
+}
+
+func newBlockedListingFs(base fs.Fs, slowDir string) *blockedListingFs {
+	return &blockedListingFs{
+		Fs:      base,
+		slowDir: slowDir,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+}
+
+// Name distinguishes the wrapper from the underlying Fs for VFS cache tests.
+func (f *blockedListingFs) Name() string { return f.Fs.Name() + "-blocked-listing" }
+
+// List blocks the configured directory until releaseListing is called.
+func (f *blockedListingFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	entries, err := f.Fs.List(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	if dir == f.slowDir {
+		f.startedOnce.Do(func() { close(f.started) })
+		select {
+		case <-f.release:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	return entries, nil
+}
+
+func (f *blockedListingFs) releaseListing() {
+	f.releaseOnce.Do(func() { close(f.release) })
+}
+
+func setupBlockedListing(t *testing.T, base fs.Fs) (*VFS, *blockedListingFs, *Dir, *Dir) {
+	t.Helper()
+	f := newBlockedListingFs(base, "parent/slow")
+	opt := vfscommon.Opt
+	opt.DirCacheTime = fs.Duration(time.Hour)
+	opt.PollInterval = 0
+	vfs := New(context.Background(), f, &opt)
+	t.Cleanup(func() {
+		f.releaseListing()
+		vfs.Shutdown()
+	})
+
+	node, err := vfs.Stat("parent")
+	require.NoError(t, err)
+	parent := node.(*Dir)
+	_, err = parent.ReadDirAll()
+	require.NoError(t, err)
+	node, err = vfs.Stat("parent/slow")
+	require.NoError(t, err)
+	slow := node.(*Dir)
+	return vfs, f, parent, slow
+}
+
+func startBlockedListing(t *testing.T, f *blockedListingFs, slow *Dir) <-chan error {
+	t.Helper()
+	done := make(chan error, 1)
+	go func() {
+		_, err := slow.ReadDirAll()
+		done <- err
+	}()
+	select {
+	case <-f.started:
+	case <-time.After(time.Second):
+		t.Fatal("slow listing did not start")
+	}
+	return done
+}
+
+func waitForListing(t *testing.T, f *blockedListingFs, done <-chan error) {
+	t.Helper()
+	f.releaseListing()
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("slow listing did not finish after release")
+	}
+}
+
+func TestDirOperationsDoNotWaitForSlowChildListing(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("requires the local test filesystem")
+	}
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "parent/slow/file", "slow", t1)
+	r.WriteObject(context.Background(), "parent/sibling/file", "sibling", t1)
+
+	t.Run("parent listing", func(t *testing.T) {
+		_, f, parent, slow := setupBlockedListing(t, r.Fremote)
+		slowDone := startBlockedListing(t, f, slow)
+		parentDone := make(chan error, 1)
+		go func() {
+			_, err := parent.ReadDirAll()
+			parentDone <- err
+		}()
+		select {
+		case err := <-parentDone:
+			require.NoError(t, err)
+		case <-time.After(200 * time.Millisecond):
+			waitForListing(t, f, slowDone)
+			select {
+			case err := <-parentDone:
+				require.NoError(t, err)
+			case <-time.After(time.Second):
+				t.Fatal("parent listing did not finish after release")
+			}
+			t.Fatal("parent listing waited for the slow child listing")
+		}
+		waitForListing(t, f, slowDone)
+	})
+
+	t.Run("slow child lookup", func(t *testing.T) {
+		vfs, f, _, slow := setupBlockedListing(t, r.Fremote)
+		slowDone := startBlockedListing(t, f, slow)
+		lookupDone := make(chan error, 1)
+		go func() {
+			_, err := vfs.Stat("parent/slow/file")
+			lookupDone <- err
+		}()
+		select {
+		case err := <-lookupDone:
+			t.Fatalf("slow child lookup completed before listing release: %v", err)
+		case <-time.After(200 * time.Millisecond):
+		}
+		waitForListing(t, f, slowDone)
+		select {
+		case err := <-lookupDone:
+			require.NoError(t, err)
+		case <-time.After(time.Second):
+			t.Fatal("slow child lookup did not finish after release")
+		}
+	})
+
+	t.Run("expired parent cache", func(t *testing.T) {
+		vfs, f, parent, slow := setupBlockedListing(t, r.Fremote)
+		parent.mu.Lock()
+		parent.read = time.Now().Add(-time.Hour)
+		parent.mu.Unlock()
+		slowDone := startBlockedListing(t, f, slow)
+		lookupDone := make(chan error, 1)
+		go func() {
+			_, err := vfs.Stat("parent/sibling/file")
+			lookupDone <- err
+		}()
+		select {
+		case err := <-lookupDone:
+			require.NoError(t, err)
+		case <-time.After(200 * time.Millisecond):
+			waitForListing(t, f, slowDone)
+			select {
+			case err := <-lookupDone:
+				require.NoError(t, err)
+			case <-time.After(time.Second):
+				t.Fatal("sibling lookup did not finish after release")
+			}
+			t.Fatal("sibling lookup waited for the slow child listing")
+		}
+		waitForListing(t, f, slowDone)
+	})
+
+	t.Run("invalidated listing", func(t *testing.T) {
+		vfs, f, _, slow := setupBlockedListing(t, r.Fremote)
+		slowDone := startBlockedListing(t, f, slow)
+		r.WriteObject(context.Background(), "parent/slow/new", "new", t2)
+		invalidated := make(chan struct{})
+		go func() {
+			slow.invalidateDir("parent/slow")
+			close(invalidated)
+		}()
+		select {
+		case <-invalidated:
+		case <-time.After(200 * time.Millisecond):
+			waitForListing(t, f, slowDone)
+			select {
+			case <-invalidated:
+			case <-time.After(time.Second):
+				t.Fatal("cache invalidation did not finish after release")
+			}
+			t.Fatal("cache invalidation waited for the slow child listing")
+		}
+		waitForListing(t, f, slowDone)
+		_, err := vfs.Stat("parent/slow/new")
+		require.NoError(t, err)
+	})
 }
 
 func TestDirReadDirAll(t *testing.T) {
