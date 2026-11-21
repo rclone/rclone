@@ -610,6 +610,11 @@ Stream) may incorrectly set the actual file size equal to the
 preallocated space, causing checksum and file size checks to fail.
 Use this flag to disable preallocation.
 
+On macOS, preallocation is implemented by truncating the file to its
+final size, creating a sparse file whose allocated blocks grow as
+data is written. This makes the progress of a transfer visible via
+stat.blocks.
+
 Properties:
 
 - Config:      no_preallocate
