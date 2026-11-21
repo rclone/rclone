@@ -640,14 +640,13 @@ call and taken by the [options/set](#options-set) calls as well as the
 
 ### Option blocks {#option-blocks}
 
-The calls [options/info](#options-info) (for the main config) and
-[config/providers](#config-providers) (for the backend config) may be
-used to get information on the rclone configuration options. This can
-be used to build user interfaces for displaying and setting any rclone
-option.
+The [options/info](#options-info) call describes global options. The
+[config/providers](#config-providers) call describes backend options in
+the `Options` field of each [provider block](#provider-blocks). Clients
+can use these descriptions to display and configure rclone options.
 
-These consist of arrays of `Option` blocks. These have the following
-format. Each block describes a single option.
+Options are returned as arrays of `Option` blocks. Each block describes
+a single option.
 
 | Field | Type | Optional | Description |
 |-------|------|----------|-------------|
@@ -657,16 +656,28 @@ format. Each block describes a single option.
 | Groups     | string     | Y | groups this option belongs to - comma separated string for options classification |
 | Provider   | string     | Y | set to filter on provider |
 | Default    | any        | N | default value, if set (and not to nil or "") then Required does nothing |
-| Value      | any        | N | value to be set by flags |
-| Examples   | Examples   | Y | predefined values that can be selected from list (multiple-choice option) |
+| DefaultStr | string     | N | string representation of the default value |
+| Value      | any        | N | value set for this option, or `null` if unset |
+| ValueStr   | string     | N | string representation of the option value, using the default when `Value` is `null` |
+| Type       | string     | N | name of the option's value type, e.g. `bool`, `stringArray`, or `LogLevel` |
+| Examples   | array      | Y | suggested choices for this option |
 | ShortOpt   | string     | Y | the short command line option for this |
-| Hide       | Visibility | N | if non zero, this option is hidden from the configurator or the command line |
+| Hide       | integer    | N | visibility bitmask: `0` hides neither, `1` hides from the command line, `2` hides from the configurator, `3` hides from both |
 | Required   | bool       | N | this option is required, meaning value cannot be empty unless there is a default |
 | IsPassword | bool       | N | set if the option is a password |
 | NoPrefix   | bool       | N | set if the option for this should not use the backend prefix |
 | Advanced   | bool       | N | set if this is an advanced config option |
 | Exclusive  | bool       | N | set if the answer can only be one of the examples (empty string allowed unless Required or Default is set) |
 | Sensitive  | bool       | N | set if this option should be redacted when using `rclone config redacted` |
+
+Each entry in `Examples` has a string `Value` to use when selected and a
+string `Help` describing the choice. An optional string `Provider`
+filters when that example is shown, just as it does for the option
+itself.
+
+For an enumerated option, `Default` can be numeric even when
+`DefaultStr` is a name, such as `"NOTICE"` below. The numeric
+`Default` is not an index into `Examples`.
 
 An example of this might be the `--log-level` flag. Note that the
 `Name` of the option becomes the command line flag with `_` replaced
@@ -707,6 +718,23 @@ with `-`.
 Note that the `Help` may be multiple lines separated by `\n`. The
 first line will always be a short sentence and this is the sentence
 shown when running `rclone help flags`.
+
+### Provider blocks {#provider-blocks}
+
+The `providers` array returned by [config/providers](#config-providers)
+contains one block for each registered backend name, including aliases.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Name | string | backend type used when creating a remote, e.g. `"s3"` |
+| Description | string | display description of the backend |
+| Prefix | string | prefix used for the backend's command-line flags; defaults to `Name` |
+| Options | array | backend configuration options, in the [option block](#option-blocks) format |
+| CommandHelp | array or null | backend-specific commands, with `Name`, `Short`, `Long` and an `Opts` map of option names to help text |
+| Aliases | array or null | alternative backend names |
+| Hide | bool | whether to hide this entry in the configurator; alias entries are hidden |
+| MetadataInfo | object or null | supported system metadata and help text, if supplied by the backend |
+| Overview | object | backend overview, including its tier, features, hashes, and timestamp precision |
 
 ## Specifying remotes to work on
 
