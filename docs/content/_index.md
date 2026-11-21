@@ -119,6 +119,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
 {{< provider name="Autonomys Auto Drive" home="https://ai3.storage/" config="/s3/#autonomys" >}}
 {{< provider name="Bizfly Cloud Simple Storage" home="https://bizflycloud.vn/" config="/s3/#bizflycloud" >}}
+{{< provider name="Blomp Cloud Storage" home="https://www.blomp.com/" config="/s3/#blomp" >}}
 {{< provider name="Backblaze B2" home="https://www.backblaze.com/cloud-storage" config="/b2/" >}}
 {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
 {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}

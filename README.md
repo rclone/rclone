@@ -31,6 +31,7 @@ directories to and from different cloud storage providers.
 - ArvanCloud Object Storage (AOS) [:page_facing_up:](https://rclone.org/s3/#arvan-cloud-object-storage-aos)
 - Autonomys Auto Drive [:page_facing_up:](https://rclone.org/s3/#autonomys)
 - Bizfly Cloud Simple Storage [:page_facing_up:](https://rclone.org/s3/#bizflycloud)
+- Blomp Cloud Storage [:page_facing_up:](https://rclone.org/s3/#blomp)
 - Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)
 - Box [:page_facing_up:](https://rclone.org/box/)
 - Ceph [:page_facing_up:](https://rclone.org/s3/#ceph)
