@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -231,6 +233,103 @@ func TestSorterExt(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("cutoff=%d,N=%d,wantExtSort=%v,keyFn=%v", test.cutoff, test.N, test.wantExtSort, test.keyFn != nil), func(t *testing.T) {
 			testSorterExt(t, test.cutoff, test.N, test.wantExtSort, test.keyFn)
+		})
+	}
+}
+
+// serialObject is an object which serializes its size
+type serialObject struct {
+	mockobject.Object
+	size int64
+}
+
+// Size returns the size of the object
+func (o serialObject) Size() int64 { return o.size }
+
+// Serialize returns the size of the object as data
+func (o serialObject) Serialize() ([]byte, error) {
+	return []byte(strconv.FormatInt(o.size, 10)), nil
+}
+
+// serialFs recreates serialObject from serialized data and counts
+// NewObject calls
+type serialFs struct {
+	fs.Fs          // unimplemented methods panic
+	newObjectCalls atomic.Int64
+	fail           bool // fail NewObjectFromSerialized if set
+}
+
+// Features returns the optional features of the Fs
+func (f *serialFs) Features() *fs.Features {
+	return (&fs.Features{}).Fill(context.Background(), f)
+}
+
+// NewObject counts the call and returns the object with size -1
+func (f *serialFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	f.newObjectCalls.Add(1)
+	return serialObject{Object: mockobject.Object(remote), size: -1}, nil
+}
+
+// NewObjectFromSerialized recreates the object from its size
+func (f *serialFs) NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (fs.Object, error) {
+	if f.fail {
+		return nil, errors.New("deserialize failed")
+	}
+	size, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return serialObject{Object: mockobject.Object(remote), size: size}, nil
+}
+
+// String outputs info about the Fs
+func (f *serialFs) String() string {
+	return "serialFs"
+}
+
+// Test the external sorting recreates objects from their serialized
+// data without calling NewObject unless that fails
+func TestSorterExtSerialize(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fail=%v", fail), func(t *testing.T) {
+			const N = 1000
+			ctx := context.Background()
+			ctx, ci := fs.AddConfig(ctx)
+			ci.ListCutoff = 100
+			f := &serialFs{fail: fail}
+
+			var got fs.DirEntries
+			callback := func(entries fs.DirEntries) error {
+				got = append(got, entries...)
+				return nil
+			}
+			ls, err := NewSorter(ctx, f, callback, nil)
+			require.NoError(t, err)
+			defer ls.CleanUp()
+
+			for i := N - 1; i >= 0; i-- {
+				entry := serialObject{Object: mockobject.Object(fmt.Sprintf("%04d", i)), size: int64(i)}
+				require.NoError(t, ls.Add(fs.DirEntries{entry}))
+			}
+			assert.True(t, ls.extSort)
+			require.NoError(t, ls.Send())
+
+			require.Len(t, got, N)
+			for i, entry := range got {
+				assert.Equal(t, fmt.Sprintf("%04d", i), entry.Remote())
+				obj, ok := entry.(fs.Object)
+				require.True(t, ok)
+				if fail {
+					assert.Equal(t, int64(-1), obj.Size())
+				} else {
+					assert.Equal(t, int64(i), obj.Size())
+				}
+			}
+			if fail {
+				assert.Equal(t, int64(N), f.newObjectCalls.Load())
+			} else {
+				assert.Equal(t, int64(0), f.newObjectCalls.Load())
+			}
 		})
 	}
 }
