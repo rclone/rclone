@@ -92,10 +92,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 
 	w.backend = newBackend(w)
+	conditionalBackend := newConditionalBackend(w.backend)
 
 	var newLogger logger
 	w.faker = gofakes3.New(
-		w.backend,
+		conditionalBackend,
 		gofakes3.WithHostBucket(!opt.ForcePathStyle),
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),

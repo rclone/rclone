@@ -24,7 +24,6 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
-	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,21 +56,15 @@ func newPutTestBackend(t *testing.T, backing string, vfsOpt *vfscommon.Options) 
 	f, err := fs.NewFs(ctx, backing)
 	require.NoError(t, err)
 	bucket := fmt.Sprintf("test-%d", testBackingCounter.Add(1))
-	require.NoError(t, f.Mkdir(ctx, bucket))
 	if vfsOpt == nil {
 		vfsOpt = &vfscommon.Opt
-	}
-	// The VFS is cached per remote, so a shared ":memory:" backing reuses a
-	// VFS whose cached root listing predates the bucket just created; forget
-	// it so the new bucket is visible.
-	if root, err := vfs.New(ctx, f, vfsOpt).Root(); err == nil {
-		root.ForgetAll()
 	}
 	opt := Opt
 	opt.HTTP.ListenAddr = []string{endpoint}
 	w, err := newServer(ctx, f, &opt, vfsOpt, &proxy.Opt)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = w.Shutdown() })
+	require.NoError(t, w.backend.CreateBucket(ctx, bucket))
 	return w.backend, f, bucket
 }
 

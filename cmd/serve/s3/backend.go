@@ -759,7 +759,7 @@ func (b *s3Backend) commitObject(ctx context.Context, _vfs *vfs.VFS, tmpFp, fp s
 			return err
 		}
 	}
-	return _vfs.Rename(tmpFp, fp)
+	return b.publishObject(ctx, _vfs, tmpFp, fp)
 }
 
 // objectHash returns the hash returned as the ETag of the object at fp.

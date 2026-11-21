@@ -374,6 +374,7 @@ func TestNewServerPerServerAuthProxy(t *testing.T) {
 	}()
 	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
 	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+	assert.False(t, newConditionalBackend(newBackend(w)).SupportsWriteConditions())
 }
 
 // TestAuthProxyEmptySecret checks that a request for an arbitrary
