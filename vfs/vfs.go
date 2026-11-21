@@ -178,19 +178,20 @@ var (
 
 // VFS represents the top level filing system
 type VFS struct {
-	f           fs.Fs
-	ctx         context.Context
-	root        *Dir
-	Opt         vfscommon.Options
-	cache       *vfscache.Cache
-	cancel      context.CancelFunc
-	cancelCache context.CancelFunc
-	usageMu     sync.Mutex
-	usageTime   time.Time
-	usage       *fs.Usage
-	pollMu      sync.Mutex
-	pollChan    chan time.Duration
-	inUse       atomic.Int32 // count of number of opens
+	f               fs.Fs
+	ctx             context.Context
+	root            *Dir
+	Opt             vfscommon.Options
+	cache           *vfscache.Cache
+	cancel          context.CancelFunc
+	cancelCache     context.CancelFunc
+	usageMu         sync.Mutex
+	usageTime       time.Time
+	usage           *fs.Usage
+	usageRefreshing bool
+	pollMu          sync.Mutex
+	pollChan        chan time.Duration
+	inUse           atomic.Int32 // count of number of opens
 }
 
 // Keep track of active VFS keyed on fs.ConfigString(f)
@@ -704,39 +705,27 @@ const unknownFreeBytes = 1 << 50
 // This information is cached for the DirCacheTime interval
 func (vfs *VFS) Statfs() (total, used, free int64) {
 	// defer log.Trace("/", "")("total=%d, used=%d, free=%d", &total, &used, &free)
-	vfs.usageMu.Lock()
-	defer vfs.usageMu.Unlock()
-	total, used, free = -1, -1, -1
 	doAbout := vfs.f.Features().About
-	if (doAbout != nil || vfs.Opt.UsedIsSize) && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= time.Duration(vfs.Opt.DirCacheTime)) {
-		var err error
-		ctx := vfs.ctx
-		if doAbout == nil {
-			vfs.usage = &fs.Usage{}
-		} else {
-			vfs.usage, err = doAbout(ctx)
-		}
-		if vfs.Opt.UsedIsSize {
-			var usedBySizeAlgorithm int64
-			// Algorithm from `rclone size`
-			err = walk.ListR(ctx, vfs.f, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
-				entries.ForObject(func(o fs.Object) {
-					usedBySizeAlgorithm += o.Size()
-				})
-				return nil
-			})
-			vfs.usage.Used = &usedBySizeAlgorithm
-			// if we read a Total size then we should calculate Free from it
-			if vfs.usage.Total != nil {
-				vfs.usage.Free = nil
-			}
-		}
-		vfs.usageTime = time.Now()
-		if err != nil {
-			fs.Errorf(vfs.f, "Statfs failed: %v", err)
-			return
+	refresh := doAbout != nil || vfs.Opt.UsedIsSize
+	synchronousRefresh := false
+	vfs.usageMu.Lock()
+	if refresh && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= time.Duration(vfs.Opt.DirCacheTime)) && !vfs.usageRefreshing {
+		vfs.usageRefreshing = true
+		synchronousRefresh = vfs.usage == nil
+		if !synchronousRefresh {
+			go func() { _ = vfs.refreshUsage(doAbout) }()
 		}
 	}
+	vfs.usageMu.Unlock()
+
+	if synchronousRefresh {
+		if err := vfs.refreshUsage(doAbout); err != nil {
+			return -1, -1, -1
+		}
+	}
+
+	total, used, free = -1, -1, -1
+	vfs.usageMu.Lock()
 
 	if u := vfs.usage; u != nil {
 		if u.Total != nil {
@@ -749,6 +738,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			used = *u.Used
 		}
 	}
+	vfs.usageMu.Unlock()
 
 	if int64(vfs.Opt.DiskSpaceTotalSize) >= 0 {
 		total = int64(vfs.Opt.DiskSpaceTotalSize)
@@ -756,6 +746,49 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 
 	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
 	return
+}
+
+func (vfs *VFS) refreshUsage(doAbout func(context.Context) (*fs.Usage, error)) error {
+	ctx := vfs.ctx
+	var (
+		usage *fs.Usage
+		err   error
+	)
+	if doAbout == nil {
+		usage = &fs.Usage{}
+	} else {
+		usage, err = doAbout(ctx)
+	}
+	if usage == nil && vfs.Opt.UsedIsSize {
+		usage = &fs.Usage{}
+	}
+	if vfs.Opt.UsedIsSize {
+		var usedBySizeAlgorithm int64
+		// Algorithm from `rclone size`
+		err = walk.ListR(ctx, vfs.f, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+			entries.ForObject(func(o fs.Object) {
+				usedBySizeAlgorithm += o.Size()
+			})
+			return nil
+		})
+		usage.Used = &usedBySizeAlgorithm
+		// if we read a Total size then we should calculate Free from it
+		if usage.Total != nil {
+			usage.Free = nil
+		}
+	}
+
+	vfs.usageMu.Lock()
+	if err == nil || vfs.usage == nil {
+		vfs.usage = usage
+	}
+	vfs.usageTime = time.Now()
+	vfs.usageRefreshing = false
+	vfs.usageMu.Unlock()
+	if err != nil {
+		fs.Errorf(vfs.f, "Statfs failed: %v", err)
+	}
+	return err
 }
 
 // Remove removes the named file or (empty) directory.
