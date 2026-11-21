@@ -109,10 +109,16 @@ type setDirModTime struct {
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool, allowOverlap bool) (*syncCopyMove, error) {
+	if err := fs.CheckUploadPreservation(ctx, fdst, fsrc); err != nil {
+		return nil, fserrors.FatalError(err)
+	}
 	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.OverlappingFilterCheck(ctx, fdst, fsrc) && !allowOverlap {
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	ci := fs.GetConfig(ctx)
+	if ci.PreservePOSIXProperties {
+		copyEmptySrcDirs = true
+	}
 	fi := filter.GetConfig(ctx)
 	s := &syncCopyMove{
 		ci:                     ci,
@@ -139,7 +145,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		modifyWindow:           fs.GetModifyWindow(ctx, fsrc, fdst),
 		trackRenamesCh:         make(chan fs.Object, ci.Checkers),
 		checkFirst:             ci.CheckFirst,
-		setDirMetadata:         ci.Metadata && fsrc.Features().ReadDirMetadata && fdst.Features().WriteDirMetadata,
+		setDirMetadata:         (ci.Metadata || ci.PreservePOSIXProperties) && fsrc.Features().ReadDirMetadata && fdst.Features().WriteDirMetadata,
 		setDirModTime:          (!ci.NoUpdateDirModTime && fsrc.Features().CanHaveEmptyDirectories) && (fdst.Features().WriteDirSetModTime || fdst.Features().MkdirMetadata != nil || fdst.Features().DirSetModTime != nil),
 		setDirModTimeAfter:     !ci.NoUpdateDirModTime && (!copyEmptySrcDirs || fsrc.Features().CanHaveEmptyDirectories && fdst.Features().DirModTimeUpdatesOnWrite),
 		modifiedDirs:           make(map[string]struct{}),
