@@ -168,10 +168,19 @@ type sapiClientTransport struct {
 	h2       *http2.Transport //nolint:staticcheck // see newSAPIHTTP2Client
 }
 
+// isSAPIHost reports whether u is on the SAPI endpoint or on one of its
+// subdomains, such as the upload host the server publishes.
+func isSAPIHost(u, endpoint *url.URL) bool {
+	if !strings.EqualFold(u.Scheme, endpoint.Scheme) {
+		return false
+	}
+	return strings.EqualFold(u.Host, endpoint.Host) ||
+		strings.HasSuffix(strings.ToLower(u.Hostname()), "."+strings.ToLower(endpoint.Hostname()))
+}
+
 // RoundTrip implements http.RoundTripper.
 func (t *sapiClientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if req.URL.Scheme == t.endpoint.Scheme && strings.EqualFold(req.URL.Host, t.endpoint.Host) &&
-		strings.HasPrefix(req.URL.Path, "/sapi/") {
+	if isSAPIHost(req.URL, t.endpoint) && strings.HasPrefix(req.URL.Path, "/sapi/") {
 		return t.sapi.RoundTrip(req)
 	}
 	return t.base.RoundTrip(req)

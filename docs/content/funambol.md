@@ -281,6 +281,10 @@ The server limits the size of one file (4 GiB on O2 Spain). The backend reads
 the limit from the server and refuses a bigger file before the upload starts.
 To store bigger files, wrap the backend with [chunker](/chunker/).
 
+The server can also publish a separate host for uploads
+(`upload.cloud.o2online.es` on O2 Spain). The backend sends the file contents
+to that host, like the official apps, if it is a subdomain of the endpoint.
+
 The download server mishandles a range request that starts at 2,000,000,000
 bytes or later: it answers with two zero bytes instead of the data. Reads
 that start earlier are fine, including ones that continue past that offset.

@@ -192,6 +192,7 @@ type StorageSpace struct {
 type SystemInformation struct {
 	Status
 	MaxUploadSizeMB string `json:"sapi.upload.max-size-in-mb"` // e.g. "4096"
+	UploadEndpoint  string `json:"sapi.upload.endpoint"`       // host for the file bytes, e.g. "https://upload.cloud.o2online.es"
 }
 
 // ---- request bodies (all wrapped in {"data": …}) ----

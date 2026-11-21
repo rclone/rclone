@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"path"
 	"reflect"
@@ -178,13 +177,14 @@ type Fs struct {
 
 	auth    *authState   // shared session state (pointer so *Fs stays copyable)
 	uploads *uploadCache // items uploaded too recently to be listed
-	limit   *uploadLimit // largest file the server accepts
+	limit   *uploadLimit // what the server publishes about uploads
 }
 
-// uploadLimit holds the largest file size the server accepts, read once.
+// uploadLimit holds what the server publishes about uploads, read once.
 type uploadLimit struct {
-	once sync.Once
-	size int64 // 0 if unknown
+	once     sync.Once
+	size     int64  // largest file the server accepts, 0 if unknown
+	endpoint string // root URL for the file bytes, "" for the endpoint
 }
 
 // recentUploadTTL is how long a finished upload stays in the uploadCache.
@@ -1141,9 +1141,8 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
-// maxUploadSize returns the largest file size the server accepts, or 0 if it
-// is unknown.
-func (f *Fs) maxUploadSize(ctx context.Context) int64 {
+// uploadInfo reads what the server publishes about uploads, once.
+func (f *Fs) uploadInfo(ctx context.Context) *uploadLimit {
 	f.limit.once.Do(func() {
 		var res api.SystemInformation
 		opts := rest.Opts{Method: "GET", Path: "/sapi/system/information", Parameters: url.Values{"action": {"get"}}}
@@ -1154,8 +1153,21 @@ func (f *Fs) maxUploadSize(ctx context.Context) int64 {
 		if mb, err := strconv.ParseFloat(res.MaxUploadSizeMB, 64); err == nil && mb > 0 {
 			f.limit.size = int64(mb * 1024 * 1024)
 		}
+		// The session cookies, the OAuth header and the client fingerprint
+		// go only to the endpoint and its subdomains.
+		if u, err := url.Parse(strings.TrimRight(res.UploadEndpoint, "/")); err == nil && u.Host != "" && isSAPIHost(u, f.jarURL()) {
+			f.limit.endpoint = u.String()
+		} else if res.UploadEndpoint != "" {
+			fs.Debugf(f, "not using upload endpoint %q outside the endpoint's domain", res.UploadEndpoint)
+		}
 	})
-	return f.limit.size
+	return f.limit
+}
+
+// maxUploadSize returns the largest file size the server accepts, or 0 if it
+// is unknown.
+func (f *Fs) maxUploadSize(ctx context.Context) int64 {
+	return f.uploadInfo(ctx).size
 }
 
 // DirCacheFlush resets the directory cache
@@ -1841,7 +1853,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var upRes api.UploadResponse
 	vk := o.fs.key()
 	upOpts := rest.Opts{
-		Method:        "POST",
+		Method: "POST",
+		// The endpoint's CDN refuses some uploads with an HTML page (HTTP
+		// 403), so send the bytes to the upload host like the official apps.
+		RootURL:       o.fs.uploadInfo(ctx).endpoint,
 		Path:          "/sapi/upload/" + uploadMediaType,
 		Parameters:    url.Values{"action": {"save"}, "validationkey": {vk}},
 		Body:          in,
@@ -1946,7 +1961,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	jar, err := cookiejar.New(nil)
+	jar, err := newSAPIJar(opt.Endpoint)
 	if err != nil {
 		return nil, err
 	}

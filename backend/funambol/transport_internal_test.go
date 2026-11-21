@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -151,6 +152,28 @@ func TestSAPITransportRouting(t *testing.T) {
 	require.NoError(t, resp.Body.Close())
 	require.Len(t, hellos, 1)
 	assert.NotEqual(t, uint16(0x0a0a), (<-hellos).CipherSuites[0]&0x0f0f)
+}
+
+// The upload host the server publishes is a subdomain of the endpoint and gets
+// the same session and client traits; other hosts do not.
+func TestIsSAPIHost(t *testing.T) {
+	endpoint, err := url.Parse("https://cloud.o2online.es")
+	require.NoError(t, err)
+	for raw, want := range map[string]bool{
+		"https://cloud.o2online.es/sapi/x":        true,
+		"https://CLOUD.o2online.es/sapi/x":        true,
+		"https://upload.cloud.o2online.es/sapi/x": true,
+		"https://upload.cloud.o2online.es:8443/":  true,
+		"http://upload.cloud.o2online.es/sapi/x":  false,
+		"https://o2online.es/sapi/x":              false,
+		"https://evilcloud.o2online.es/sapi/x":    false,
+		"https://cloud.o2online.es.evil.com/":     false,
+		"https://cloud.o2online.es:8443/sapi/x":   false,
+	} {
+		u, err := url.Parse(raw)
+		require.NoError(t, err)
+		assert.Equal(t, want, isSAPIHost(u, endpoint), raw)
+	}
 }
 
 func TestSAPITransportDisableHTTP2(t *testing.T) {

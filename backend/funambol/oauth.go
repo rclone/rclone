@@ -378,10 +378,9 @@ func (f *Fs) reloginOnError(ctx context.Context, resp *http.Response, err error,
 	return true, nil
 }
 
-// isSAPIURL reports whether u is a SAPI call on the endpoint.
+// isSAPIURL reports whether u is a SAPI call on the endpoint or its upload host.
 func (f *Fs) isSAPIURL(u *url.URL) bool {
-	base := f.jarURL()
-	return u.Scheme == base.Scheme && strings.EqualFold(u.Host, base.Host) && strings.HasPrefix(u.Path, "/sapi/")
+	return isSAPIHost(u, f.jarURL()) && strings.HasPrefix(u.Path, "/sapi/")
 }
 
 // oauthHeader returns the Authorization header that carries the saved token

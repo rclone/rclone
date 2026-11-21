@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -171,6 +172,97 @@ func TestUploadRejectsFileOverServerLimit(t *testing.T) {
 
 	assert.Equal(t, int32(1), uploads.Load())
 	assert.Equal(t, int32(1), infos.Load(), "the limit is read once")
+}
+
+// The file bytes go to the upload host the server publishes, with the session
+// of the endpoint, if that host is a subdomain of the endpoint. The endpoint's
+// CDN refuses some uploads; the official apps use the upload host too.
+func TestUploadBytesGoToPublishedUploadHost(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		upload   func(port string) string
+		toUpload bool
+	}{
+		{"subdomain", func(port string) string { return "http://upload.localhost:" + port }, true},
+		{"other domain", func(port string) string { return "http://upload.example.invalid:" + port }, false},
+		{"none", func(string) string { return "" }, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var mainBytes, uploadBytes atomic.Int32
+			saveBytes := func(counter *atomic.Int32) http.HandlerFunc {
+				return func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Query().Get("action") == "save-metadata" {
+						_, _ = io.WriteString(w, `{"id":"guid"}`)
+						return
+					}
+					counter.Add(1)
+					assert.Equal(t, testKey, r.URL.Query().Get("validationkey"))
+					c, err := r.Cookie("validationKey")
+					if assert.NoError(t, err, "the session cookie reaches the host") {
+						assert.Equal(t, testKey, c.Value)
+					}
+					assert.Equal(t, "guid", r.Header.Get("x-funambol-id"))
+					body, _ := io.ReadAll(r.Body)
+					assert.Equal(t, "data", string(body))
+					_, _ = io.WriteString(w, `{"id":42,"status":"U"}`)
+				}
+			}
+			uploadSrv := httptest.NewServer(saveBytes(&uploadBytes))
+			t.Cleanup(uploadSrv.Close)
+			_, uploadPort, err := net.SplitHostPort(uploadSrv.Listener.Addr().String())
+			require.NoError(t, err)
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("/sapi/media/folder/root", func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.WriteString(w, `{"data":{"folders":[{"id":1,"name":"root"}]}}`)
+			})
+			mux.HandleFunc("/sapi/system/information", func(w http.ResponseWriter, r *http.Request) {
+				_, _ = fmt.Fprintf(w, `{"sapi.upload.endpoint":%q}`, tc.upload(uploadPort))
+			})
+			mux.HandleFunc("/sapi/media", func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.WriteString(w, `{"data":{"media":[],"more":false}}`)
+			})
+			mux.HandleFunc("/sapi/upload/file", saveBytes(&mainBytes))
+			mainSrv := httptest.NewServer(mux)
+			t.Cleanup(mainSrv.Close)
+			_, mainPort, err := net.SplitHostPort(mainSrv.Listener.Addr().String())
+			require.NoError(t, err)
+
+			cookies, err := json.Marshal([]cookiePair{{"validationKey", testKey}})
+			require.NoError(t, err)
+			m := configmap.Simple{
+				"user":     testUser,
+				"endpoint": "http://localhost:" + mainPort,
+				"cookies":  base64.StdEncoding.EncodeToString(cookies),
+			}
+			// Every host name resolves to the test servers, by port.
+			dialer := &net.Dialer{}
+			ctx := context.Background()
+			f, err := NewFs(ctx, "test", "", m)
+			require.NoError(t, err)
+			f.(*Fs).client.Transport = &http.Transport{
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					_, port, err := net.SplitHostPort(addr)
+					if err != nil {
+						return nil, err
+					}
+					return dialer.DialContext(ctx, network, net.JoinHostPort("127.0.0.1", port))
+				},
+			}
+
+			src := object.NewStaticObjectInfo("file.bin", time.Now(), 4, true, nil, nil)
+			o, err := f.Put(ctx, strings.NewReader("data"), src)
+			require.NoError(t, err)
+			assert.Equal(t, "42", o.(*Object).ID())
+			if tc.toUpload {
+				assert.Equal(t, int32(1), uploadBytes.Load())
+				assert.Equal(t, int32(0), mainBytes.Load())
+			} else {
+				assert.Equal(t, int32(0), uploadBytes.Load())
+				assert.Equal(t, int32(1), mainBytes.Load())
+			}
+		})
+	}
 }
 
 // MED-1000 is a transient server fault and must be retried.

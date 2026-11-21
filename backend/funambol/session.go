@@ -131,6 +131,48 @@ func (f *Fs) jarURL() *url.URL {
 	return u
 }
 
+// sapiJar gives the subdomains of the endpoint the endpoint's cookies, so the
+// upload host the server publishes shares the session. Cookies the endpoint
+// sets without a domain, and the ones restored from the config, belong to the
+// endpoint's host only.
+type sapiJar struct {
+	http.CookieJar
+	endpoint *url.URL
+}
+
+// newSAPIJar returns a cookie jar for the SAPI endpoint and its subdomains.
+func newSAPIJar(endpoint string) (http.CookieJar, error) {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+	return &sapiJar{CookieJar: jar, endpoint: u}, nil
+}
+
+// on returns u moved to the endpoint's host if u is on one of its subdomains.
+func (j *sapiJar) on(u *url.URL) *url.URL {
+	if strings.EqualFold(u.Host, j.endpoint.Host) || !isSAPIHost(u, j.endpoint) {
+		return u
+	}
+	moved := *u
+	moved.Host = j.endpoint.Host
+	return &moved
+}
+
+// Cookies implements http.CookieJar.
+func (j *sapiJar) Cookies(u *url.URL) []*http.Cookie {
+	return j.CookieJar.Cookies(j.on(u))
+}
+
+// SetCookies implements http.CookieJar.
+func (j *sapiJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	j.CookieJar.SetCookies(j.on(u), cookies)
+}
+
 // validationKeyFromJar returns the value of the validationKey cookie, which is
 // exactly the key SAPI expects as the validationkey query parameter.
 func (f *Fs) validationKeyFromJar() string {
@@ -508,7 +550,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	if err != nil {
 		return nil, err
 	}
-	jar, err := cookiejar.New(nil)
+	jar, err := newSAPIJar(opt.Endpoint)
 	if err != nil {
 		return nil, err
 	}
