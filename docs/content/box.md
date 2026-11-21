@@ -107,7 +107,7 @@ List all the files in your Box
 rclone ls remote:
 ```
 
-To copy a local directory to an Box directory called backup
+To copy a local directory to a Box directory called backup
 
 ```console
 rclone copy /home/source remote:backup
@@ -121,7 +121,7 @@ be done at your Enterprise Box account by going to Settings, "Account"
 Tab, and then set the password in the "Authentication" field.
 
 Once you have done this, you can setup your Enterprise Box account
-using the same procedure detailed above in the, using the password you
+using the same procedure detailed above, using the password you
 have just set.
 
 ### Invalid refresh token

@@ -90,7 +90,7 @@ List all the files in your Mega
 rclone ls remote:
 ```
 
-To copy a local directory to an Mega directory called backup
+To copy a local directory to a Mega directory called backup
 
 ```console
 rclone copy /home/source remote:backup

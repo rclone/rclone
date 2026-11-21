@@ -717,7 +717,7 @@ The parameters can be a string as per the rest of rclone, eg
 `s3:bucket/path` or `:sftp:/my/dir`. They can also be specified as
 JSON blobs.
 
-If specifying a JSON blob it should be a object mapping strings to
+If specifying a JSON blob it should be an object mapping strings to
 strings. These values will be used to configure the remote. There are
 3 special values which may be set:
 

@@ -97,7 +97,7 @@ List all the files in your Proton Drive
 rclone ls remote:
 ```
 
-To copy a local directory to an Proton Drive directory called backup
+To copy a local directory to a Proton Drive directory called backup
 
 ```console
 rclone copy /home/source remote:backup

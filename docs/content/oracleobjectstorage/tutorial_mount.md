@@ -62,7 +62,7 @@ instance principal provider as means of authenticating with object storage servi
 - namespace-c, bucket-c
 
 Rclone configuration file needs to have 3 remote sections, one section of each
-of above 3 buckets. Create a configuration file in a accessible location that
+of above 3 buckets. Create a configuration file in an accessible location that
 rclone program can read.
 
 ```console
