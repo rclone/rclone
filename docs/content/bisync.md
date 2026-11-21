@@ -107,6 +107,8 @@ Optional Flags:
       --conflict-suffix string               Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')
       --create-empty-src-dirs                Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)
       --download-hash                        Compute hash by downloading when otherwise unavailable. (warning: may be slow and use lots of data!)
+      --edit-filters                         Edit --filters-file with the interactive genfilters user interface, showing Path1, before the run (command line only)
+      --edit-filters-path2                   Like --edit-filters, but showing Path2 (command line only)
       --filters-file string                  Read filtering patterns from a file
       --force                                Bypass --max-delete safety check and run the sync. Consider using with --verbose
   -h, --help                                 help for bisync
@@ -541,6 +543,28 @@ On the next run with `--filters-file` set, bisync re-calculates the MD5 hash
 of the current filters file and compares it to the hash stored in the `.md5` file.
 If they don't match, the run aborts with a critical error and thus forces you
 to do a `--resync`, likely avoiding a disaster.
+
+### --edit-filters {#edit-filters}
+
+`--edit-filters` opens your [`--filters-file`](#filters-file) in
+[`rclone genfilters`](/commands/rclone_genfilters/) before the run, showing
+Path1 as a tree in which you include and exclude files and directories. Use
+`--edit-filters-path2` to show Path2 instead. The rules are checked with
+rclone's own filters as you go, so mistakes that would include or exclude
+more than you meant are easy to spot. `--edit-filters` needs
+`--filters-file` to name the file, but the file doesn't have to exist yet:
+genfilters creates it. If it already exists, the old version is kept as
+`FILTERSFILE.bak`.
+
+If you change the filters, bisync asks whether to do the `--resync` they
+need now. If you say no, nothing is synced, and the next run needs
+`--resync`. If the filters are unchanged, the run goes ahead as usual.
+
+Editing happens before bisync takes its [lock](#lock-file), so if another
+run holds the lock, the new filters are saved but this run stops, and the
+next run needs `--resync`, as after any filter change.
+`--edit-filters` is interactive, so it can't be used with the
+[rc](/rc/#sync-bisync).
 
 ### --conflict-resolve CHOICE {#conflict-resolve}
 
@@ -1263,6 +1287,8 @@ Bisync's [`--filters-file`](#filters-file) flag slightly extends the rclone's
 filtering mechanism.
 For a given bisync run you may provide *only one* `--filters-file`.
 The `--include*`, `--exclude*`, and `--filter` flags are also supported.
+To create or change a filters file interactively, see
+[`--edit-filters`](#edit-filters).
 
 ### How to filter directories
 

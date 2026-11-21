@@ -6,25 +6,19 @@ package ncdu
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"path"
-	"reflect"
 	"sort"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v3"
 	"github.com/gdamore/tcell/v3/color"
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fspath"
-	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rivo/uniseg"
+	"github.com/rclone/rclone/lib/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -134,10 +128,7 @@ type UI struct {
 	root               *scan.Dir // root directory
 	d                  *scan.Dir // current directory being displayed
 	path               string    // path of current directory
-	showBox            bool      // whether to show a box
-	boxText            []string  // text to show in box
-	boxMenu            []string  // box menu options
-	boxMenuButton      int
+	box                tui.Box   // popup box
 	boxMenuHandler     func(fs fs.Fs, path string, option int) (string, error)
 	entries            fs.DirEntries // entries of current directory
 	sortPerm           []int         // order to display entries in after sorting
@@ -163,171 +154,6 @@ type UI struct {
 type dirPos struct {
 	entry  int
 	offset int
-}
-
-// graphemeWidth returns the number of cells in rs.
-//
-// The original [runewidth.StringWidth] iterates through graphemes
-// and uses this same logic. To avoid iterating through graphemes
-// repeatedly, we separate that out into its own function.
-func graphemeWidth(rs []rune) (wd int) {
-	// copied/adapted from [runewidth.StringWidth]
-	for _, r := range rs {
-		wd = runewidth.RuneWidth(r)
-		if wd > 0 {
-			break
-		}
-	}
-	return
-}
-
-// Print a string
-func (u *UI) Print(x, y int, style tcell.Style, msg string) {
-	g := uniseg.NewGraphemes(msg)
-	for g.Next() {
-		rs := g.Runes()
-		u.s.SetContent(x, y, rs[0], rs[1:], style)
-		x += graphemeWidth(rs)
-	}
-}
-
-// Printf a string
-func (u *UI) Printf(x, y int, style tcell.Style, format string, args ...any) {
-	s := fmt.Sprintf(format, args...)
-	u.Print(x, y, style, s)
-}
-
-// Line prints a string to given xmax, with given space
-func (u *UI) Line(x, y, xmax int, style tcell.Style, spacer rune, msg string) {
-	g := uniseg.NewGraphemes(msg)
-	for g.Next() {
-		rs := g.Runes()
-		u.s.SetContent(x, y, rs[0], rs[1:], style)
-		x += graphemeWidth(rs)
-		if x >= xmax {
-			return
-		}
-	}
-	for ; x < xmax; x++ {
-		u.s.SetContent(x, y, spacer, nil, style)
-	}
-}
-
-// Linef a string
-func (u *UI) Linef(x, y, xmax int, style tcell.Style, spacer rune, format string, args ...any) {
-	s := fmt.Sprintf(format, args...)
-	u.Line(x, y, xmax, style, spacer, s)
-}
-
-// LineOptions Print line of selectable options
-func (u *UI) LineOptions(x, y, xmax int, style tcell.Style, options []string, selected int) {
-	for x := x; x < xmax; x++ {
-		u.s.SetContent(x, y, ' ', nil, style) // fill
-	}
-	x += ((xmax - x) - lineOptionLength(options)) / 2 // center
-
-	for i, o := range options {
-		u.s.SetContent(x, y, ' ', nil, style)
-		x++
-
-		ostyle := style
-		if i == selected {
-			ostyle = tcell.StyleDefault
-		}
-
-		u.s.SetContent(x, y, '<', nil, ostyle)
-		x++
-
-		g := uniseg.NewGraphemes(o)
-		for g.Next() {
-			rs := g.Runes()
-			u.s.SetContent(x, y, rs[0], rs[1:], ostyle)
-			x += graphemeWidth(rs)
-		}
-
-		u.s.SetContent(x, y, '>', nil, ostyle)
-		x++
-
-		u.s.SetContent(x, y, ' ', nil, style)
-		x++
-	}
-}
-
-func lineOptionLength(o []string) int {
-	count := 0
-	for _, i := range o {
-		count += len(i)
-	}
-	return count + 4*len(o) // spacer and arrows <entry>
-}
-
-// Box the u.boxText onto the screen
-func (u *UI) Box() {
-	w, h := u.s.Size()
-
-	// Find dimensions of text
-	boxWidth := 10
-	for _, s := range u.boxText {
-		if len(s) > boxWidth && len(s) < w-4 {
-			boxWidth = len(s)
-		}
-	}
-	boxHeight := len(u.boxText)
-
-	// position
-	x := (w - boxWidth) / 2
-	y := (h - boxHeight) / 2
-	xmax := x + boxWidth
-	if len(u.boxMenu) != 0 {
-		count := lineOptionLength(u.boxMenu)
-		xmax = max(x+boxWidth, x+count)
-	}
-	ymax := y + len(u.boxText)
-
-	// draw text
-	style := tcell.StyleDefault.Background(color.Red).Reverse(true)
-	for i, s := range u.boxText {
-		u.Line(x, y+i, xmax, style, ' ', s)
-		style = tcell.StyleDefault.Reverse(true)
-	}
-
-	if len(u.boxMenu) != 0 {
-		u.LineOptions(x, ymax, xmax, style, u.boxMenu, u.boxMenuButton)
-		ymax++
-	}
-
-	// draw top border
-	for i := y; i < ymax; i++ {
-		u.s.SetContent(x-1, i, tcell.RuneVLine, nil, style)
-		u.s.SetContent(xmax, i, tcell.RuneVLine, nil, style)
-	}
-	for j := x; j < xmax; j++ {
-		u.s.SetContent(j, y-1, tcell.RuneHLine, nil, style)
-		u.s.SetContent(j, ymax, tcell.RuneHLine, nil, style)
-	}
-
-	u.s.SetContent(x-1, y-1, tcell.RuneULCorner, nil, style)
-	u.s.SetContent(xmax, y-1, tcell.RuneURCorner, nil, style)
-	u.s.SetContent(x-1, ymax, tcell.RuneLLCorner, nil, style)
-	u.s.SetContent(xmax, ymax, tcell.RuneLRCorner, nil, style)
-}
-
-func (u *UI) moveBox(to int) {
-	if len(u.boxMenu) == 0 {
-		return
-	}
-
-	if to > 0 { // move right
-		u.boxMenuButton++
-	} else { // move left
-		u.boxMenuButton--
-	}
-
-	if u.boxMenuButton >= len(u.boxMenu) {
-		u.boxMenuButton = len(u.boxMenu) - 1
-	} else if u.boxMenuButton < 0 {
-		u.boxMenuButton = 0
-	}
 }
 
 // find the biggest entry in the current listing
@@ -368,10 +194,10 @@ func (u *UI) Draw() {
 	u.s.Clear()
 
 	// Header line
-	u.Linef(0, 0, w, tcell.StyleDefault.Reverse(true), ' ', "rclone ncdu %s - use the arrow keys to navigate, press ? for help", fs.Version)
+	tui.Linef(u.s, 0, 0, w, tcell.StyleDefault.Reverse(true), ' ', "rclone ncdu %s - use the arrow keys to navigate, press ? for help", fs.Version)
 
 	// Directory line
-	u.Linef(0, 1, w, tcell.StyleDefault, '-', "-- %s ", u.path)
+	tui.Linef(u.s, 0, 1, w, tcell.StyleDefault, '-', "-- %s ", u.path)
 
 	// graphs
 	const (
@@ -478,7 +304,7 @@ func (u *UI) Draw() {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			u.Linef(0, y, w, style, ' ', "%c %s %s%c%s%s",
+			tui.Linef(u.s, 0, y, w, style, ' ', "%c %s %s%c%s%s",
 				fileFlag, operations.SizeStringField(attrs.Size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
@@ -486,20 +312,20 @@ func (u *UI) Draw() {
 
 	// Footer
 	if u.d == nil {
-		u.Line(0, h-1, w, tcell.StyleDefault.Reverse(true), ' ', "Waiting for root directory...")
+		tui.Line(u.s, 0, h-1, w, tcell.StyleDefault.Reverse(true), ' ', "Waiting for root directory...")
 	} else {
 		message := ""
 		if u.listing {
 			message = " [listing in progress]"
 		}
 		size, count := u.d.Attr()
-		u.Linef(0, h-1, w, tcell.StyleDefault.Reverse(true), ' ', "Total usage: %s, Objects: %s%s",
+		tui.Linef(u.s, 0, h-1, w, tcell.StyleDefault.Reverse(true), ' ', "Total usage: %s, Objects: %s%s",
 			operations.SizeString(size, u.humanReadable), operations.CountString(count, u.humanReadable), message)
 	}
 
 	// Show the box on top if required
-	if u.showBox {
-		u.Box()
+	if u.box.Show {
+		u.box.Draw(u.s)
 	}
 }
 
@@ -574,7 +400,7 @@ func (u *UI) deleteSingle() {
 	cursorPos := u.dirPosMap[u.path]
 	dirPos := u.sortPerm[cursorPos.entry]
 	dirEntry := u.entries[dirPos]
-	u.boxMenu = []string{"cancel", "confirm"}
+	u.box.Menu = []string{"cancel", "confirm"}
 	if obj, isFile := dirEntry.(fs.Object); isFile {
 		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 			if o != 1 {
@@ -590,7 +416,7 @@ func (u *UI) deleteSingle() {
 			}
 			return "Successfully deleted file!", nil
 		}
-		u.popupBox([]string{
+		u.box.Popup([]string{
 			"Delete this file?",
 			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	} else {
@@ -608,7 +434,7 @@ func (u *UI) deleteSingle() {
 			}
 			return "Successfully purged folder!", nil
 		}
-		u.popupBox([]string{
+		u.box.Popup([]string{
 			"Purge this directory?",
 			"ALL files in it will be deleted",
 			fspath.JoinRootPath(u.fsName, dirEntry.String())})
@@ -618,7 +444,7 @@ func (u *UI) deleteSingle() {
 func (u *UI) deleteSelected() {
 	ctx := context.Background()
 
-	u.boxMenu = []string{"cancel", "confirm"}
+	u.box.Menu = []string{"cancel", "confirm"}
 
 	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 		if o != 1 {
@@ -629,11 +455,11 @@ func (u *UI) deleteSelected() {
 		i := 0
 
 		// the menu has been handled, so don't draw it over the progress
-		u.boxMenu = []string{}
+		u.box.Menu = []string{}
 
 		for key, cursorPos := range u.selectedEntries {
 
-			u.popupBox([]string{
+			u.box.Popup([]string{
 				"Deleting selected items...",
 				fmt.Sprintf("%d of %d", i+1, len(positionsToDelete))})
 			u.Draw()
@@ -675,13 +501,13 @@ func (u *UI) deleteSelected() {
 
 		return fmt.Sprintf("Successfully deleted %d items!", i), nil
 	}
-	u.popupBox([]string{
+	u.box.Popup([]string{
 		"Delete selected items?",
 		fmt.Sprintf("ALL %d items will be deleted", len(u.selectedEntries))})
 }
 
 func (u *UI) displayPath() {
-	u.togglePopupBox([]string{
+	u.box.Toggle([]string{
 		"Current Path",
 		u.path,
 	})
@@ -827,20 +653,20 @@ func (u *UI) enter() {
 
 // handles a box option that was selected
 func (u *UI) handleBoxOption() {
-	msg, err := u.boxMenuHandler(u.f, u.path, u.boxMenuButton)
+	msg, err := u.boxMenuHandler(u.f, u.path, u.box.Button)
 	// reset
-	u.boxMenuButton = 0
-	u.boxMenu = []string{}
+	u.box.Button = 0
+	u.box.Menu = []string{}
 	u.boxMenuHandler = nil
 	if err != nil {
-		u.popupBox([]string{
+		u.box.Popup([]string{
 			"error:",
 			err.Error(),
 		})
 		return
 	}
 
-	u.popupBox([]string{"Finished:", msg})
+	u.box.Popup([]string{"Finished:", msg})
 
 }
 
@@ -852,21 +678,6 @@ func (u *UI) up() {
 	parent := u.d.Parent()
 	if parent != nil {
 		u.setCurrentDir(parent)
-	}
-}
-
-// popupBox shows a box with the text in
-func (u *UI) popupBox(text []string) {
-	u.boxText = text
-	u.showBox = true
-}
-
-// togglePopupBox shows a box with the text in
-func (u *UI) togglePopupBox(text []string) {
-	if u.showBox && reflect.DeepEqual(u.boxText, text) {
-		u.showBox = false
-	} else {
-		u.popupBox(text)
 	}
 }
 
@@ -942,21 +753,7 @@ func (u *UI) Run() error {
 	}
 
 	// Hijack log output so that it doesn't corrupt the screen.
-	if !log.Redirected() {
-		var logs []string
-		log.Handler.SetOutput(func(level slog.Level, text string) {
-			if len(logs) > 100 {
-				logs = logs[len(logs)-100:]
-			}
-			logs = append(logs, text)
-		})
-		defer func() {
-			log.Handler.ResetOutput()
-			for _, text := range logs {
-				_, _ = os.Stderr.WriteString(text)
-			}
-		}()
-	}
+	defer tui.RedirectLogs()()
 
 	defer u.s.Fini()
 
@@ -987,42 +784,37 @@ outer:
 				u.s.Sync()
 				continue // don't draw again
 			case *tcell.EventKey:
-				var c rune
-				if k := ev.Key(); k == tcell.KeyRune {
-					c, _ = utf8.DecodeRuneInString(ev.Str())
-				} else {
-					c = key(k)
-				}
+				c := tui.EventRune(ev)
 				switch c {
-				case key(tcell.KeyEsc), key(tcell.KeyCtrlC), 'q':
-					if u.showBox || c == key(tcell.KeyEsc) {
-						u.showBox = false
+				case tui.Key(tcell.KeyEsc), tui.Key(tcell.KeyCtrlC), 'q':
+					if u.box.Show || c == tui.Key(tcell.KeyEsc) {
+						u.box.Show = false
 					} else {
 						break outer
 					}
-				case key(tcell.KeyDown), 'j':
+				case tui.Key(tcell.KeyDown), 'j':
 					u.move(1)
-				case key(tcell.KeyUp), 'k':
+				case tui.Key(tcell.KeyUp), 'k':
 					u.move(-1)
-				case key(tcell.KeyPgDn), '-', '_':
+				case tui.Key(tcell.KeyPgDn), '-', '_':
 					u.move(u.dirListHeight)
-				case key(tcell.KeyPgUp), '=', '+':
+				case tui.Key(tcell.KeyPgUp), '=', '+':
 					u.move(-u.dirListHeight)
-				case key(tcell.KeyLeft), 'h':
-					if u.showBox {
-						u.moveBox(-1)
+				case tui.Key(tcell.KeyLeft), 'h':
+					if u.box.Show {
+						u.box.Move(-1)
 						break
 					}
 					u.up()
-				case key(tcell.KeyEnter):
-					if len(u.boxMenu) > 0 {
+				case tui.Key(tcell.KeyEnter):
+					if len(u.box.Menu) > 0 {
 						u.handleBoxOption()
 						break
 					}
 					u.enter()
-				case key(tcell.KeyRight), 'l':
-					if u.showBox {
-						u.moveBox(1)
+				case tui.Key(tcell.KeyRight), 'l':
+					if u.box.Show {
+						u.box.Move(1)
 						break
 					}
 					u.enter()
@@ -1059,14 +851,14 @@ outer:
 				case 'D':
 					u.deleteSelected()
 				case '?':
-					u.togglePopupBox(helpText())
+					u.box.Toggle(helpText())
 				case 'r':
 					// restart scan
 					rootChan, errChan, updated = u.scan()
 
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.
-				case key(tcell.KeyCtrlL):
+				case tui.Key(tcell.KeyCtrlL):
 					u.Draw()
 					u.s.Sync()
 					continue // don't draw again
@@ -1078,9 +870,4 @@ outer:
 		u.s.Show()
 	}
 	return nil
-}
-
-// key returns a rune representing the key k. It is a negative value, to not collide with Unicode code-points.
-func key(k tcell.Key) rune {
-	return rune(-k)
 }
