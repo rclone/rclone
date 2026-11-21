@@ -6,3 +6,4 @@ endpoint: {}
 quirks:
   force_path_style: true
   use_multipart_etag: false # multipart ETags are random
+  equal_part_sizes: true # all parts but the last must be the same size

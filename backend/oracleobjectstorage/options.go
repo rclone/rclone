@@ -15,6 +15,7 @@ const (
 	maxUploadParts             = 10000
 	defaultUploadConcurrency   = 10
 	minChunkSize               = fs.SizeSuffix(5 * 1024 * 1024)
+	maxChunkSize               = fs.SizeSuffix(50 * 1024 * 1024 * 1024) // the biggest part OCI takes
 	defaultUploadCutoff        = fs.SizeSuffix(200 * 1024 * 1024)
 	maxUploadCutoff            = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep                   = 10 * time.Millisecond

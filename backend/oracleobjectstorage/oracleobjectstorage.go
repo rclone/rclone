@@ -124,14 +124,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMetadata:      true,
-		ReadMimeType:      true,
-		WriteMimeType:     true,
-		BucketBased:       true,
-		BucketBasedRootOK: true,
-		SetTier:           true,
-		GetTier:           true,
-		SlowModTime:       true,
+		ReadMetadata:            true,
+		ReadMimeType:            true,
+		ChunkWriterVariableSize: true,
+		WriteMimeType:           true,
+		BucketBased:             true,
+		BucketBasedRootOK:       true,
+		SetTier:                 true,
+		GetTier:                 true,
+		SlowModTime:             true,
 	}).Fill(ctx, f)
 	if f.rootBucket != "" && f.rootDirectory != "" && !strings.HasSuffix(root, "/") {
 		// Check to see if the (bucket,directory) is actually an existing file
