@@ -81,6 +81,7 @@ type Info struct {
 	Rs          ranges.Ranges // which parts of the file are present
 	Fingerprint string        // fingerprint of remote object
 	Dirty       bool          // set if the backing file has been modified
+	Stale       bool          // set if the cache file content does not match the remote object
 }
 
 // Items are a slice of *Item ordered by ATime
@@ -441,6 +442,7 @@ func (item *Item) _dirty() {
 	}
 	if !item.info.Dirty {
 		item.info.Dirty = true
+		item.info.Stale = false
 		err := item._save()
 		if err != nil {
 			fs.Errorf(item.name, "vfs cache: failed to save item info: %v", err)
@@ -663,6 +665,11 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		}
 		item.o = o
 		item._updateFingerprint()
+		if o != nil && cacheObj.Size() >= 0 && o.Size() >= 0 && o.Size() != cacheObj.Size() {
+			item.info.Stale = true
+		} else {
+			item.info.Stale = false
+		}
 	}
 
 	// Write the object back to the VFS layer before we mark it as
@@ -916,13 +923,17 @@ func (item *Item) _checkObject(o fs.Object) error {
 		fs.Debugf(item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
 		if item.info.Fingerprint != "" {
 			// remote object && local object
-			if remoteFingerprint != item.info.Fingerprint {
-				if !item.info.Dirty {
-					fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
-					item._remove("stale (remote is different)")
+			if remoteFingerprint != item.info.Fingerprint || item.info.Stale {
+				if !item.info.Dirty && item.opens == 0 {
+					reason := "stale (remote is different)"
+					if item.info.Stale {
+						reason = "stale (cache content differs from remote)"
+					}
+					fs.Debugf(item.name, "vfs cache: removing cached entry as %s", reason)
+					item._remove(reason)
 					item.info.Fingerprint = remoteFingerprint
 				} else {
-					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
+					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified or open - keeping it (remote fingerprint %q != cached fingerprint %q, stale=%v)", remoteFingerprint, item.info.Fingerprint, item.info.Stale)
 				}
 			}
 		} else {
@@ -930,13 +941,17 @@ func (item *Item) _checkObject(o fs.Object) error {
 			// Set fingerprint
 			item.info.Fingerprint = remoteFingerprint
 		}
-		item.info.Size = o.Size()
+		if !item.info.Stale {
+			item.info.Size = o.Size()
+		}
 	}
 	item.o = o
 
-	err := item._truncateToCurrentSize()
-	if err != nil {
-		return fmt.Errorf("vfs cache item: open truncate failed: %w", err)
+	if !item.info.Stale {
+		err := item._truncateToCurrentSize()
+		if err != nil {
+			return fmt.Errorf("vfs cache item: open truncate failed: %w", err)
+		}
 	}
 
 	return nil
@@ -1413,7 +1428,7 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	}
 
 	// Check to see if object has shrunk - if so don't read too much.
-	if item.o != nil && !item.info.Dirty && item.o.Size() != item.info.Size {
+	if item.o != nil && !item.info.Dirty && !item.info.Stale && item.o.Size() != item.info.Size {
 		fs.Debugf(item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
 		err = item._truncate(item.o.Size())
 		if err != nil {
