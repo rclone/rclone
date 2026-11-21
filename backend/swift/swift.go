@@ -903,13 +903,37 @@ func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, a
 	return nil
 }
 
-// listContainers lists the containers
-func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err error) {
-	var containers []swift.Container
+// containersAll returns the containers in the account.
+//
+// If listing the account is forbidden it returns the container named
+// after the user if that exists, otherwise the error from the listing.
+func (f *Fs) containersAll(ctx context.Context) (containers []swift.Container, err error) {
 	err = f.pacer.Call(func() (bool, error) {
 		containers, err = f.c.ContainersAll(ctx, nil)
 		return shouldRetry(ctx, err)
 	})
+	var swiftError *swift.Error
+	if !errors.As(err, &swiftError) || swiftError.StatusCode != http.StatusForbidden || f.c.UserName == "" {
+		return containers, err
+	}
+	// Some providers (eg Blomp) forbid listing the account and give
+	// each user one container named after their login.
+	var container swift.Container
+	containerErr := f.pacer.Call(func() (bool, error) {
+		var err error
+		container, _, err = f.c.Container(ctx, f.c.UserName)
+		return shouldRetry(ctx, err)
+	})
+	if containerErr != nil {
+		return nil, err
+	}
+	fs.Debugf(f, "Listing the account is forbidden so using container %q", f.c.UserName)
+	return []swift.Container{container}, nil
+}
+
+// listContainers lists the containers
+func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err error) {
+	containers, err := f.containersAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("container listing failed: %w", err)
 	}
@@ -1056,11 +1080,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 			}
 		}
 	} else {
-		var containers []swift.Container
-		err = f.pacer.Call(func() (bool, error) {
-			containers, err = f.c.ContainersAll(ctx, nil)
-			return shouldRetry(ctx, err)
-		})
+		containers, err := f.containersAll(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("container listing failed: %w", err)
 		}
