@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -3185,4 +3186,298 @@ func blankMissingHashes(logger, lsf *bytes.Buffer) {
 	}
 	logger.Reset()
 	logger.Write(bytes.Join(loggerSplit, []byte("\n")))
+}
+
+// canReplaceTypes reports whether a file and a directory of the same
+// name can't both be in f, so one has to be deleted to make way for
+// the other.
+func canReplaceTypes(f fs.Fs) bool {
+	return !f.Features().BucketBased && !f.Features().DuplicateFiles
+}
+
+// Test a file in the destination where the source has a directory
+func TestSyncDirectoryReplacingFile(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	file1 := r.WriteFile("was-file/sub/file.txt", "in what was a file", t1)
+	file2 := r.WriteBoth(ctx, "unchanged.txt", "unchanged", t2)
+	r.WriteObject(ctx, "was-file", "the file", t1)
+	r.WriteObject(ctx, "deleted.txt", "deleted from the source", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckLocalItems(t, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
+}
+
+// Test a directory in the destination where the source has a file
+func TestSyncFileReplacingDirectory(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	file1 := r.WriteFile("was-dir", "the file", t1)
+	file2 := r.WriteBoth(ctx, "unchanged.txt", "unchanged", t2)
+	r.WriteObject(ctx, "was-dir/file.txt", "in what was a directory", t1)
+	r.WriteObject(ctx, "was-dir/sub/deep/file.txt", "in what was a directory", t1)
+	r.WriteObject(ctx, "deleted.txt", "deleted from the source", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckLocalItems(t, file1, file2)
+	r.CheckRemoteListing(t, []fstest.Item{file1, file2}, []string{})
+}
+
+// Test replacing a file with a directory and the reverse with each way of deleting
+func TestSyncReplacingTypesDeleteModes(t *testing.T) {
+	for name, deleteMode := range map[string]fs.DeleteMode{"Before": fs.DeleteModeBefore, "During": fs.DeleteModeDuring, "After": fs.DeleteModeAfter} {
+		t.Run(name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.DeleteMode = deleteMode
+			r := fstest.NewRun(t)
+			if !canReplaceTypes(r.Fremote) {
+				t.Skip("destination can have a file and a directory with the same name")
+			}
+			file1 := r.WriteFile("was-file/file.txt", "in what was a file", t1)
+			file2 := r.WriteFile("was-dir", "the file", t1)
+			r.WriteObject(ctx, "was-file", "the file", t1)
+			r.WriteObject(ctx, "was-dir/sub/file.txt", "in what was a directory", t1)
+
+			accounting.GlobalStats().ResetCounters()
+			require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+			r.CheckRemoteListing(t, []fstest.Item{file1, file2}, []string{"was-file"})
+		})
+	}
+}
+
+// Test that replacing a file with a directory obeys --backup-dir and --dry-run
+func TestSyncReplacingTypesBackupDirAndDryRun(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) || !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name, or can't move files")
+	}
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "dst"))
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+	file1 := r.WriteFile("was-file/file.txt", "in what was a file", t1)
+	file2 := r.WriteFile("was-dir", "the file", t1)
+	old1 := r.WriteObject(ctx, "dst/was-file", "the old file", t1)
+	old2 := r.WriteObject(ctx, "dst/was-dir/sub/file.txt", "in what was a directory", t1)
+
+	ci.DryRun = true
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, fdst, r.Flocal, false))
+	r.CheckRemoteItems(t, old1, old2)
+
+	ci.DryRun = false
+	ci.BackupDir = r.FremoteName + "/backup"
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, fdst, r.Flocal, false))
+
+	file1.Path, file2.Path = "dst/"+file1.Path, "dst/"+file2.Path
+	old1.Path, old2.Path = "backup/was-file", "backup/was-dir/sub/file.txt"
+	r.CheckRemoteItems(t, file1, file2, old1, old2)
+}
+
+// Test that copying doesn't delete what is in the way of a change of type
+func TestSyncReplacingTypesWithSimilarNames(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	// These sort between a directory and a file called "name"
+	file1 := r.WriteBoth(ctx, "nameData.txt", "unchanged", t1)
+	file2 := r.WriteBoth(ctx, "nameE", "unchanged", t1)
+	file3 := r.WriteFile("name/file.txt", "in what was a file", t1)
+	r.WriteObject(ctx, "name", "the old file", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckRemoteItems(t, file1, file2, file3)
+}
+
+func TestSyncDoesNotReplaceTypesWithMaxDepth(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.MaxDepth = 1
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	r.WriteFile("was-dir", "the file", t1)
+	old := r.WriteObject(ctx, "was-dir/sub/deep/file.txt", "in what was a directory", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	accounting.GlobalStats().ResetCounters()
+	require.Error(t, err)
+
+	// What is too deep to be seen is still there
+	r.CheckRemoteItems(t, old)
+}
+
+func TestSyncDoesNotReplaceTypesAfterErrors(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	r.WriteFile("was-dir", "the file", t1)
+	old := r.WriteObject(ctx, "was-dir/file.txt", "in what was a directory", t1)
+
+	// Nothing is deleted from the destination after an error
+	accounting.GlobalStats().ResetCounters()
+	_ = fs.CountError(ctx, errors.New("an earlier error"))
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	accounting.GlobalStats().ResetCounters()
+	require.Error(t, err)
+
+	r.CheckRemoteItems(t, old)
+}
+
+func TestCopyEmptyDirectoryOverFileIsNotAnError(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	require.NoError(t, operations.Mkdir(ctx, r.Flocal, "was-file"))
+	old := r.WriteObject(ctx, "was-file", "the old file", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, CopyDir(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckRemoteItems(t, old)
+}
+
+func TestSyncDoesNotReplaceTypesWithExcludedFiles(t *testing.T) {
+	ctx := context.Background()
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.AddRule("- *.bak"))
+	ctx = filter.ReplaceConfig(ctx, fi)
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	r.WriteFile("was-dir", "the file", t1)
+	old1 := r.WriteObject(ctx, "was-dir/file.txt", "in what was a directory", t1)
+	old2 := r.WriteObject(ctx, "was-dir/sub/kept.bak", "excluded so not deleted", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	err = Sync(ctx, r.Fremote, r.Flocal, false)
+	accounting.GlobalStats().ResetCounters()
+	require.Error(t, err)
+
+	// The directory would still be in the way, so nothing in it is deleted
+	r.CheckRemoteItems(t, old1, old2)
+
+	// The directory can go if excluded files are deleted too
+	fi.Opt.DeleteExcluded = true
+	file1 := fstest.NewItem("was-dir", "the file", t1)
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file1)
+}
+
+func TestSyncDoesNotReplaceTypesWithSuffix(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Suffix = ".old"
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	r.WriteFile("was-dir", "the file", t1)
+	old := r.WriteObject(ctx, "was-dir/file.txt", "in what was a directory", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	accounting.GlobalStats().ResetCounters()
+	require.Error(t, err)
+
+	// Renaming what is in the directory wouldn't get it out of the way
+	r.CheckRemoteItems(t, old)
+}
+
+func TestSyncDoesNotReplaceDirectoryWithUnreadableFile(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("can't make a file unreadable")
+	}
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	r.WriteFile("was-dir", "the file", t1)
+	require.NoError(t, os.Chmod(filepath.Join(r.LocalName, "was-dir"), 0))
+	old := r.WriteObject(ctx, "was-dir/file.txt", "in what was a directory", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	accounting.GlobalStats().ResetCounters()
+	require.Error(t, err)
+
+	r.CheckRemoteItems(t, old)
+}
+
+func TestSyncReplacingTypesIsLogged(t *testing.T) {
+	ctx := context.Background()
+	// Collected through a channel as the logger is called from many goroutines
+	logged := make(chan string, 100)
+	ctx = operations.WithSyncLogger(ctx, operations.LoggerOpt{
+		LoggerFn: func(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEntry, err error) {
+			if sigil == operations.MissingOnSrc {
+				logged <- dst.Remote()
+			}
+		},
+	})
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	file1 := r.WriteFile("was-dir", "the file", t1)
+	file2 := r.WriteFile("was-file/file.txt", "in what was a file", t1)
+	r.WriteObject(ctx, "was-dir/sub/file.txt", "in what was a directory", t1)
+	r.WriteObject(ctx, "was-file", "the old file", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file1, file2)
+
+	close(logged)
+	missing := map[string]bool{}
+	for remote := range logged {
+		missing[remote] = true
+	}
+	assert.True(t, missing["was-dir/sub/file.txt"], "file in the directory which was replaced not logged: %v", missing)
+	assert.True(t, missing["was-file"], "file which was replaced not logged: %v", missing)
+}
+
+func TestCopyDoesNotReplaceTypes(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !canReplaceTypes(r.Fremote) {
+		t.Skip("destination can have a file and a directory with the same name")
+	}
+	r.WriteFile("was-file/file.txt", "in what was a file", t1)
+	r.WriteFile("was-dir", "the file", t1)
+	old1 := r.WriteObject(ctx, "was-file", "the old file", t1)
+	old2 := r.WriteObject(ctx, "was-dir/sub/file.txt", "in what was a directory", t1)
+
+	accounting.GlobalStats().ResetCounters()
+	err := CopyDir(ctx, r.Fremote, r.Flocal, false)
+	accounting.GlobalStats().ResetCounters()
+	require.Error(t, err)
+
+	// The modification time of the old file isn't checked, as it is
+	// set to that of the directory in the source.
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{old1, old2}, nil, fs.ModTimeNotSupported)
 }
