@@ -126,6 +126,143 @@ func TestGetPhotos_DoesNotServeStaleCacheOnPagedDeltaFailure(t *testing.T) {
 	assert.Nil(t, lib.pendingDelta, "failed delta apply must not leave pendingDelta stuck forever")
 }
 
+func TestGetPhotos_IncrementalCacheRefresh(t *testing.T) {
+	master := photoRecord{RecordName: "master-photo", RecordType: "CPLMaster"}
+	master.Fields.FilenameEnc = &ckStringField{Value: "photo.PNG", Type: "STRING"}
+	master.Fields.ResOriginalRes = &ckResourceField{}
+	master.Fields.ResOriginalRes.Value.DownloadURL = "https://example.com/photo"
+	master.Fields.ResOriginalRes.Value.Size = 1024
+	asset := photoRecord{RecordName: "asset-photo", RecordType: "CPLAsset"}
+	asset.Fields.MasterRef = &ckReferenceField{}
+	asset.Fields.MasterRef.Value.RecordName = master.RecordName
+	asset.Fields.AssetSubtypeV2 = &ckIntField{Value: subtypeV2Screenshot}
+
+	for _, memoryCache := range []bool{false, true} {
+		cacheName := "disk"
+		if memoryCache {
+			cacheName = "memory"
+		}
+		t.Run(cacheName, func(t *testing.T) {
+			for _, test := range []struct {
+				name           string
+				initialDeleted bool
+				deleted        bool
+				permanent      bool
+				edited         bool
+				live           bool
+			}{
+				{name: "replace changed photo"},
+				{name: "move to Recently Deleted", deleted: true},
+				{name: "refresh Recently Deleted", initialDeleted: true, deleted: true},
+				{name: "permanent deletion", initialDeleted: true, permanent: true},
+				{name: "remove obsolete edited version", edited: true},
+				{name: "replace Live Photo companions", live: true},
+			} {
+				t.Run(test.name, func(t *testing.T) {
+					setTestCacheDir(t)
+					oldMaster, oldAsset := master, asset
+					if test.initialDeleted {
+						oldAsset.Fields.IsDeleted = &ckIntField{Value: 1}
+					}
+					if test.edited {
+						oldAsset.Fields.AdjustmentType = &ckStringField{Value: "edit"}
+						oldAsset.Fields.ResJPEGFullRes = master.Fields.ResOriginalRes
+					}
+					if test.live {
+						oldMaster.Fields.ResOriginalVidComplRes = master.Fields.ResOriginalRes
+					}
+					cachedPhotos := buildPhotos(&oldMaster, &oldAsset)
+					require.NotEmpty(t, cachedPhotos)
+
+					newMaster, newAsset := oldMaster, asset
+					resource := *master.Fields.ResOriginalRes
+					resource.Value.Size = 2048
+					newMaster.Fields.ResOriginalRes = &resource
+					if test.deleted {
+						newAsset.Fields.IsDeleted = &ckIntField{Value: 1}
+					}
+					var records []json.RawMessage
+					for _, record := range []photoRecord{newMaster, newAsset} {
+						data, err := json.Marshal(record)
+						require.NoError(t, err)
+						records = append(records, data)
+					}
+					if test.permanent {
+						records = []json.RawMessage{
+							json.RawMessage(`{"recordName":"master-photo","deleted":true}`),
+							json.RawMessage(`{"recordName":"asset-photo","deleted":true}`),
+						}
+					}
+					var deltaCalls atomic.Int32
+					ps := newHTTPTestPhotosService(t, "incremental-cache", func(w http.ResponseWriter, r *http.Request) {
+						if r.URL.Path != "/database/1/com.apple.photos.cloud/production/private/changes/zone" {
+							http.Error(w, "unexpected request", http.StatusInternalServerError)
+							return
+						}
+						var body struct {
+							Zones []struct{ SyncToken string }
+						}
+						if err := readJSONBody(r, &body); err != nil || len(body.Zones) != 1 {
+							http.Error(w, "invalid zone request", http.StatusBadRequest)
+							return
+						}
+						var changes []json.RawMessage
+						if body.Zones[0].SyncToken == "old-token" {
+							deltaCalls.Add(1)
+							changes = records
+						}
+						writeJSON(t, w, map[string]any{"zones": []map[string]any{{
+							"zoneID": map[string]any{"zoneName": "PrimarySync"}, "records": changes, "syncToken": "new-token",
+						}}})
+					})
+					lib := &Library{service: ps, zoneID: "PrimarySync", area: areaPrivate, albums: buildSmartAlbums()}
+					for _, album := range lib.albums {
+						album.lib = lib
+						photos := []*Photo{{ID: "unchanged", Filename: "keep.jpg"}}
+						for _, photo := range cachedPhotos {
+							for _, name := range photo.SmartAlbums {
+								if name == album.Name {
+									photos = append(photos, photo)
+								}
+							}
+						}
+						album.saveDiskCache(photos)
+						if memoryCache {
+							album.photoCache = buildPhotoCache(photos)
+						}
+					}
+					lib.saveSyncToken("old-token")
+
+					for _, name := range []string{"All Photos", "Screenshots", "Recently Deleted"} {
+						album := lib.albums[name]
+						photos, err := album.GetPhotos(context.Background())
+						require.NoError(t, err)
+						want := []*Photo{{ID: "unchanged", Filename: "keep.jpg"}}
+						if !test.permanent && ((name == "Recently Deleted") == test.deleted) {
+							albums := []string{"All Photos", "Screenshots"}
+							if test.deleted {
+								albums = []string{"Recently Deleted"}
+							}
+							want = append(want, &Photo{ID: "master-photo", Filename: "photo.PNG", Size: 2048,
+								ResourceKey: "resOriginalRes", SmartAlbums: albums})
+							if test.live {
+								want = append(want, &Photo{ID: "master-photo", Filename: "photo.MOV", Size: 1024,
+									ResourceKey: "resOriginalVidComplRes", SmartAlbums: albums})
+							}
+						}
+						assert.ElementsMatch(t, want, photos, "%s listing", name)
+						diskPhotos, ok := album.loadDiskCacheFrom(lib.zoneCacheDir())
+						require.True(t, ok)
+						assert.ElementsMatch(t, want, diskPhotos, "%s disk cache", name)
+					}
+					assert.Equal(t, int32(1), deltaCalls.Load())
+					assert.Equal(t, "new-token", lib.readSyncToken())
+				})
+			}
+		})
+	}
+}
+
 func TestGetLibraries_RediscoversZonesWhenCacheExists(t *testing.T) {
 	setTestCacheDir(t)
 	ctx := context.Background()
