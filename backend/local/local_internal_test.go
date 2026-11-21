@@ -1307,6 +1307,41 @@ func TestFilter(t *testing.T) {
 	require.Equal(t, "[included]", fmt.Sprint(entries))
 }
 
+func TestFilterSkipsLstatOfExcludedFiles(t *testing.T) {
+	if useReadDir {
+		t.Skip("Readdir reads the info of every entry with its name")
+	}
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	when := time.Now()
+	r.WriteFile("included", "included file", when)
+	r.WriteFile("excluded", "excluded file", when)
+	r.WriteFile("dir/file", "file in dir", when)
+	f := r.Flocal.(*Fs)
+
+	var lstatted []string
+	oldListLstat := listLstat
+	defer func() { listLstat = oldListLstat }()
+	listLstat = func(name string) (os.FileInfo, error) {
+		lstatted = append(lstatted, filepath.Base(name))
+		return oldListLstat(name)
+	}
+
+	ctx, fi := filter.AddConfig(ctx)
+	require.NoError(t, fi.AddRule("+ included"))
+	require.NoError(t, fi.AddRule("- *"))
+	ctx = filter.SetUseFilter(ctx, true)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	sort.Sort(entries)
+	assert.Equal(t, "[dir included]", fmt.Sprint(entries))
+
+	// Directories are filtered by the layer above, so are still read
+	sort.Strings(lstatted)
+	assert.Equal(t, []string{"dir", "included"}, lstatted)
+}
+
 func testFilterSymlink(t *testing.T, copyLinks bool) {
 	skipIfNoSymlinks(t)
 	ctx := context.Background()
