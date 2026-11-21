@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -273,4 +274,80 @@ func TestAuthProxyTransferOutlivesCache(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, contents == string(got), "upload corrupted")
 	})
+}
+
+// TestUploadOffset checks APPE appends to an existing file and REST
+// before STOR writes from the restart offset.
+func TestUploadOffset(t *testing.T) {
+	const addr = "127.0.0.1:" + testPORT
+	root := t.TempDir()
+	f, err := fs.NewFs(context.Background(), root)
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.ListenAddr = addr
+	opt.PassivePorts = testPASSIVEPORTRANGE
+	opt.User = testUSER
+	opt.Pass = testPASS
+	vfsOpt := vfscommon.Opt
+	vfsOpt.CacheMode = vfscommon.CacheModeWrites
+	vfsOpt.WriteBack = 0
+	d, err := newServer(context.Background(), f, &opt, &vfsOpt, &proxy.Opt)
+	require.NoError(t, err)
+	quit := make(chan struct{})
+	go func() {
+		assert.NoError(t, d.Serve())
+		close(quit)
+	}()
+	defer func() {
+		assert.NoError(t, d.Shutdown())
+		<-quit
+	}()
+
+	var c *ftpclient.ServerConn
+	require.Eventually(t, func() bool {
+		c, err = ftpclient.Dial(addr)
+		return err == nil
+	}, 10*time.Second, 10*time.Millisecond)
+	defer func() { _ = c.Quit() }()
+	require.NoError(t, c.Login(testUSER, testPASS))
+
+	for _, test := range []struct {
+		name   string
+		upload func(t *testing.T, path string) error
+		want   string
+	}{
+		{"AppendNew", func(t *testing.T, path string) error {
+			return c.Append(path, strings.NewReader("hello world"))
+		}, "hello world"},
+		{"Append", func(t *testing.T, path string) error {
+			require.NoError(t, c.Stor(path, strings.NewReader("hello world")))
+			return c.Append(path, strings.NewReader(" again"))
+		}, "hello world again"},
+		{"RestartAtEnd", func(t *testing.T, path string) error {
+			require.NoError(t, c.Stor(path, strings.NewReader("hello world")))
+			return c.StorFrom(path, strings.NewReader(" again"), 11)
+		}, "hello world again"},
+		{"RestartInMiddle", func(t *testing.T, path string) error {
+			require.NoError(t, c.Stor(path, strings.NewReader("hello world")))
+			return c.StorFrom(path, strings.NewReader("WORLD"), 6)
+		}, "hello WORLD"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			path := test.name + ".txt"
+			require.NoError(t, test.upload(t, path))
+
+			resp, err := c.Retr(path)
+			require.NoError(t, err)
+			got, err := io.ReadAll(resp)
+			require.NoError(t, err)
+			require.NoError(t, resp.Close())
+			assert.Equal(t, test.want, string(got))
+
+			assert.Eventually(t, func() bool {
+				got, err := os.ReadFile(filepath.Join(root, path))
+				return err == nil && string(got) == test.want
+			}, 10*time.Second, 10*time.Millisecond, "backing file not written")
+		})
+	}
 }
