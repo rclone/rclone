@@ -39,6 +39,7 @@ func TestIntegration(t *testing.T) {
 			"SetMetadata",
 		},
 		UnimplementableFsMethods: []string{
+			"ServerSideFetchURL",
 			"PublicLink",
 			"OpenWriterAt",
 			"OpenChunkWriter",

@@ -32,6 +32,7 @@ func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
 // would make the redirect tests unable to detect a header missing from it.
 // TestRedirectSecretHeadersMatchTestList keeps the two lists in sync.
 var s3SecretTestHeaderNames = []string{
+	"Fastly-Object-Storage-Source-Url",
 	"X-Amz-Security-Token",
 	"X-Amz-S3session-Token",
 	"Authorization",

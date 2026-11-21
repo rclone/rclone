@@ -170,6 +170,72 @@ func (c *copy) serverSideCopy(ctx context.Context) (actionTaken string, newDst f
 	return actionTaken, newDst, err
 }
 
+// uploadOptions returns the options used when uploading the destination object.
+func (c *copy) uploadOptions() []fs.OpenOption {
+	options := []fs.OpenOption{c.hashOption}
+	for _, option := range c.ci.UploadHeaders {
+		options = append(options, option)
+	}
+	if c.ci.MetadataSet != nil {
+		options = append(options, fs.MetadataOption(c.ci.MetadataSet))
+	}
+	return options
+}
+
+// serverSideFetchURL fetches c.src into (c.f, c.remoteForCopy) using a direct source URL if possible.
+func (c *copy) serverSideFetchURL(ctx context.Context) (actionTaken string, newDst fs.Object, err error) {
+	if err := ctx.Err(); err != nil {
+		return actionTaken, nil, err
+	}
+	srcFeatures := c.src.Fs().Features()
+	if c.dstFeatures.ServerSideFetchURL == nil || srcFeatures == nil || srcFeatures.PublicLink == nil || !srcFeatures.PublicLinkIsDirect ||
+		c.src.Size() < 0 || c.ci.DryRun || len(c.ci.DownloadHeaders) != 0 || len(c.ci.Headers) != 0 ||
+		c.ci.ClientCert != "" || c.ci.ClientKey != "" || c.ci.Dump != 0 {
+		return actionTaken, nil, fs.ErrorCantCopy
+	}
+
+	sourceURL, err := srcFeatures.PublicLink(ctx, c.src.Remote(), c.ci.ServerSideFetchURLExpire, false)
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return actionTaken, nil, ctxErr
+	}
+	if errors.Is(err, context.Canceled) {
+		return actionTaken, nil, context.Canceled
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return actionTaken, nil, context.DeadlineExceeded
+	}
+	if err != nil || sourceURL == "" {
+		fs.Debugf(c.src, "Server-side URL fetch: source link unavailable; using ordinary copy")
+		return actionTaken, nil, fs.ErrorCantCopy
+	}
+	if err := ctx.Err(); err != nil {
+		return actionTaken, nil, err
+	}
+
+	in := c.tr.Account(ctx, nil)
+	in.ServerSideTransferStart()
+	fetchCtx, ta := in.NewServerSideCopyAccounter(ctx)
+	newDst, err = c.dstFeatures.ServerSideFetchURL(fetchCtx, c.remoteForCopy, sourceURL, c.src, c.uploadOptions()...)
+	if err == nil && newDst == nil {
+		err = errors.New("server-side URL fetch returned no destination object")
+	}
+	if err == nil {
+		var n int64
+		if !ta.Started() {
+			n = newDst.Size()
+		}
+		in.ServerSideCopyEnd(n)
+	} else {
+		ta.Reset()
+	}
+	_ = in.Close()
+	if errors.Is(err, fs.ErrorCantCopy) {
+		fs.Debugf(c.src, "Server-side URL fetch unavailable: %v; using ordinary copy", err)
+		c.tr.Reset(ctx)
+	}
+	return "Copied (server-side URL fetch)", newDst, err
+}
+
 // Copy c.src to (c.f, c.remoteForCopy) using multiThreadCopy
 func (c *copy) multiThreadCopy(ctx context.Context, uploadOptions []fs.OpenOption) (actionTaken string, newDst fs.Object, err error) {
 	newDst, err = multiThreadCopy(ctx, c.f, c.remoteForCopy, c.src, c.ci.MultiThreadStreams, c.tr, uploadOptions...)
@@ -250,13 +316,7 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 	}
 
 	// Options for the upload
-	uploadOptions := []fs.OpenOption{c.hashOption}
-	for _, option := range c.ci.UploadHeaders {
-		uploadOptions = append(uploadOptions, option)
-	}
-	if c.ci.MetadataSet != nil {
-		uploadOptions = append(uploadOptions, fs.MetadataOption(c.ci.MetadataSet))
-	}
+	uploadOptions := c.uploadOptions()
 
 	// Options for the download
 	downloadOptions := []fs.OpenOption{c.hashOption}
@@ -321,9 +381,18 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 		// Try server side copy
 		actionTaken, newDst, err = c.serverSideCopy(ctx)
 
-		// If can't server-side copy, do it manually
+		// If can't server-side copy, try fetching from a direct source URL
 		if errors.Is(err, fs.ErrorCantCopy) {
-			actionTaken, newDst, err = c.manualCopy(ctx)
+			actionTaken, newDst, err = c.serverSideFetchURL(ctx)
+		}
+
+		// If neither server-side method is available, do it manually
+		if errors.Is(err, fs.ErrorCantCopy) {
+			if ctx.Err() != nil {
+				err = ctx.Err()
+			} else {
+				actionTaken, newDst, err = c.manualCopy(ctx)
+			}
 		}
 
 		// End if ctx is in error

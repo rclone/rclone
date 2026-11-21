@@ -3,9 +3,25 @@ package fs
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestServerSideFetchURLExpire(t *testing.T) {
+	assert.Equal(t, Duration(24*time.Hour), GetConfig(context.Background()).ServerSideFetchURLExpire)
+	for _, d := range []Duration{0, -1, Duration(500 * time.Millisecond), DurationOff} {
+		ctx, ci := AddConfig(context.Background())
+		ci.ServerSideFetchURLExpire = d
+		err := ci.Reload(ctx)
+		assert.ErrorContains(t, err, "server-side-fetch-url-expire")
+	}
+	for _, d := range []Duration{Duration(time.Second), Duration(24 * time.Hour), Duration(8 * 24 * time.Hour)} {
+		ctx, ci := AddConfig(context.Background())
+		ci.ServerSideFetchURLExpire = d
+		assert.NoError(t, ci.Reload(ctx))
+	}
+}
 
 func TestGetConfig(t *testing.T) {
 	ctx := context.Background()
