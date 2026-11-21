@@ -2763,6 +2763,38 @@ func TestMaxTransfer(t *testing.T) {
 	t.Run("Cautious", func(t *testing.T) { test(t, fs.CutoffModeCautious) })
 }
 
+func TestMaxErrors(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.MaxErrors = 1
+	ci.Transfers = 1
+	ci.Checkers = 1
+
+	test := func(t *testing.T, cutoff fs.CutoffMode) {
+		r := fstest.NewRun(t)
+		ci.CutoffMode = cutoff
+
+		file1 := r.WriteFile("file1", "file1 contents", t1)
+		file2 := r.WriteFile("file2", "file2 contents", t1)
+		r.CheckLocalItems(t, file1, file2)
+		r.CheckRemoteItems(t)
+
+		accounting.GlobalStats().ResetCounters()
+		defer accounting.GlobalStats().ResetCounters()
+		_ = accounting.GlobalStats().Error(errors.New("boom"))
+
+		err := Sync(ctx, r.Fremote, r.Flocal, false)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, accounting.ErrorMaxErrorsReached), "unexpected error: %v", err)
+		assert.Equal(t, cutoff == fs.CutoffModeHard, fserrors.IsFatalError(err))
+		r.CheckRemoteItems(t)
+	}
+
+	t.Run("Hard", func(t *testing.T) { test(t, fs.CutoffModeHard) })
+	t.Run("Soft", func(t *testing.T) { test(t, fs.CutoffModeSoft) })
+	t.Run("Cautious", func(t *testing.T) { test(t, fs.CutoffModeCautious) })
+}
+
 func testSyncConcurrent(t *testing.T, subtest string) {
 	const (
 		NFILES     = 20

@@ -268,6 +268,10 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
+		if ci.MaxErrors > 0 && accounting.GlobalStats().GetTotalErrors() >= int64(ci.MaxErrors) {
+			fs.Errorf(nil, "Not retrying as --max-errors limit reached")
+			break
+		}
 		if accounting.GlobalStats().Errored() && !accounting.GlobalStats().HadRetryError() {
 			fs.Errorf(nil, "Can't retry any of the errors - not attempting retries")
 			break

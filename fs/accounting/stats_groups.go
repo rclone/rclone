@@ -385,6 +385,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 		{
 			sum.bytes += stats.bytes
 			sum.errors += stats.errors
+			sum.totalErrors += stats.totalErrors
 			if sum.lastError == nil && stats.lastError != nil {
 				sum.lastError = stats.lastError
 			}

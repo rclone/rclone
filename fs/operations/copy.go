@@ -114,8 +114,14 @@ func (c *copy) checkPartial(ctx context.Context) (remoteForCopy string, inplace 
 	return remoteForCopy, false, nil
 }
 
-// Check to see if we have hit max transfer limits
+// Check to see if we have hit max transfer or max errors limits
 func (c *copy) checkLimits(ctx context.Context) (err error) {
+	if c.ci.MaxErrors > 0 && accounting.Stats(ctx).GetTotalErrors() >= int64(c.ci.MaxErrors) {
+		if c.ci.CutoffMode == fs.CutoffModeHard {
+			return accounting.ErrorMaxErrorsReachedFatal
+		}
+		return accounting.ErrorMaxErrorsReachedGraceful
+	}
 	if c.ci.MaxTransfer < 0 {
 		return nil
 	}
