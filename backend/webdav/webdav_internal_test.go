@@ -111,6 +111,43 @@ var (
 	headers    = []string{"X-Potato", "sausage", "X-Rhubarb", "cucumber"}
 )
 
+func TestAboutRootQuota(t *testing.T) {
+	for _, root := range []string{"", "shared/", "shared folder/", "shared#folder/", "shared/nested/"} {
+		t.Run(root, func(t *testing.T) {
+			const endpoint = "/remote.php/dav/files/alice/"
+			wantPath := endpoint + root
+			var quotaPaths []string
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "PROPFIND", r.Method)
+				assert.Equal(t, "0", r.Header.Get("Depth"))
+				quotaPaths = append(quotaPaths, r.URL.Path)
+				free := int64(0)
+				if r.URL.Path == wantPath {
+					free = 10717105227
+				}
+				w.Header().Set("Content-Type", "application/xml")
+				w.WriteHeader(http.StatusMultiStatus)
+				_, _ = fmt.Fprintf(w, `<d:multistatus xmlns:d="DAV:"><d:response><d:href>/</d:href><d:propstat><d:prop><d:quota-used-bytes>20313013</d:quota-used-bytes><d:quota-available-bytes>%d</d:quota-available-bytes></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`, free)
+			}))
+			defer ts.Close()
+			f, err := webdav.NewFs(context.Background(), remoteName, root, configmap.Simple{
+				"url":    ts.URL + endpoint,
+				"vendor": "nextcloud",
+			})
+			require.NoError(t, err)
+			usage, err := f.Features().About(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, usage.Free)
+			assert.EqualValues(t, 10717105227, *usage.Free)
+			require.NotNil(t, usage.Used)
+			assert.EqualValues(t, 20313013, *usage.Used)
+			require.NotNil(t, usage.Total)
+			assert.EqualValues(t, 10737418240, *usage.Total)
+			assert.Equal(t, []string{wantPath}, quotaPaths)
+		})
+	}
+}
+
 // prepareServer the test server and return a function to tidy it up afterwards
 // with each request the headers option tests are executed
 func prepareServer(t *testing.T) (configmap.Simple, func()) {
