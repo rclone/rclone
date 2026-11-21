@@ -1278,8 +1278,8 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 		return nil
 	}
 
-	// First attempt to use DirMover if exists, same Fs and no filters are active
-	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && fi.InActive() {
+	// First attempt to use DirMover if exists, same Fs and no filters or name transforms are active
+	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && fi.InActive() && !transform.Transforming(ctx) {
 		if operations.SkipDestructive(ctx, fdst, "server-side directory move") {
 			return nil
 		}
