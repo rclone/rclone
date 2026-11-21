@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/transform"
 
 	"github.com/spf13/cobra"
 )
@@ -205,8 +206,11 @@ var commandDefinition = &cobra.Command{
 }
 
 func (opt *Options) applyContext(ctx context.Context) error {
-	maxDelete := DefaultMaxDelete
 	ci := fs.GetConfig(ctx)
+	if transform.Transforming(ctx) {
+		return errors.New("--name-transform is not supported by bisync")
+	}
+	maxDelete := DefaultMaxDelete
 	if ci.MaxDelete > 100 {
 		return fmt.Errorf("--max-delete is a percentage for bisync and must be from 0 to 100, not %d", ci.MaxDelete)
 	}

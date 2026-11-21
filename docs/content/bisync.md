@@ -1232,6 +1232,12 @@ new/changed on both sides AND the checksums match AND the filename case does not
 match, the Path1 filename is considered the winner, for the purposes of
 `--fix-case` (Path2 will be renamed to match it).
 
+### `--name-transform`
+
+Bisync does not support [`--name-transform`](/docs/#name-transform-stringarray).
+If it is set, bisync returns an error and does not sync, including during
+`--resync`.
+
 ## Windows support {#windows}
 
 Bisync has been tested on Windows 8.1, Windows 10 Pro 64-bit and on Windows
