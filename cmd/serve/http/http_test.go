@@ -15,10 +15,13 @@ import (
 	"testing"
 	"time"
 
+	httpbackend "github.com/rclone/rclone/backend/http"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/chunkedreader"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
@@ -596,4 +599,34 @@ func TestAuthProxyDownloadOutlivesCache(t *testing.T) {
 	rest, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.True(t, contents == string(start)+string(rest), "download corrupted")
+}
+
+func TestSequentialUnknownSizeZIP(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	// A large ZIP is streamed without Content-Length, even after Open.
+	payload := random.String(65536)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "payload"), []byte(payload), 0600))
+	local, err := fs.NewFs(ctx, dir)
+	require.NoError(t, err)
+	s, testURL := start(ctx, t, local)
+	t.Cleanup(func() { assert.NoError(t, s.Shutdown()) })
+	f, err := httpbackend.NewFs(ctx, "test", "", configmap.Simple{
+		"url":       strings.Replace(testURL, "://", "://"+testUser+":"+testPass+"@", 1),
+		"no_escape": "true",
+	})
+	require.NoError(t, err)
+	obj, err := f.NewObject(ctx, "?download=zip")
+	require.NoError(t, err)
+	require.Equal(t, int64(-1), obj.Size())
+	reader := chunkedreader.New(ctx, obj, -1, -1, 0)
+	_, err = reader.Open()
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, reader.Close()) })
+	require.Equal(t, int64(-1), obj.Size())
+	data, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	entries := readZip(t, data)
+	require.Len(t, entries, 1)
+	require.Equal(t, payload, entries["payload"].Contents)
 }
