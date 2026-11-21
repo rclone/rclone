@@ -145,6 +145,11 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 			bracketStart = false
 			bracketNegated = false
 			_, _ = re.WriteRune(c)
+			if c == '\\' && inBrackets == 1 {
+				// the next character is escaped so can't open or close the class
+				slashed = true
+				continue
+			}
 			if c == '[' {
 				inBrackets++
 			}
