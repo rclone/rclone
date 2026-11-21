@@ -84,6 +84,21 @@ type TeamWorkspaceResponse struct {
 	TeamWorkspace []TeamWorkspace `json:"data"`
 }
 
+// TeamInfo is returned by the team info API and carries the storage
+// usage and quota for the whole team.
+type TeamInfo struct {
+	Data struct {
+		Attributes struct {
+			StorageInfo struct {
+				StorageUsed int64 `json:"storage_used_in_bytes"`
+			} `json:"storage_info"`
+			LicenseObj struct {
+				AllowedSpace int64 `json:"allowed_space_bytes"`
+			} `json:"license_obj"`
+		} `json:"attributes"`
+	} `json:"data"`
+}
+
 // Item is may represent a file or a folder in Zoho Workdrive
 type Item struct {
 	ID         string `json:"id"`
@@ -96,6 +111,7 @@ type Item struct {
 		UploadedTime Time   `json:"uploaded_time_in_millisecond"`
 		StorageInfo  struct {
 			Size        int64 `json:"size_in_bytes"`
+			StorageUsed int64 `json:"storage_used_in_bytes"`
 			FileCount   int64 `json:"files_count"`
 			FolderCount int64 `json:"folders_count"`
 		} `json:"storage_info"`
