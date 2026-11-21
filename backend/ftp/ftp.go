@@ -134,8 +134,22 @@ So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     "trust_pasv_ip",
-			Help:     "Trust the IP address in the server's PASV reply for the data connection. Only enable this for servers you trust, as the PASV IP is server-supplied; it is needed for servers whose PASV reply legitimately points at a different host than the control connection.",
+			Name: "trust_pasv_ip",
+			Help: `Trust the IP address in the server's PASV reply.
+
+By default rclone ignores the IP address in the PASV reply and
+makes the data connection to the same host as the control
+connection. Enable this option to trust the IP address in the
+PASV reply instead, which is needed for servers whose PASV reply
+legitimately points at a different host than the control
+connection.
+
+The default is false to prevent a malicious server making direct
+connections to other hosts on your network.
+
+Try this option if transfers hang or fail with connection-refused
+errors after upgrading to >= v1.76.0.
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
