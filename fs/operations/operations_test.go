@@ -46,6 +46,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/transform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/cases"
@@ -1059,6 +1060,62 @@ func TestMoveFile(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t)
 	r.CheckRemoteItems(t, file2)
+}
+
+func TestCopyFileNameTransform(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	require.NoError(t, transform.SetOptions(ctx, "prefix=p-"))
+	// Update the destination in place, as happens on backends
+	// without partial uploads.
+	ci.Inplace = true
+	r := fstest.NewRun(t)
+
+	// A file already exists at the untransformed destination name.
+	// The copy writes to the transformed name, so it must be left
+	// untouched.
+	oldFile := r.WriteObject(ctx, "file2", "old file2 contents", t2)
+	srcFile := r.WriteFile("file1", "file1 contents", t1)
+	r.CheckLocalItems(t, srcFile)
+	r.CheckRemoteItems(t, oldFile)
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, "file2", "file1")
+	require.NoError(t, err)
+
+	transformed := srcFile
+	transformed.Path = "p-file2"
+	r.CheckLocalItems(t, srcFile)
+	r.CheckRemoteItems(t, oldFile, transformed)
+
+	// Copying again checks the file at the transformed name: it is
+	// identical to the source, so nothing is transferred and the
+	// file at the untransformed name is still untouched.
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, "file2", "file1")
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, oldFile, transformed)
+}
+
+func TestMoveFileNameTransform(t *testing.T) {
+	ctx := context.Background()
+	ctx, _ = fs.AddConfig(ctx)
+	require.NoError(t, transform.SetOptions(ctx, "prefix=p-"))
+	r := fstest.NewRun(t)
+
+	// A file already exists at the untransformed destination name.
+	// The move writes to the transformed name, so it must be left
+	// untouched.
+	oldFile := r.WriteObject(ctx, "file2", "old file2 contents", t2)
+	srcFile := r.WriteFile("file1", "file1 contents", t1)
+	r.CheckLocalItems(t, srcFile)
+	r.CheckRemoteItems(t, oldFile)
+
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, "file2", "file1")
+	require.NoError(t, err)
+
+	transformed := srcFile
+	transformed.Path = "p-file2"
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, oldFile, transformed)
 }
 
 func TestMoveFileWithIgnoreExisting(t *testing.T) {
