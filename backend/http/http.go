@@ -6,6 +6,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -129,6 +130,24 @@ Changing the configured time later makes every file appear modified to a sync.`,
 			Name:    "no_escape",
 			Help:    "Do not escape URL metacharacters in path names.",
 			Default: false,
+		}, {
+			Name: "use_listing",
+			Help: `Use the size and modification time from the directory listing.
+
+Normally rclone does a HEAD request for each file in a directory
+listing to find its size and modification time. If the server shows
+these in its listing, this option uses them instead, which is much
+faster for directories with many files.
+
+This only works when the server returns its listing as JSON in the
+format used by nginx (autoindex_format json), which shows times to the
+second. HTML listings are not used for this.
+
+Files whose size and time are not in the listing still get a HEAD
+request. Files found this way have no Content-Type or other header
+metadata from the server, as with --http-no-head.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -177,6 +196,7 @@ type Options struct {
 	NoHeadTime fs.Time         `config:"no_head_time"`
 	Headers    fs.CommaSepList `config:"headers"`
 	NoEscape   bool            `config:"no_escape"`
+	UseListing bool            `config:"use_listing"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -485,9 +505,23 @@ func parseName(base *url.URL, name string) (string, error) {
 	return name, nil
 }
 
-// Parse turns HTML for a directory into names
+// listingEntry is one name found in a directory listing
+//
+// size is -1 and modTime is the zero time when the listing doesn't show them.
+type listingEntry struct {
+	name    string
+	size    int64
+	modTime time.Time
+}
+
+// hasInfo returns true if the listing gave both the size and the modification time
+func (e listingEntry) hasInfo() bool {
+	return e.size >= 0 && !e.modTime.IsZero()
+}
+
+// Parse turns HTML for a directory into entries
 // base should be the base URL to resolve any relative names from
-func parse(base *url.URL, in io.Reader) (names []string, err error) {
+func parse(base *url.URL, in io.Reader) (entries []listingEntry, err error) {
 	doc, err := html.Parse(in)
 	if err != nil {
 		return nil, err
@@ -503,7 +537,7 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 					name, err := parseName(base, a.Val)
 					if err == nil {
 						if _, found := seen[name]; !found {
-							names = append(names, name)
+							entries = append(entries, listingEntry{name: name, size: -1})
 							seen[name] = struct{}{}
 						}
 					}
@@ -516,7 +550,44 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 		}
 	}
 	walk(doc)
-	return names, nil
+	return entries, nil
+}
+
+// parseJSON turns a JSON directory listing into entries
+// base should be the base URL to resolve any relative names from
+func parseJSON(base *url.URL, in io.Reader) (entries []listingEntry, err error) {
+	var items []struct {
+		Name  string `json:"name"`
+		Type  string `json:"type"`
+		MTime string `json:"mtime"`
+		Size  *int64 `json:"size"`
+	}
+	if err := json.NewDecoder(in).Decode(&items); err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{})
+	for _, item := range items {
+		name := rest.URLPathEscape(item.Name)
+		if item.Type == "directory" {
+			name += "/"
+		}
+		name, err := parseName(base, name)
+		if err != nil {
+			continue
+		}
+		if _, found := seen[name]; found {
+			continue
+		}
+		seen[name] = struct{}{}
+		entry := listingEntry{name: name, size: -1}
+		if item.Size != nil && item.Type == "file" {
+			if modTime, err := http.ParseTime(item.MTime); err == nil {
+				entry.size, entry.modTime = *item.Size, modTime
+			}
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
 }
 
 // parseFilename extracts the filename from a Content-Disposition header
@@ -576,7 +647,7 @@ func (f *Fs) addHeaders(req *http.Request) {
 }
 
 // Read the directory passed in
-func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error) {
+func (f *Fs) readDir(ctx context.Context, dir string) (entries []listingEntry, err error) {
 	URL := f.url(dir)
 	u, err := url.Parse(URL)
 	if err != nil {
@@ -606,14 +677,19 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 	contentType, _, _ := strings.Cut(res.Header.Get("Content-Type"), ";")
 	switch contentType {
 	case "text/html":
-		names, err = parse(u, res.Body)
+		entries, err = parse(u, res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("readDir: %w", err)
+		}
+	case "application/json":
+		entries, err = parseJSON(u, res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("readDir: %w", err)
 		}
 	default:
 		return nil, fmt.Errorf("can't parse content type %q", contentType)
 	}
-	return names, nil
+	return entries, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -640,7 +716,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if !strings.HasSuffix(dir, "/") && dir != "" {
 		dir += "/"
 	}
-	names, err := f.readDir(ctx, dir)
+	listing, err := f.readDir(ctx, dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
@@ -674,13 +750,22 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 		})
 	}
-	for _, name := range names {
-		isDir := name[len(name)-1] == '/'
-		name = strings.TrimRight(name, "/")
-		remote := path.Join(dir, name)
-		if isDir {
+	for _, entry := range listing {
+		isDir := entry.name[len(entry.name)-1] == '/'
+		remote := path.Join(dir, strings.TrimRight(entry.name, "/"))
+		switch {
+		case isDir:
 			add(fs.NewDir(remote, time.Time{}))
-		} else {
+		case f.opt.UseListing && entry.hasInfo():
+			file := &Object{
+				fs:      f,
+				remote:  remote,
+				size:    entry.size,
+				modTime: entry.modTime,
+			}
+			file.contentType = fs.MimeType(ctx, file)
+			add(file)
+		default:
 			in <- remote
 		}
 	}
