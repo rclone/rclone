@@ -1,0 +1,97 @@
+---
+name: XFS
+
+on:
+  push:
+    paths:
+      - 'backend/local/**'
+      - 'cmd/serve/s3/**'
+      - 'lib/file/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/xfs.yml'
+  pull_request:
+    paths:
+      - 'backend/local/**'
+      - 'cmd/serve/s3/**'
+      - 'lib/file/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/xfs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: XFS (${{ matrix.arch }}, exchange=${{ matrix.exchange }})
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            exchange: 1
+          - arch: amd64
+            exchange: 0
+          - arch: '386'
+            exchange: 1
+    env:
+      RCLONE_CONFIG: /notfound
+      GOARCH: ${{ matrix.arch }}
+      CGO_ENABLED: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Prepare XFS
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xfsprogs xfslibs-dev
+          truncate -s 8G "$RUNNER_TEMP/xfs.img"
+          mkfs.xfs -f -b size=4096 -i exchange=${{ matrix.exchange }} "$RUNNER_TEMP/xfs.img"
+          mkdir -p "$RUNNER_TEMP/xfs"
+          sudo mount -o loop,nosuid,nodev "$RUNNER_TEMP/xfs.img" "$RUNNER_TEMP/xfs"
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/xfs"
+          xfs_info "$RUNNER_TEMP/xfs"
+          uname -a
+          echo "TMPDIR=$RUNNER_TEMP/xfs" >> "$GITHUB_ENV"
+          echo "RCLONE_TEST_XFS_DIR=$RUNNER_TEMP/xfs" >> "$GITHUB_ENV"
+          echo "RCLONE_TEST_XFS_OTHER_DIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+          echo "RCLONE_TEST_XFS_EXCHANGE=${{ matrix.exchange }}" >> "$GITHUB_ENV"
+          if [ '${{ matrix.exchange }}' = 1 ]; then
+            echo 'RCLONE_TEST_XFS_REQUIRED=1' >> "$GITHUB_ENV"
+          fi
+      - name: Test on XFS
+        run: go test -count=1 -shuffle=on -coverprofile=coverage.out ./lib/file ./cmd/serve/s3
+      - name: Test local backend on XFS
+        run: go test -count=1 -shuffle=on -coverprofile=coverage-local.out ./backend/local -args -individual
+      - name: Race tests
+        if: matrix.arch == 'amd64'
+        env:
+          CGO_ENABLED: 1
+        run: go test -race -count=3 -shuffle=on -run 'Test(XFS|Conditional|Keyed)|TestEntity|TestSplitEntity|TestConditionsFrom' ./lib/file ./cmd/serve/s3
+      - name: Fuzz conditional headers
+        if: matrix.arch == 'amd64' && matrix.exchange == 1
+        run: |
+          module=$(go list -m -f '{{.Dir}}' github.com/rclone/gofakes3)
+          go -C "$module" test -run '^$' -fuzz '^FuzzEntityTags$' -fuzztime=15s
+      - name: Save coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xfs-${{ matrix.arch }}-${{ matrix.exchange }}-coverage
+          path: coverage*.out
+          if-no-files-found: ignore
+      - name: Unmount XFS
+        if: always()
+        run: |
+          if mountpoint -q "$RUNNER_TEMP/xfs"; then
+            sudo umount "$RUNNER_TEMP/xfs"
+          fi

@@ -87,15 +87,8 @@ func newMultipartTestServerVFS(t *testing.T, backing string, disableStreaming bo
 	// A unique bucket per server: every plain ":memory:" backing shares one
 	// process-wide store, so a fixed name would leak objects between tests.
 	bucket := fmt.Sprintf("test-%d", testBackingCounter.Add(1))
-	require.NoError(t, f.Mkdir(ctx, bucket))
 	if vfsOpt == nil {
 		vfsOpt = &vfscommon.Opt
-	}
-	// The VFS is cached per remote (fs.ConfigString), so a shared ":memory:"
-	// server reuses a VFS whose cached root listing predates the bucket just
-	// created; forget it so the new bucket is visible.
-	if root, err := vfs.New(ctx, f, vfsOpt).Root(); err == nil {
-		root.ForgetAll()
 	}
 
 	keyid := random.String(16)
@@ -119,6 +112,7 @@ func newMultipartTestServerVFS(t *testing.T, backing string, disableStreaming bo
 		Secure: false,
 	})
 	require.NoError(t, err)
+	require.NoError(t, core.MakeBucket(ctx, bucket, minio.MakeBucketOptions{}))
 	return core, f, bucket
 }
 
@@ -1014,8 +1008,7 @@ func TestMultipartNoServerSideMove(t *testing.T) {
 
 // TestMultipartNoServerSideMovePartialUploads checks that a multipart upload
 // to a remote where partial uploads are visible and which has no server-side
-// move or copy round-trips: the parts are written straight to the final
-// object rather than being buffered in memory.
+// move or copy round-trips through a staged object.
 func TestMultipartNoServerSideMovePartialUploads(t *testing.T) {
 	core, f, bucket := newMultipartTestServerVFS(t, "", false, nil, nil, "Move", "Copy")
 	require.False(t, operations.CanServerSideMove(f))
@@ -1028,42 +1021,46 @@ func TestMultipartNoServerSideMovePartialUploads(t *testing.T) {
 	requireOnly(t, f, bucket, object)
 }
 
-// TestMultipartCacheModeWritesNoServerSideMove checks that with
-// --vfs-cache-mode writes a remote with no server-side move or copy is still
-// written through the cache rather than falling back to buffering the upload
-// in memory, and pins the documented trade-offs of that path: the parts go
-// into the cache under the final key, so the in-flight upload is visible
-// there, and an aborted upload cannot be abandoned once in the cache, so its
-// partial data is written back as if it were a completed object.
+// TestMultipartCacheModeWritesNoServerSideMove checks that staged cache writes
+// publish on completion and leave the destination alone on abort.
 func TestMultipartCacheModeWritesNoServerSideMove(t *testing.T) {
-	// The distinct description= gives this remote its own config string so
-	// it doesn't share a VFS with the fully-featured ":memory:" servers.
 	core, f, bucket := newMultipartTestServerVFS(t, ":memory,description=no-move-cache:", false, nil, cacheWritesVFSOpt(100*time.Millisecond), "Copy")
 	require.False(t, operations.CanServerSideMove(f))
 	ctx := context.Background()
 
-	// A round trip goes through the cache under the final key.
 	const object = "cached-direct.bin"
 	want, err := multipartUploadParts(t, core, bucket, object, []int{120 * 1024, 100 * 1024, 53 * 1024})
 	require.NoError(t, err)
 	waitForContent(t, f, bucket, object, want)
 
-	// The parts are written to the cache, not buffered in memory, so the
-	// in-flight upload is visible at the key.
-	const object2 = "cached-direct-inflight.bin"
-	uploadID, err := core.NewMultipartUpload(ctx, bucket, object2, minio.PutObjectOptions{})
-	require.NoError(t, err)
-	data := []byte(random.String(50 * 1024))
-	_, err = core.PutObjectPart(ctx, bucket, object2, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
-	require.NoError(t, err)
-	_, err = core.StatObject(ctx, bucket, object2, minio.StatObjectOptions{})
-	assert.NoError(t, err, "in-flight upload should be visible at the key")
+	for _, key := range []string{"new.bin", object} {
+		t.Run(key, func(t *testing.T) {
+			id, err := core.NewMultipartUpload(ctx, bucket, key, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			data := []byte(random.String(50 * 1024))
+			_, err = core.PutObjectPart(ctx, bucket, key, id, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+			require.NoError(t, err)
 
-	// An aborted upload's partial data is committed to the cache and
-	// written back.
-	require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object2, uploadID))
-	waitForContent(t, f, bucket, object2, data)
-	requireOnly(t, f, bucket, object, object2)
+			checkDestination := func() {
+				t.Helper()
+				info, err := core.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
+				if key == object {
+					require.NoError(t, err)
+					assert.Equal(t, int64(len(want)), info.Size)
+					assert.Equal(t, want, readObject(t, f, bucket, key))
+				} else {
+					require.Error(t, err)
+					assert.Equal(t, "NoSuchKey", minio.ToErrorResponse(err).Code)
+					_, err = f.NewObject(ctx, path.Join(bucket, key))
+					assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+				}
+			}
+			checkDestination()
+			require.NoError(t, core.AbortMultipartUpload(ctx, bucket, key, id))
+			checkDestination()
+		})
+	}
+	requireOnly(t, f, bucket, object)
 }
 
 // TestTempObjectsHiddenFromListings checks that the reserved .rclone_temp_
