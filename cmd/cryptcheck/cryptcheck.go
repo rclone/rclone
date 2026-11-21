@@ -48,6 +48,16 @@ the files in ` + "`remote:path`" + `.
 rclone cryptcheck remote:path encryptedremote:path
 ` + "```" + `
 
+The encrypted remote can be given as either the source or the
+destination, so this works too.
+
+` + "```console" + `
+rclone cryptcheck encryptedremote:path /path/to/files
+` + "```" + `
+
+If both remotes are encrypted then the destination is the one whose
+checksums are checked.
+
 After it has run it will log the status of the ` + "`encryptedremote:`" + `.
 ` + check.FlagsHelp,
 	Annotations: map[string]string{
@@ -65,10 +75,17 @@ After it has run it will log the status of the ` + "`encryptedremote:`" + `.
 
 // cryptCheck checks the integrity of an encrypted remote
 func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
-	// Check to see fcrypt is a crypt
+	// Check to see which of fdst or fsrc is a crypt, preferring fdst
+	fplain := fsrc
 	fcrypt, ok := fdst.(*crypt.Fs)
+	cryptIsSrc := false
 	if !ok {
-		return fmt.Errorf("%s:%s is not a crypt remote", fdst.Name(), fdst.Root())
+		fplain = fdst
+		fcrypt, ok = fsrc.(*crypt.Fs)
+		cryptIsSrc = true
+	}
+	if !ok {
+		return fmt.Errorf("neither %s:%s nor %s:%s is a crypt remote", fsrc.Name(), fsrc.Root(), fdst.Name(), fdst.Root())
 	}
 	// Find a hash to use
 	funderlying := fcrypt.UnWrap()
@@ -78,7 +95,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	}
 	fs.Infof(nil, "Using %v for hash comparisons", hashType)
 
-	opt, close, err := check.GetCheckOpt(fsrc, fcrypt)
+	opt, close, err := check.GetCheckOpt(fsrc, fdst)
 	if err != nil {
 		return err
 	}
@@ -89,6 +106,9 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	// it returns true if differences were found
 	// it also returns whether it couldn't be hashed
 	opt.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+		if cryptIsSrc {
+			dst, src = src, dst
+		}
 		cryptDst := dst.(*crypt.Object)
 		underlyingDst := cryptDst.UnWrap()
 		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
@@ -106,7 +126,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 			return false, true, nil
 		}
 		if cryptHash != underlyingHash {
-			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fcrypt.Name(), fcrypt.Root(), cryptHash, fplain.Name(), fplain.Root(), underlyingHash)
 			fs.Errorf(src, "%s", err.Error())
 			return true, false, nil
 		}
