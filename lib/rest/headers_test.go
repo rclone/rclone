@@ -1,11 +1,14 @@
 package rest
 
 import (
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseSizeFromHeaders(t *testing.T) {
@@ -159,7 +162,6 @@ func TestCheckContentRange(t *testing.T) {
 			status:        http.StatusPartialContent,
 			contentLength: 3,
 			options:       []fs.OpenOption{&fs.RangeOption{Start: 2, End: 4}},
-			wantErr:       true,
 		},
 		{
 			name:          "wrong unit",
@@ -244,4 +246,35 @@ func TestCheckContentRange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckContentRangeMissingHeaderHTTPTest(t *testing.T) {
+	body := make([]byte, 100)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Accept-Ranges", "bytes")
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Length", "100")
+		w.WriteHeader(http.StatusPartialContent)
+		_, _ = w.Write(body)
+	}))
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL, nil)
+	require.NoError(t, err)
+	req.Header.Set("Range", "bytes=0-99")
+
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+
+	assert.Equal(t, http.StatusPartialContent, resp.StatusCode)
+	assert.Empty(t, resp.Header.Get("Content-Range"))
+	assert.Equal(t, int64(100), resp.ContentLength)
+
+	err = CheckContentRange(resp, []fs.OpenOption{&fs.RangeOption{Start: 0, End: 99}}, -1)
+	assert.NoError(t, err)
+
+	got, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.Len(t, got, 100)
 }
