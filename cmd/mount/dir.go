@@ -32,6 +32,7 @@ var _ fusefs.Node = (*Dir)(nil)
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(d, "")("attr=%+v, err=%v", a, &err)
 	a.Valid = time.Duration(d.fsys.opt.AttrTimeout)
+	a.Inode = d.Inode()
 	a.Gid = d.VFS().Opt.GID
 	a.Uid = d.VFS().Opt.UID
 	a.Mode = d.Mode()
@@ -110,8 +111,9 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 		return nil, translateError(err)
 	}
 	dirents = append(dirents, fuse.Dirent{
-		Type: fuse.DT_Dir,
-		Name: ".",
+		Inode: d.Inode(),
+		Type:  fuse.DT_Dir,
+		Name:  ".",
 	}, fuse.Dirent{
 		Type: fuse.DT_Dir,
 		Name: "..",
@@ -123,9 +125,11 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 			continue
 		}
 		var dirent = fuse.Dirent{
-			// Inode FIXME ???
-			Type: fuse.DT_File,
-			Name: name,
+			// Use the VFS inode, same as Attr, otherwise bazil
+			// generates a 64-bit FNV hash (GenerateDynamicInode)
+			Inode: node.Inode(),
+			Type:  fuse.DT_File,
+			Name:  name,
 		}
 		if node.IsDir() {
 			dirent.Type = fuse.DT_Dir
