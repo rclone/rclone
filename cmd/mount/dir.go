@@ -110,13 +110,19 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	if err != nil {
 		return nil, translateError(err)
 	}
+	// ".." of the root is the root itself, following the convention for "/"
+	parentInode := d.Inode()
+	if parent := d.Parent(); parent != nil {
+		parentInode = parent.Inode()
+	}
 	dirents = append(dirents, fuse.Dirent{
 		Inode: d.Inode(),
 		Type:  fuse.DT_Dir,
 		Name:  ".",
 	}, fuse.Dirent{
-		Type: fuse.DT_Dir,
-		Name: "..",
+		Inode: parentInode,
+		Type:  fuse.DT_Dir,
+		Name:  "..",
 	})
 	for _, node := range items {
 		name := node.Name()

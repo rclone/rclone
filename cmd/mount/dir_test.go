@@ -36,7 +36,7 @@ func TestInode(t *testing.T) {
 		require.NoError(t, node.Attr(ctx, &a))
 		assert.Equal(t, want, a.Inode)
 	}
-	checkDirents := func(d *Dir, wantNames ...string) {
+	checkDirents := func(d *Dir, parentInode uint64, wantNames ...string) {
 		dirents, err := d.ReadDirAll(ctx)
 		require.NoError(t, err)
 		var names []string
@@ -49,6 +49,7 @@ func TestInode(t *testing.T) {
 			case ".":
 				assert.Equal(t, d.Inode(), dirent.Inode)
 			case "..":
+				assert.Equal(t, parentInode, dirent.Inode)
 			default:
 				node, err := d.Dir.Stat(dirent.Name)
 				require.NoError(t, err)
@@ -58,13 +59,13 @@ func TestInode(t *testing.T) {
 	}
 
 	checkAttr(root, root.Inode())
-	checkDirents(root, "dir")
+	checkDirents(root, root.Inode(), "dir")
 
 	dirNode, err := root.Lookup(ctx, &fuse.LookupRequest{Name: "dir"}, &fuse.LookupResponse{})
 	require.NoError(t, err)
 	dir := dirNode.(*Dir)
 	checkAttr(dir, dir.Inode())
-	checkDirents(dir, "file")
+	checkDirents(dir, root.Inode(), "file")
 
 	fileNode, err := dir.Lookup(ctx, &fuse.LookupRequest{Name: "file"}, &fuse.LookupResponse{})
 	require.NoError(t, err)
