@@ -143,6 +143,21 @@ rclone hashsum crc32 --http-url "https://getsamplefiles.com" :archive::http:down
 If you just want to download a file or multiple files by URL then
 using [copyurl](/commands/rclone_copyurl/) is more efficient.
 
+### JSON directory listings
+
+If the server returns its directory listing as JSON, rclone reads the
+size and modification time of each file from it and does not need a
+HEAD request per file, which is much faster for large directories.
+Two formats are understood: nginx with
+[`autoindex_format json;`](https://nginx.org/en/docs/http/ngx_http_autoindex_module.html),
+and Caddy [`file_server browse`](https://caddyserver.com/docs/caddyfile/directives/file_server),
+which only returns JSON when asked for it, so use
+`--http-headers Accept,application/json` with Caddy. A JSON listing in
+any other format is an error. Files whose size or time are not in the
+listing still get a HEAD request. Files found this way have no
+Content-Type or other header metadata from the server, as with
+`--http-no-head`.
+
 ### Modification times
 
 Most HTTP servers store time accurate to 1 second.

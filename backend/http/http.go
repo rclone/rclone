@@ -6,6 +6,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -485,9 +486,23 @@ func parseName(base *url.URL, name string) (string, error) {
 	return name, nil
 }
 
-// Parse turns HTML for a directory into names
+// listingEntry is one name found in a directory listing
+//
+// size is -1 and modTime is the zero time when the listing doesn't show them.
+type listingEntry struct {
+	name    string
+	size    int64
+	modTime time.Time
+}
+
+// hasInfo returns true if the listing gave both the size and the modification time
+func (e listingEntry) hasInfo() bool {
+	return e.size >= 0 && !e.modTime.IsZero()
+}
+
+// Parse turns HTML for a directory into entries
 // base should be the base URL to resolve any relative names from
-func parse(base *url.URL, in io.Reader) (names []string, err error) {
+func parse(base *url.URL, in io.Reader) (entries []listingEntry, err error) {
 	doc, err := html.Parse(in)
 	if err != nil {
 		return nil, err
@@ -503,7 +518,7 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 					name, err := parseName(base, a.Val)
 					if err == nil {
 						if _, found := seen[name]; !found {
-							names = append(names, name)
+							entries = append(entries, listingEntry{name: name, size: -1})
 							seen[name] = struct{}{}
 						}
 					}
@@ -516,7 +531,65 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 		}
 	}
 	walk(doc)
-	return names, nil
+	return entries, nil
+}
+
+// parseJSON turns a JSON directory listing into entries
+//
+// Two formats are understood, told apart by the fields each item has:
+// nginx (autoindex_format json) with name, type, mtime and size, and Caddy
+// (file_server browse sent Accept: application/json) with name, is_dir,
+// mod_time and size. An item in neither format is an error rather than a
+// guess.
+//
+// base should be the base URL to resolve any relative names from
+func parseJSON(base *url.URL, in io.Reader) (entries []listingEntry, err error) {
+	var items []struct {
+		Name    string  `json:"name"`
+		Size    *int64  `json:"size"`
+		Type    *string `json:"type"`     // nginx: "file", "directory" or "other"
+		MTime   string  `json:"mtime"`    // nginx: HTTP date
+		IsDir   *bool   `json:"is_dir"`   // Caddy
+		ModTime string  `json:"mod_time"` // Caddy: RFC 3339
+	}
+	if err := json.NewDecoder(in).Decode(&items); err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{})
+	for i, item := range items {
+		var isDir, isFile bool
+		var modTime time.Time
+		switch {
+		case item.Name == "":
+			return nil, fmt.Errorf("unrecognised JSON listing: item %d has no name", i)
+		case item.Type != nil:
+			isDir, isFile = *item.Type == "directory", *item.Type == "file"
+			modTime, _ = http.ParseTime(item.MTime)
+		case item.IsDir != nil:
+			isDir, isFile = *item.IsDir, !*item.IsDir
+			modTime, _ = time.Parse(time.RFC3339Nano, item.ModTime)
+		default:
+			return nil, fmt.Errorf("unrecognised JSON listing: item %d is neither nginx nor Caddy format", i)
+		}
+		name := rest.URLPathEscape(item.Name)
+		if isDir {
+			name += "/"
+		}
+		name, err := parseName(base, name)
+		if err != nil {
+			continue
+		}
+		if _, found := seen[name]; found {
+			continue
+		}
+		seen[name] = struct{}{}
+		entry := listingEntry{name: name, size: -1}
+		if isFile && item.Size != nil && !modTime.IsZero() {
+			entry.size, entry.modTime = *item.Size, modTime
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
 }
 
 // parseFilename extracts the filename from a Content-Disposition header
@@ -576,7 +649,7 @@ func (f *Fs) addHeaders(req *http.Request) {
 }
 
 // Read the directory passed in
-func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error) {
+func (f *Fs) readDir(ctx context.Context, dir string) (entries []listingEntry, err error) {
 	URL := f.url(dir)
 	u, err := url.Parse(URL)
 	if err != nil {
@@ -606,14 +679,19 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 	contentType, _, _ := strings.Cut(res.Header.Get("Content-Type"), ";")
 	switch contentType {
 	case "text/html":
-		names, err = parse(u, res.Body)
+		entries, err = parse(u, res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("readDir: %w", err)
+		}
+	case "application/json":
+		entries, err = parseJSON(u, res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("readDir: %w", err)
 		}
 	default:
 		return nil, fmt.Errorf("can't parse content type %q", contentType)
 	}
-	return names, nil
+	return entries, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -640,7 +718,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if !strings.HasSuffix(dir, "/") && dir != "" {
 		dir += "/"
 	}
-	names, err := f.readDir(ctx, dir)
+	listing, err := f.readDir(ctx, dir)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
@@ -674,13 +752,22 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 		})
 	}
-	for _, name := range names {
-		isDir := name[len(name)-1] == '/'
-		name = strings.TrimRight(name, "/")
-		remote := path.Join(dir, name)
-		if isDir {
+	for _, entry := range listing {
+		isDir := entry.name[len(entry.name)-1] == '/'
+		remote := path.Join(dir, strings.TrimRight(entry.name, "/"))
+		switch {
+		case isDir:
 			add(fs.NewDir(remote, time.Time{}))
-		} else {
+		case entry.hasInfo():
+			file := &Object{
+				fs:      f,
+				remote:  remote,
+				size:    entry.size,
+				modTime: entry.modTime,
+			}
+			file.contentType = fs.MimeType(ctx, file)
+			add(file)
+		default:
 			in <- remote
 		}
 	}
