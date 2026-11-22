@@ -211,6 +211,139 @@ func TestCheckDownload(t *testing.T) {
 	testCheck(t, operations.CheckDownload)
 }
 
+// downloadProbe records how many download streams are active at once.
+type downloadProbe struct {
+	mu       sync.Mutex
+	inFlight int
+	max      int
+}
+
+func (p *downloadProbe) enter() func() {
+	p.mu.Lock()
+	p.inFlight++
+	p.max = max(p.max, p.inFlight)
+	p.mu.Unlock()
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			p.mu.Lock()
+			p.inFlight--
+			p.mu.Unlock()
+		})
+	}
+}
+
+func (p *downloadProbe) maxInFlight() int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.max
+}
+
+type downloadProbeReadCloser struct {
+	io.ReadCloser
+	done func()
+}
+
+func (r *downloadProbeReadCloser) Read(buf []byte) (int, error) {
+	time.Sleep(time.Millisecond)
+	n, err := r.ReadCloser.Read(buf)
+	if err == io.EOF {
+		r.done()
+	}
+	return n, err
+}
+
+func (r *downloadProbeReadCloser) Close() error {
+	r.done()
+	return r.ReadCloser.Close()
+}
+
+type downloadProbeObject struct {
+	*mockobject.ContentMockObject
+	probe *downloadProbe
+}
+
+func (o *downloadProbeObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	in, err := o.ContentMockObject.Open(ctx, options...)
+	if err != nil {
+		return nil, err
+	}
+	return &downloadProbeReadCloser{ReadCloser: in, done: o.probe.enter()}, nil
+}
+
+type normalCheckProbeObject struct {
+	*mockobject.ContentMockObject
+	probe *downloadProbe
+}
+
+func (o *normalCheckProbeObject) Hash(ctx context.Context, ht hash.Type) (string, error) {
+	done := o.probe.enter()
+	defer done()
+	time.Sleep(time.Millisecond)
+	return o.ContentMockObject.Hash(ctx, ht)
+}
+
+func testCheckDownloadConcurrency(t *testing.T, checkers, transfers, want int) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Checkers = checkers
+	ci.Transfers = transfers
+	probe := new(downloadProbe)
+
+	fsrcAny, err := mockfs.NewFs(ctx, "source", "source", nil)
+	require.NoError(t, err)
+	fsrc := fsrcAny.(*mockfs.Fs)
+	fdstAny, err := mockfs.NewFs(ctx, "destination", "destination", nil)
+	require.NoError(t, err)
+	fdst := fdstAny.(*mockfs.Fs)
+	content := bytes.Repeat([]byte("content"), 128*1024)
+	for i := range 8 {
+		name := fmt.Sprintf("file%d", i)
+		src := &downloadProbeObject{ContentMockObject: mockobject.New(name).WithContent(content, mockobject.SeekModeNone), probe: probe}
+		dst := &downloadProbeObject{ContentMockObject: mockobject.New(name).WithContent(content, mockobject.SeekModeNone), probe: probe}
+		fsrc.AddObject(src)
+		fdst.AddObject(dst)
+	}
+
+	err = operations.CheckDownload(ctx, &operations.CheckOpt{Fsrc: fsrc, Fdst: fdst})
+	require.NoError(t, err)
+	assert.Equal(t, want, probe.maxInFlight())
+}
+
+func TestCheckDownloadConcurrency(t *testing.T) {
+	t.Run("transfers", func(t *testing.T) {
+		testCheckDownloadConcurrency(t, 8, 1, 2)
+		testCheckDownloadConcurrency(t, 8, 8, 16)
+	})
+	t.Run("checkers", func(t *testing.T) {
+		testCheckDownloadConcurrency(t, 1, 8, 2)
+	})
+}
+
+func TestCheckConcurrencyUsesCheckers(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Checkers = 2
+	ci.Transfers = 1
+	probe := new(downloadProbe)
+
+	fsrcAny, err := mockfs.NewFs(ctx, "source", "source", nil)
+	require.NoError(t, err)
+	fsrc := fsrcAny.(*mockfs.Fs)
+	fsrc.SetHashes(hash.NewHashSet(hash.MD5))
+	fdstAny, err := mockfs.NewFs(ctx, "destination", "destination", nil)
+	require.NoError(t, err)
+	fdst := fdstAny.(*mockfs.Fs)
+	fdst.SetHashes(hash.NewHashSet(hash.MD5))
+	for i := range 4 {
+		name := fmt.Sprintf("file%d", i)
+		content := []byte("content")
+		fsrc.AddObject(&normalCheckProbeObject{ContentMockObject: mockobject.New(name).WithContent(content, mockobject.SeekModeNone), probe: probe})
+		fdst.AddObject(&normalCheckProbeObject{ContentMockObject: mockobject.New(name).WithContent(content, mockobject.SeekModeNone), probe: probe})
+	}
+
+	require.NoError(t, operations.Check(ctx, &operations.CheckOpt{Fsrc: fsrc, Fdst: fdst}))
+	assert.Equal(t, 4, probe.maxInFlight())
+}
+
 func TestCheckSizeOnly(t *testing.T) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)

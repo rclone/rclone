@@ -372,7 +372,10 @@ func checkIdenticalDownload(ctx context.Context, src, dst fs.Object) (equal bool
 // and the actual contents of the files.
 func CheckDownload(ctx context.Context, opt *CheckOpt) error {
 	optCopy := *opt
+	downloadTokens := make(chan struct{}, fs.GetConfig(ctx).Transfers)
 	optCopy.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+		downloadTokens <- struct{}{}
+		defer func() { <-downloadTokens }()
 		same, err := CheckIdenticalDownload(ctx, src, dst)
 		if err != nil {
 			return true, true, fmt.Errorf("failed to download: %w", err)
