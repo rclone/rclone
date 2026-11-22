@@ -103,6 +103,23 @@ func TestObjectInfoHashOverrideRemoteNotObject(t *testing.T) {
 	assert.Equal(t, "", gotHash)
 }
 
+type unknownSizeObject struct {
+	fs.Object
+}
+
+func (unknownSizeObject) Size() int64 { return -1 }
+
+func TestObjectSizeUnknown(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+
+	o := &Object{
+		Object: unknownSizeObject{},
+		f:      &Fs{cipher: c},
+	}
+	assert.Equal(t, int64(-1), o.Size())
+}
+
 func testComputeHash(t *testing.T, f *Fs) {
 	var (
 		contents = random.String(100)

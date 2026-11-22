@@ -1026,6 +1026,9 @@ func (o *Object) Remote() string {
 func (o *Object) Size() int64 {
 	size := o.Object.Size()
 	if !o.f.opt.NoDataEncryption {
+		if size < 0 {
+			return size
+		}
 		var err error
 		size, err = o.f.cipher.DecryptedSize(size)
 		if err != nil {
