@@ -4,6 +4,7 @@ package operations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest/mockfs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -98,5 +100,50 @@ func TestDirTransferEntry(t *testing.T) {
 	} {
 		got := dirTransferEntry(f, test.dst, test.dir)
 		assert.Equal(t, test.want, got.Remote(), fmt.Sprintf("dst=%v, dir=%q", test.dst, test.dir))
+	}
+}
+
+type backupLookupErrorFs struct {
+	*mockfs.Fs
+	lookupErr  error
+	moveCalled bool
+}
+
+func (f *backupLookupErrorFs) NewObject(context.Context, string) (fs.Object, error) {
+	return nil, f.lookupErr
+}
+
+func TestMoveBackupDirLookupError(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		lookupErr     error
+		wantMove      bool
+		wantLookupErr bool
+	}{
+		{name: "not found", lookupErr: fs.ErrorObjectNotFound, wantMove: true},
+		{name: "other error", lookupErr: errors.New("temporary lookup failure"), wantLookupErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			srcFs, err := mockfs.NewFs(ctx, "backup-test", "", nil)
+			require.NoError(t, err)
+			backupFsBase, err := mockfs.NewFs(ctx, "backup-test", "backup", nil)
+			require.NoError(t, err)
+			backupFs := &backupLookupErrorFs{Fs: backupFsBase.(*mockfs.Fs), lookupErr: test.lookupErr}
+			backupFs.Features().Move = func(_ context.Context, src fs.Object, _ string) (fs.Object, error) {
+				backupFs.moveCalled = true
+				return src, nil
+			}
+			src := mockobject.New("file").WithContent([]byte("content"), mockobject.SeekModeNone)
+			src.SetFs(srcFs)
+
+			err = MoveBackupDir(ctx, backupFs, src)
+			if test.wantLookupErr {
+				assert.ErrorIs(t, err, test.lookupErr)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.wantMove, backupFs.moveCalled)
+		})
 	}
 }

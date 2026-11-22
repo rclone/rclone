@@ -2044,7 +2044,10 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 // MoveBackupDir moves a file to the backup dir
 func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err error) {
 	remoteWithSuffix := SuffixName(ctx, dst.Remote())
-	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
+	overwritten, err := backupDir.NewObject(ctx, remoteWithSuffix)
+	if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+		return err
+	}
 	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)
 	return err
 }
