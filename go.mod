@@ -51,7 +51,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/internxt/rclone-adapter v0.1.0
 	github.com/jcmturner/gokrb5/v8 v8.4.4
-	github.com/jlaffaye/ftp v0.2.4
+	github.com/jlaffaye/ftp v0.2.5-0.20261123020948-2ec04ba41be0
 	github.com/josephspurrier/goversioninfo v1.7.0
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/klauspost/compress v1.20.3

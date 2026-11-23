@@ -16,6 +16,7 @@ import (
 	"github.com/jlaffaye/ftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -305,5 +306,99 @@ func TestFtpReadCloserClose(t *testing.T) {
 		assert.NoError(t, rc.Close())
 		assert.Len(t, f.pool, 1)
 		_ = f.pool[0].Quit()
+	})
+}
+
+// startPasvFTPServer starts an FTP server on 127.0.0.1 whose PASV reply
+// sends data connections to 127.0.0.2, returning its port.
+func startPasvFTPServer(t *testing.T) string {
+	t.Helper()
+	data, err := net.Listen("tcp", "127.0.0.2:0")
+	if err != nil {
+		t.Skipf("can't listen on 127.0.0.2: %v", err)
+	}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = ln.Close()
+		_ = data.Close()
+	})
+	dataPort := data.Addr().(*net.TCPAddr).Port
+	session := func(conn net.Conn) {
+		defer func() { _ = conn.Close() }()
+		_, _ = fmt.Fprint(conn, "220 fake FTP server\r\n")
+		scanner := bufio.NewScanner(conn)
+		for scanner.Scan() {
+			cmd, _, _ := strings.Cut(scanner.Text(), " ")
+			switch strings.ToUpper(cmd) {
+			case "USER":
+				_, _ = fmt.Fprint(conn, "331 need password\r\n")
+			case "PASS":
+				_, _ = fmt.Fprint(conn, "230 logged in\r\n")
+			case "FEAT":
+				_, _ = fmt.Fprint(conn, "211-Features:\r\n PASV\r\n211 End\r\n")
+			case "EPSV":
+				_, _ = fmt.Fprint(conn, "500 unknown command\r\n")
+			case "PASV":
+				_, _ = fmt.Fprintf(conn, "227 Entering Passive Mode (127,0,0,2,%d,%d)\r\n", dataPort/256, dataPort%256)
+			case "LIST":
+				_, _ = fmt.Fprint(conn, "150 opening\r\n")
+				dataConn, err := data.Accept()
+				if err != nil {
+					return
+				}
+				_, _ = fmt.Fprint(dataConn, "-rw-r--r-- 1 user group 5 Jan 01 00:00 file.txt\r\n")
+				_ = dataConn.Close()
+				_, _ = fmt.Fprint(conn, "226 done\r\n")
+			case "QUIT":
+				_, _ = fmt.Fprint(conn, "221 bye\r\n")
+				return
+			default:
+				_, _ = fmt.Fprint(conn, "200 OK\r\n")
+			}
+		}
+	}
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go session(conn)
+		}
+	}()
+	return fmt.Sprint(ln.Addr().(*net.TCPAddr).Port)
+}
+
+// TestTrustPasvIP checks that the PASV reply IP is only used with
+// trust_pasv_ip and that the error suggests it when it isn't set.
+func TestTrustPasvIP(t *testing.T) {
+	ctx := context.Background()
+	port := startPasvFTPServer(t)
+	newFs := func(trust bool) fs.Fs {
+		f, err := NewFs(ctx, "TestTrustPasvIP", "", configmap.Simple{
+			"host":          "127.0.0.1",
+			"port":          port,
+			"user":          "user",
+			"pass":          obscure.MustObscure("pass"),
+			"trust_pasv_ip": fmt.Sprint(trust),
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = f.Features().Shutdown(ctx) })
+		return f
+	}
+
+	t.Run("untrusted", func(t *testing.T) {
+		_, err := newFs(false).List(ctx, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "127.0.0.2")
+		assert.Contains(t, err.Error(), "--ftp-trust-pasv-ip")
+	})
+
+	t.Run("trusted", func(t *testing.T) {
+		entries, err := newFs(true).List(ctx, "")
+		require.NoError(t, err)
+		require.Len(t, entries, 1)
+		assert.Equal(t, "file.txt", entries[0].Remote())
 	})
 }

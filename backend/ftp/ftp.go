@@ -783,6 +783,17 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return f.drainPool(ctx)
 }
 
+// pasvError returns err with advice to set --ftp-trust-pasv-ip if the data
+// connection failed because the IP in the server's PASV reply was ignored
+func (f *Fs) pasvError(err error) error {
+	var pasvErr *ftp.PasvIPIgnoredError
+	// trust_pasv_ip makes no difference when connecting through a proxy
+	if f.opt.SocksProxy != "" || f.proxyURL != nil || !errors.As(err, &pasvErr) {
+		return err
+	}
+	return fmt.Errorf("%w: rclone ignored the IP %s in the server's PASV reply for security - set --ftp-trust-pasv-ip if you trust this server", pasvErr.Err, pasvErr.PasvHost)
+}
+
 // translateErrorFile turns FTP errors into rclone errors if possible for a file
 func translateErrorFile(err error) error {
 	if errX := textprotoError(err); errX != nil {
@@ -870,7 +881,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
-		return nil, translateErrorFile(err)
+		return nil, translateErrorFile(f.pasvError(err))
 	}
 	for _, file := range files {
 		f.entryToStandard(file)
@@ -953,7 +964,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	select {
 	case listErr = <-errchan:
 		timer.Stop()
-		return nil, translateErrorDir(listErr)
+		return nil, translateErrorDir(f.pasvError(listErr))
 	case files = <-resultchan:
 		timer.Stop()
 	case <-timer.C:
@@ -1396,7 +1407,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("open: %w", err)
+		return nil, fmt.Errorf("open: %w", o.fs.pasvError(err))
 	}
 
 	rc = &ftpReadCloser{rc: readers.NewLimitedReadCloser(fd, limit), c: c, f: o.fs}
@@ -1442,7 +1453,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// recycle connection in advance to let remove() find free token
 		o.fs.putFtpConnection(nil, err)
 		remove()
-		return fmt.Errorf("update stor: %w", err)
+		return fmt.Errorf("update stor: %w", o.fs.pasvError(err))
 	}
 	o.fs.putFtpConnection(&c, nil)
 	if o.fs.opt.NoCheckUpload {
