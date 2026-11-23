@@ -1655,9 +1655,9 @@ currently supported backends.
 Use this option to set an HTTP proxy for all HTTP based services to
 use.
 
-Rclone also supports the standard HTTP proxy environment variables
-which it will pick up automatically. The is the way the HTTP proxy
-will normally be set but this flag can be used to override it.
+Rclone reads the standard proxy environment variables automatically.
+See the [proxy setup examples](/faq/#can-i-use-rclone-with-an-http-proxy).
+Use this flag to override the proxy set through those variables.
 
 ### --human-readable
 
