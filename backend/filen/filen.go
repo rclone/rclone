@@ -467,7 +467,7 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 
 func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error) {
 	realChunkNumber := int64(chunkNumber) * (cw.chunkSize) / sdk.ChunkSize
-	chunk := make([]byte, sdk.ChunkSize, sdk.ChunkSize+cw.EncryptionKey.Cipher.Overhead())
+	chunk := make([]byte, sdk.ChunkSize)
 
 	totalWritten := int64(0)
 	for sliceStart := int64(0); sliceStart < cw.chunkSize; sliceStart += sdk.ChunkSize {
@@ -486,7 +486,8 @@ func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader i
 		if chunkRead == 0 {
 			break
 		}
-		chunkReadSlice := chunk[:chunkRead]
+		// Cap capacity so UploadChunk's Cipher.Seal(data[:0], ...) allocates rather than overwriting plaintext needed on retry.
+		chunkReadSlice := chunk[:chunkRead:chunkRead]
 		err = func() error {
 			cw.chunksLock.Lock()
 			defer cw.chunksLock.Unlock()
