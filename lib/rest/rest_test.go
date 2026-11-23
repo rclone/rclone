@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -230,6 +232,83 @@ func TestReadBodyLimit(t *testing.T) {
 		assert.ErrorIs(t, err, ErrBodyTooLarge)
 		assert.Less(t, written.Load(), int64(maxChunks*chunk), "client should stop reading before the server stops sending")
 	})
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
+func TestDecodeResponseLimit(t *testing.T) {
+	const limit = 32 << 20
+	const overLimit = limit + 4096
+	padding := strings.Repeat(" ", overLimit)
+	for _, codec := range []struct {
+		name  string
+		value string
+		call  func(*Client, context.Context, *Opts, any, any) (*http.Response, error)
+	}{
+		{"JSON", `{"value":"ok"}`, (*Client).CallJSON},
+		{"XML", `<result><value>ok</value></result>`, (*Client).CallXML},
+	} {
+		t.Run(codec.name, func(t *testing.T) {
+			for _, test := range []struct {
+				name     string
+				size     int
+				limit    fs.SizeSuffix
+				trailing bool
+			}{
+				{"Small", len(codec.value), 0, false},
+				{"TwoMiB", 2 << 20, 0, true},
+				{"AtLimit", limit, 0, false},
+				{"OverLimit", overLimit, 0, false},
+				{"TrailingOverLimit", overLimit, 0, true},
+				{"ConfiguredAtLimit", 1024, 1024, false},
+				{"ConfiguredOverLimit", 1025, 1024, false},
+			} {
+				t.Run(test.name, func(t *testing.T) {
+					value, space := codec.value, padding[:test.size-len(codec.value)]
+					if !test.trailing {
+						value, space = space, value
+					}
+					counter := readers.NewCountingReader(io.MultiReader(strings.NewReader(value), strings.NewReader(space)))
+					closed := false
+					ctx := context.Background()
+					if test.limit != 0 {
+						ctx, _ = fs.AddConfig(ctx)
+						fs.GetConfig(ctx).MaxRESTResponseSize = test.limit
+					}
+					api := NewClient(&http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode:    http.StatusOK,
+							ContentLength: -1,
+							Request:       req,
+							Body:          readers.NoCloserNotify(counter, func() { closed = true }),
+						}, nil
+					})}).SetRoot("https://example.invalid")
+					var result struct {
+						Value string `json:"value" xml:"value"`
+					}
+					_, err := codec.call(api, ctx, &Opts{Method: http.MethodGet}, nil, &result)
+					t.Logf("body bytes read: %d; error: %v", counter.BytesRead(), err)
+					assert.True(t, closed)
+					maxSize := int(test.limit)
+					if maxSize == 0 {
+						maxSize = limit
+					}
+					if test.size > maxSize {
+						assert.ErrorIs(t, err, ErrBodyTooLarge)
+						assert.LessOrEqual(t, counter.BytesRead(), uint64(maxSize+1))
+					} else {
+						require.NoError(t, err)
+						assert.Equal(t, "ok", result.Value)
+						assert.Equal(t, uint64(test.size), counter.BytesRead())
+					}
+				})
+			}
+		})
+	}
 }
 
 func TestRedirectLeavesHost(t *testing.T) {
