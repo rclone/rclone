@@ -545,9 +545,7 @@ func (b *s3Backend) dirMarkerObject(_vfs *vfs.VFS, fp, objectName string) (*gofa
 	}, nil
 }
 
-// putDirMarker makes the directory fp the directory marker key
-// objectName stands for. A directory marker can't hold data.
-func putDirMarker(_vfs *vfs.VFS, fp, objectName string, input io.Reader) error {
+func checkDirMarkerBody(objectName string, input io.Reader) error {
 	// Read to the end of an empty input so any checksum of it is
 	// checked, but no further.
 	n, err := io.Copy(io.Discard, io.LimitReader(input, 1))
@@ -557,10 +555,14 @@ func putDirMarker(_vfs *vfs.VFS, fp, objectName string, input io.Reader) error {
 	if n != 0 {
 		return gofakes3.ErrorMessagef(gofakes3.ErrInvalidArgument, "Directory marker %q must be empty", objectName)
 	}
+	return nil
+}
+
+func putDirMarker(_vfs *vfs.VFS, fp, objectName string) error {
 	if node, err := _vfs.Stat(fp); err == nil && !node.IsDir() {
 		return errParentIsObject(strings.TrimSuffix(objectName, "/"))
 	}
-	_, err = mkdirRecursive(fp, _vfs)
+	_, err := mkdirRecursive(fp, _vfs)
 	return err
 }
 
@@ -600,6 +602,10 @@ func (b *s3Backend) PutObject(
 	meta map[string]string,
 	input io.Reader, size int64,
 ) (result gofakes3.PutObjectResult, err error) {
+	return b.putObject(ctx, bucketName, objectName, meta, input, size, nil)
+}
+
+func (b *s3Backend) putObject(ctx context.Context, bucketName, objectName string, meta map[string]string, input io.Reader, size int64, lock func(*vfs.VFS) (func(), error)) (result gofakes3.PutObjectResult, err error) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return result, err
@@ -616,7 +622,17 @@ func (b *s3Backend) PutObject(
 		if b.s.etagHash(_vfs) != fshash.MD5 {
 			result.ETag = quoteETag(emptyHash(b.s.etagHash(_vfs)))
 		}
-		if err := putDirMarker(_vfs, fp, objectName, input); err != nil {
+		if err := checkDirMarkerBody(objectName, input); err != nil {
+			return result, err
+		}
+		if lock != nil {
+			unlock, err := lock(_vfs)
+			if err != nil {
+				return result, err
+			}
+			defer unlock()
+		}
+		if err := putDirMarker(_vfs, fp, objectName); err != nil {
 			return result, err
 		}
 		b.tenant(ctx).storeDirMarker(fp)
@@ -678,6 +694,14 @@ func (b *s3Backend) PutObject(
 		input = io.TeeReader(input, md5Hasher)
 	}
 
+	if lock != nil && tmpFp == fp {
+		unlock, err := lock(_vfs)
+		if err != nil {
+			removeMadeDirs(objectDir, madeDir, _vfs)
+			return result, err
+		}
+		defer unlock()
+	}
 	f, err := _vfs.Create(tmpFp)
 	if err != nil {
 		cleanup()
@@ -709,6 +733,14 @@ func (b *s3Backend) PutObject(
 
 	// Move the temporary object into place
 	if tmpFp != fp {
+		if lock != nil {
+			unlock, err := lock(_vfs)
+			if err != nil {
+				cleanup()
+				return result, err
+			}
+			defer unlock()
+		}
 		if err := b.commitObject(ctx, _vfs, tmpFp, fp); err != nil {
 			cleanup()
 			return result, err
@@ -748,6 +780,10 @@ func quoteETag(hash []byte) string {
 // object, so the check and the move are atomic against other writes
 // through it, though not against changes made some other way.
 func (b *s3Backend) commitObject(ctx context.Context, _vfs *vfs.VFS, tmpFp, fp string) error {
+	// The conditional backend holds the publication lock and has checked the parsed headers.
+	if conditions, _ := ctx.Value(writeConditionsKey{}).(*writeConditions); conditions != nil {
+		return _vfs.Rename(tmpFp, fp)
+	}
 	unlock := b.commitLocks.lock(fs.ConfigString(_vfs.Fs()) + "\x00" + fp)
 	defer unlock()
 	if gofakes3.HasWriteConditions(ctx) {

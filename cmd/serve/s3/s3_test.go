@@ -492,6 +492,20 @@ func serveS3AuthProxy(t *testing.T, root string, opt Options, users ...string) m
 	return clients
 }
 
+func TestAuthProxyConditionalPut(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(root, "bucket"), 0700))
+	client := serveS3AuthProxy(t, root, Opt, "alice")["alice"]
+	opt := minio.PutObjectOptions{}
+	opt.SetMatchETagExcept("*")
+	put := func() error {
+		_, err := client.PutObject(context.Background(), "bucket", "key", strings.NewReader("a"), 1, "", "", opt)
+		return err
+	}
+	require.NoError(t, put())
+	require.Equal(t, 412, minio.ToErrorResponse(put()).StatusCode)
+}
+
 // TestAuthProxyUsersKeptApart checks that one auth proxy user can't use
 // another user's multipart upload or see the metadata of their objects,
 // even when both are mapped to the same backend.
