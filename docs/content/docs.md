@@ -3057,6 +3057,12 @@ produce identical results either way. Using `--disable ListR` or `--fast-list`
 on a remote which doesn't support `ListR` does nothing, rclone will just ignore
 it.
 
+Using `--fast-list` does not disable [`--checkers`](#checkers-int).
+During a sync, `--checkers` still controls how many file comparisons run in
+parallel. The effect on recursive listing itself depends on the backend.
+For example, Google Drive also uses `--checkers` to size its `ListR` worker
+pool.
+
 A rule of thumb is that if you pay for transactions and can fit your entire
 sync listing into memory, then `--fast-list` is recommended. If you have a
 very big sync to do, then don't use `--fast-list`, otherwise you will run out
