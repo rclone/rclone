@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,13 +32,15 @@ type Dir struct {
 	f            fs.Fs       // read only
 	cleanupTimer *time.Timer // read only: timer to call cacheCleanup
 
-	mu      sync.RWMutex // protects the following
-	parent  *Dir         // parent, nil for root
-	path    string
-	entry   fs.Directory
-	read    time.Time         // time directory entry last read
-	items   map[string]Node   // directory entries - can be empty but not nil
-	virtual map[string]vState // virtual directory entries - may be nil
+	mu         sync.RWMutex // protects the following
+	parent     *Dir         // parent, nil for root
+	path       string
+	entry      fs.Directory
+	read       time.Time         // time directory entry last read
+	items      map[string]Node   // directory entries - can be empty but not nil
+	virtual    map[string]vState // virtual directory entries - may be nil
+	generation uint64            // incremented whenever cached contents change
+	readMu     sync.Mutex        // serializes remote directory listings
 
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
@@ -230,6 +233,7 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	d.generation++
 
 	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
@@ -266,6 +270,7 @@ func (d *Dir) invalidateDir(absPath string) {
 	node := d.vfs.root.cachedNode(absPath)
 	if dir, ok := node.(*Dir); ok {
 		dir.mu.Lock()
+		dir.generation++
 		if !dir.read.IsZero() {
 			fs.Debugf(dir.path, "invalidating directory cache")
 			dir.read = time.Time{}
@@ -363,6 +368,7 @@ func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 func (d *Dir) renameTree(dirPath string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	d.generation++
 
 	// Make sure the path is correct for each node
 	if d.path != dirPath {
@@ -406,6 +412,7 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.path = fsDir.Remote()
 	newPath := d.path
 	d.read = time.Time{}
+	d.generation++
 	d.mu.Unlock()
 
 	// Rename any remaining items in the tree that we couldn't forget
@@ -436,6 +443,7 @@ func name(p string) string {
 // note that we add new objects rather than updating old ones
 func (d *Dir) addObject(node Node) {
 	d.mu.Lock()
+	d.generation++
 	leaf := node.Name()
 	d.items[leaf] = node
 	if d.virtual == nil {
@@ -500,6 +508,7 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 // from a remote directory listing.
 func (d *Dir) delObject(leaf string) {
 	d.mu.Lock()
+	d.generation++
 	delete(d.items, leaf)
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
@@ -523,22 +532,58 @@ func (d *Dir) DelVirtual(leaf string) {
 	d.delObject(leaf)
 }
 
-// read the directory and sets d.items - must be called with the lock held
+// read the directory and sets d.items
 func (d *Dir) _readDir() error {
-	when := time.Now()
-	if age, stale := d._age(when); stale {
-		if age != 0 {
-			fs.Debugf(d.path, "Re-reading directory (%v old)", age)
+	d.readMu.Lock()
+	defer d.readMu.Unlock()
+	return d._readDirLocked()
+}
+
+// _readDirLocked reads the directory while holding d.readMu.
+func (d *Dir) _readDirLocked() error {
+	for {
+		d.mu.RLock()
+		when := time.Now()
+		age, stale := d._age(when)
+		f, dirPath, generation := d.f, d.path, d.generation
+		d.mu.RUnlock()
+		if !stale {
+			return nil
 		}
-	} else {
+		if age != 0 {
+			fs.Debugf(dirPath, "Re-reading directory (%v old)", age)
+		}
+
+		entries, err := d.listDir(d.vfs.ctx, f, dirPath)
+		if err != nil {
+			return err
+		}
+
+		d.mu.Lock()
+		if d.path != dirPath || d.generation != generation {
+			d.mu.Unlock()
+			continue
+		}
+		err = d._readDirFromEntries(entries, nil, time.Time{})
+		if err != nil {
+			d.mu.Unlock()
+			return err
+		}
+		d.read = time.Now()
+		d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
+		d.mu.Unlock()
 		return nil
 	}
-	entries, err := list.DirSorted(d.vfs.ctx, d.f, false, d.path)
+}
+
+// listDir reads and normalizes a single remote directory without taking d.mu.
+func (d *Dir) listDir(ctx context.Context, f fs.Fs, dirPath string) (entries fs.DirEntries, err error) {
+	entries, err = list.DirSorted(ctx, f, false, dirPath)
 	if err == fs.ErrorDirNotFound {
 		// We treat directory not found as empty because we
 		// create directories on the fly
 	} else if err != nil {
-		return err
+		return nil, err
 	}
 
 	if d.vfs.Opt.BlockNormDupes { // do this only if requested, as it will have a performance hit
@@ -570,15 +615,7 @@ func (d *Dir) _readDir() error {
 		entries = filteredEntries
 	}
 
-	err = d._readDirFromEntries(entries, nil, time.Time{})
-	if err != nil {
-		return err
-	}
-
-	d.read = time.Now()
-	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
-
-	return nil
+	return entries, nil
 }
 
 // update d.items for each dir in the DirTree below this one and
@@ -725,6 +762,7 @@ func (mv manageVirtuals) end(d *Dir) {
 // update d.items and if dirTree is not nil update each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
 func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree, when time.Time) error {
+	d.generation++
 	var err error
 	mv := d._newManageVirtuals()
 	for _, entry := range entries {
@@ -756,8 +794,10 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 				node = newDir(d.vfs, d.f, d, item)
 			}
 			dir := node.(*Dir)
-			dir.mu.Lock()
+			dir.modTimeMu.Lock()
 			dir.modTime = item.ModTime(d.vfs.ctx)
+			dir.modTimeMu.Unlock()
+			dir.mu.Lock()
 			dir.entry = item
 			if dirTree != nil {
 				err = dir._readDirFromDirTree(dirTree, when)
@@ -809,10 +849,13 @@ func (d *Dir) readDirTree() error {
 
 // readDir forces a refresh of the directory
 func (d *Dir) readDir() error {
+	d.readMu.Lock()
+	defer d.readMu.Unlock()
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	d.read = time.Time{}
-	return d._readDir()
+	d.generation++
+	d.mu.Unlock()
+	return d._readDirLocked()
 }
 
 // jsonErrorf formats the string according to a format specifier and
@@ -866,14 +909,13 @@ func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
 // returns a custom error if directory on a case-insensitive file system
 // contains files with names that differ only by case.
 func (d *Dir) stat(leaf string) (Node, error) {
-	d.mu.Lock()
 	err := d._readDir()
 	if err != nil {
-		d.mu.Unlock()
 		return nil, err
 	}
+	d.mu.RLock()
 	item, ok := d.items[leaf]
-	d.mu.Unlock()
+	d.mu.RUnlock()
 
 	// Look for a metadata file
 	if !ok {
@@ -917,12 +959,12 @@ func (d *Dir) stat(leaf string) (Node, error) {
 
 // Check to see if a directory is empty
 func (d *Dir) isEmpty() (bool, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
 	err := d._readDir()
 	if err != nil {
 		return false, err
 	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return len(d.items) == 0, nil
 }
 
@@ -999,17 +1041,16 @@ func (d *Dir) Stat(name string) (node Node, err error) {
 // ReadDirAll reads the contents of the directory sorted
 func (d *Dir) ReadDirAll() (items Nodes, err error) {
 	// fs.Debugf(d.path, "Dir.ReadDirAll")
-	d.mu.Lock()
 	err = d._readDir()
 	if err != nil {
 		fs.Debugf(d.path, "Dir.ReadDirAll error: %v", err)
-		d.mu.Unlock()
 		return nil, err
 	}
+	d.mu.RLock()
 	for _, item := range d.items {
 		items = append(items, item)
 	}
-	d.mu.Unlock()
+	d.mu.RUnlock()
 	sort.Sort(items)
 	// fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
 	return items, nil
@@ -1181,6 +1222,8 @@ func (d *Dir) RemoveAll() error {
 
 // DirEntry returns the underlying fs.DirEntry
 func (d *Dir) DirEntry() (entry fs.DirEntry) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return d.entry
 }
 
