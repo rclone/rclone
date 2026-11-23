@@ -152,7 +152,7 @@ The main rclone commands with most used first
 
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable line-length -->
-- [rclone config](/commands/rclone_config/) - Enter an interactive configurationsession.
+- [rclone config](/commands/rclone_config/) - Enter an interactive configuration session.
 - [rclone copy](/commands/rclone_copy/) - Copy files from source to dest, skipping already copied.
 - [rclone sync](/commands/rclone_sync/) - Make source and dest identical, modifying destination only.
 - [rclone bisync](/commands/rclone_bisync/) - [Bidirectional synchronization](/bisync/) between two paths.
@@ -242,7 +242,7 @@ the config file (configured with `rclone config`).
 
 ### remote:/path/to/dir
 
-On most backends this is refers to the same directory as
+On most backends this refers to the same directory as
 `remote:path/to/dir` and that format should be preferred.  On a very
 small number of remotes (FTP, SFTP, Dropbox for business) this will
 refer to a different directory.  On these, paths without a leading `/`
