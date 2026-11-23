@@ -1,13 +1,13 @@
 package koofr
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync/atomic"
 	"testing"
 
-	"context"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
