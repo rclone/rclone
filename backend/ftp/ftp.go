@@ -134,6 +134,25 @@ So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "trust_pasv_ip",
+			Help: `Trust the IP address in the server's PASV reply.
+
+By default rclone ignores the IP address in the PASV reply and
+makes the data connection to the same host as the control
+connection. Enable this option to trust the IP address in the
+PASV reply instead, which is needed for servers whose PASV reply
+legitimately points at a different host than the control
+connection.
+
+The default is false to prevent a malicious server making direct
+connections to other hosts on your network.
+
+Try this option if transfers hang or fail with connection-refused
+errors after upgrading to >= v1.76.0.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -268,6 +287,7 @@ type Options struct {
 	DisableUTF8             bool                 `config:"disable_utf8"`
 	WritingMDTM             bool                 `config:"writing_mdtm"`
 	ForceListHidden         bool                 `config:"force_list_hidden"`
+	TrustPasvIP             bool                 `config:"trust_pasv_ip"`
 	IdleTimeout             fs.Duration          `config:"idle_timeout"`
 	CloseTimeout            fs.Duration          `config:"close_timeout"`
 	ShutTimeout             fs.Duration          `config:"shut_timeout"`
@@ -521,6 +541,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
+	}
+	if f.opt.TrustPasvIP {
+		ftpConfig = append(ftpConfig, ftp.DialWithTrustPasvIP(true))
 	}
 	if f.opt.DisableMLSD {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
