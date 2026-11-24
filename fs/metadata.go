@@ -147,14 +147,14 @@ func metadataMapper(ctx context.Context, cmdLine SpaceSepList, dstFs Fs, o DirEn
 
 // GetMetadataOptions from an DirEntry and merge it with any in options
 //
-// If --metadata isn't in use it will return nil.
+// If neither --metadata nor --preserve-posix-properties is in use it will return nil.
 //
 // If the object has no metadata then metadata will be nil.
 //
 // This should be passed the destination Fs for the metadata mapper
 func GetMetadataOptions(ctx context.Context, dstFs Fs, o DirEntry, options []OpenOption) (metadata Metadata, err error) {
 	ci := GetConfig(ctx)
-	if !ci.Metadata {
+	if !ci.Metadata && !ci.PreservePOSIXProperties {
 		return nil, nil
 	}
 	metadata, err = GetMetadata(ctx, o)
@@ -169,4 +169,25 @@ func GetMetadataOptions(ctx context.Context, dstFs Fs, o DirEntry, options []Ope
 		}
 	}
 	return metadata, nil
+}
+
+// CheckUploadPreservation rejects preservation options for unsupported transfer directions.
+func CheckUploadPreservation(ctx context.Context, dst, src Info) error {
+	ci := GetConfig(ctx)
+	if !ci.PreservePOSIXProperties && !ci.PreserveSymlinks {
+		return nil
+	}
+	for _, option := range []struct {
+		name    string
+		enabled bool
+		write   bool
+	}{
+		{"--preserve-posix-properties", ci.PreservePOSIXProperties, dst.Features().WritePOSIXProperties},
+		{"--preserve-symlinks", ci.PreserveSymlinks, dst.Features().WriteSymlinks},
+	} {
+		if option.enabled && (!src.Features().IsLocal || src.Features().Overlay || !option.write || dst.Features().Overlay) {
+			return fmt.Errorf("%s requires a local POSIX source and a destination supporting upload preservation", option.name)
+		}
+	}
+	return nil
 }

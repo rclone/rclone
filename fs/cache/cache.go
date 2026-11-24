@@ -180,6 +180,11 @@ func Get(ctx context.Context, fsString string) (f fs.Fs, err error) {
 	newCtx := context.Background()
 	newCtx = fs.CopyConfig(newCtx, ctx)
 	newCtx = filter.CopyConfig(newCtx, ctx)
+	// Preservation changes backend construction, but the cache key contains only the path.
+	// Keep these instances request-local so they cannot reuse or replace ordinary backends.
+	if ci := fs.GetConfig(newCtx); ci.PreservePOSIXProperties || ci.PreserveSymlinks {
+		return fs.NewFs(newCtx, fsString)
+	}
 	f, err = GetFn(newCtx, fsString, fs.NewFs)
 	if f == nil || (err != nil && err != fs.ErrorIsFile) {
 		return f, err

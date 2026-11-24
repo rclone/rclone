@@ -395,6 +395,9 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	if err := fs.CheckUploadPreservation(ctx, f, src.Fs()); err != nil {
+		return nil, err
+	}
 	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewTransfer(src, f)
 	defer func() {

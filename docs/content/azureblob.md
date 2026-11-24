@@ -86,6 +86,49 @@ This remote supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
+### Preserving POSIX properties and symlinks on upload
+
+For uploads from a local POSIX filesystem to Azure Blob Storage, use:
+
+```console
+rclone copy /path/to/source remote:container/path \
+    --preserve-posix-properties --preserve-symlinks
+```
+
+The options are independent and disabled by default. They also work with
+`sync`, `move` and `copyto`. They are not supported for downloads, remote-to-remote
+transfers or transfers through wrapping backends such as crypt and union.
+
+`--preserve-posix-properties` stores file and directory properties using AzCopy's
+standard blob metadata format. This includes the full POSIX mode (including
+special permission bits), numeric UID and GID, access/modification/change times,
+link count, inode and device numbers. On Linux, available statx properties,
+including birth time and filesystem attributes, are also stored. Filesystems
+without statx use the available stat properties.
+
+Directory properties are stored on zero-length blobs at the directory's name,
+with `hdi_isfolder=true`. Empty directories are included automatically; there
+is no need to add `--create-empty-src-dirs` or `--azureblob-directory-markers`.
+The source root's contents are copied using rclone's usual path semantics.
+The properties are metadata only, not Azure authorization permissions, and
+hard-linked files are uploaded independently rather than deduplicated.
+This option does not require `--metadata`; add `--metadata` if you also want
+to copy user metadata such as extended attributes.
+As with normal rclone copying, unchanged files may be skipped. Use
+`--ignore-times` to re-upload files when you need to refresh all their preserved
+properties.
+
+`--preserve-symlinks` uploads each symlink using its original name, without
+the `.rclonelink` suffix. The blob content is the exact link target and the
+blob has `is_symlink=true` metadata, compatible with AzCopy. The target is
+not followed, so broken links, relative links and links to directories are
+preserved too. It cannot be combined with `--links`, `--local-links`,
+`--copy-links` or `--skip-links`.
+
+These options only preserve properties on upload; they do not restore them
+when downloading with rclone. Without these options, existing metadata and
+symlink behavior is unchanged.
+
 ### Modification times and hashes
 
 The modification time is stored as metadata on the object with the

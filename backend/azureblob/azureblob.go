@@ -131,6 +131,13 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 	},
 }
 
+var posixMetadataKeys = []string{
+	"permissions", "modtime", "posix_owner", "posix_group", "posix_nlink", "posix_ino",
+	"posix_dev", "posix_rdev", "posix_atime", "posix_ctime", "linux_btime",
+	"linux_statx_mask", "linux_attribute", "linux_attribute_mask",
+	"is_symlink", dirMetaKey, "is_char_dev", "is_block_dev", "is_fifo", "is_socket",
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -681,6 +688,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	ci := fs.GetConfig(ctx)
+	if ci.PreservePOSIXProperties {
+		opt.DirectoryMarkers = true
+	}
 	f := &Fs{
 		name:        name,
 		opt:         *opt,
@@ -705,7 +715,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:                 true,
 		ServerSideAcrossConfigs: true,
 		DoubleSlash:             true,
+		WritePOSIXProperties:    true,
+		WriteSymlinks:           true,
 	}).Fill(ctx, f)
+	if ci.PreservePOSIXProperties {
+		f.features.ReadDirMetadata = true
+		f.features.WriteDirMetadata = true
+	} else {
+		f.features.MkdirMetadata = nil
+	}
 
 	conf := auth.NewClientOpts[service.Client, service.ClientOptions, service.SharedKeyCredential]{
 		DefaultBaseURL:                   storageDefaultBaseURL,
@@ -880,6 +898,9 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 
 	// Set modTimeKey in it
 	o.meta[modTimeKey] = modTime.Format(timeFormatOut)
+	if _, hasPOSIXModTime := o.meta["modtime"]; hasPOSIXModTime || o.fs.ci.PreservePOSIXProperties {
+		o.meta["modtime"] = strconv.FormatInt(modTime.UnixNano(), 10)
+	}
 }
 
 // parseXMsTags parses the value of the x-ms-tags header into a map.
@@ -982,6 +1003,71 @@ func toAzureMetaPtr(in map[string]string) map[string]*string {
 		out[k] = &vv
 	}
 	return out
+}
+
+// mapPOSIXMetadata maps local system metadata to AzCopy's standard POSIX blob metadata.
+func mapPOSIXMetadata(meta fs.Metadata) (fs.Metadata, error) {
+	mode, err := strconv.ParseUint(meta["mode"], 8, 16)
+	if err != nil {
+		return nil, fmt.Errorf("POSIX mode %q: %w", meta["mode"], err)
+	}
+	out := maps.Clone(meta)
+	for _, key := range posixMetadataKeys {
+		delete(out, key)
+	}
+	out["permissions"] = strconv.FormatUint(mode, 10)
+	delete(out, "mode")
+	for key, dest := range map[string]string{
+		"uid": "posix_owner", "gid": "posix_group", "nlink": "posix_nlink",
+		"ino": "posix_ino", "dev": "posix_dev", "statx-mask": "linux_statx_mask",
+		"attributes": "linux_attribute", "attributes-mask": "linux_attribute_mask",
+	} {
+		if value, ok := meta[key]; ok {
+			bits := 64
+			if key == "uid" || key == "gid" || key == "statx-mask" {
+				bits = 32
+			}
+			n, err := strconv.ParseUint(value, 10, bits)
+			if err != nil {
+				return nil, fmt.Errorf("POSIX %s %q: %w", key, value, err)
+			}
+			out[dest] = strconv.FormatUint(n, 10)
+		}
+		delete(out, key)
+	}
+	for key, dest := range map[string]string{
+		"atime": "posix_atime", "mtime": "modtime", "ctime": "posix_ctime", "btime": "linux_btime",
+	} {
+		if value, ok := meta[key]; ok {
+			when, err := time.Parse(time.RFC3339Nano, value)
+			if err != nil {
+				return nil, fmt.Errorf("POSIX %s %q: %w", key, value, err)
+			}
+			out[dest] = strconv.FormatInt(when.UnixNano(), 10)
+		}
+		// Keep rclone's own mtime alongside AzCopy's nanosecond modtime.
+		if key != "mtime" {
+			delete(out, key)
+		}
+	}
+	fileType := mode & 0170000
+	if marker := map[uint64]string{
+		0040000: dirMetaKey, 0120000: "is_symlink", 0020000: "is_char_dev",
+		0060000: "is_block_dev", 0010000: "is_fifo", 0140000: "is_socket",
+	}[fileType]; marker != "" {
+		out[marker] = "true"
+	}
+	if fileType == 0020000 || fileType == 0060000 {
+		if value, ok := meta["rdev"]; ok {
+			n, err := strconv.ParseUint(value, 16, 64)
+			if err != nil {
+				return nil, fmt.Errorf("POSIX rdev %q: %w", value, err)
+			}
+			out["posix_rdev"] = strconv.FormatUint(n, 10)
+		}
+	}
+	delete(out, "rdev")
+	return out, nil
 }
 
 // assembleCopyParams prepares headers, metadata and tags for copy operations.
@@ -1099,11 +1185,45 @@ func assembleCopyParams(ctx context.Context, f *Fs, src fs.Object, srcProps *blo
 func (o *Object) applyMappedMetadata(ctx context.Context, src fs.ObjectInfo, ui *uploadInfo, options []fs.OpenOption) (modTime time.Time, err error) {
 	// Start from the source modtime; may be overridden by metadata
 	modTime = src.ModTime(ctx)
+	// Directory markers already have their mapped metadata, or are parent placeholders.
+	if ui.isDirMarker && src == o {
+		return modTime, nil
+	}
 
 	// Fetch mapped metadata if --metadata is enabled
 	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
 		return modTime, err
+	}
+	ci := fs.GetConfig(ctx)
+	if ci.PreservePOSIXProperties {
+		meta, err = mapPOSIXMetadata(meta)
+		if err != nil {
+			return modTime, err
+		}
+		metadataMu.Lock()
+		for _, key := range posixMetadataKeys {
+			delete(o.meta, key)
+		}
+		metadataMu.Unlock()
+	}
+	if ci.PreserveSymlinks {
+		raw, err := fs.GetMetadata(ctx, src)
+		if err != nil {
+			return modTime, fmt.Errorf("read symlink properties: %w", err)
+		}
+		mode, err := strconv.ParseUint(raw["mode"], 8, 16)
+		if err != nil {
+			return modTime, fmt.Errorf("symlink mode %q: %w", raw["mode"], err)
+		}
+		metadataMu.Lock()
+		delete(o.meta, "is_symlink")
+		metadataMu.Unlock()
+		if mode&0170000 == 0120000 {
+			meta.Set("is_symlink", "true")
+		} else {
+			delete(meta, "is_symlink")
+		}
 	}
 	if meta == nil {
 		// No metadata processing requested
@@ -1207,6 +1327,22 @@ type listFn func(remote string, object *container.BlobItem, isDirectory bool) er
 // The remote has prefix removed from it and if addContainer is set then
 // it adds the container to the start.
 func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, addContainer bool, recurse bool, maxResults int32, fn listFn) error {
+	// A raw-name marker and a hierarchy prefix can describe the same directory.
+	callback := fn
+	var dirsMu sync.Mutex
+	dirs := make(map[string]bool)
+	fn = func(remote string, object *container.BlobItem, isDirectory bool) error {
+		if isDirectory {
+			dirsMu.Lock()
+			seen := dirs[remote]
+			dirs[remote] = true
+			dirsMu.Unlock()
+			if seen {
+				return nil
+			}
+		}
+		return callback(remote, object, isDirectory)
+	}
 	if f.cache.IsDeleted(containerName) {
 		return fs.ErrorDirNotFound
 	}
@@ -1256,7 +1392,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 	}
 	if f.dirMarkers() && foundItems == 0 && directory != "" {
 		// Determine whether the directory exists or not by whether it has a marker
-		props, err := f.readMetaData(ctx, containerName, directory)
+		props, _, err := f.readDirectoryMarker(ctx, containerName, directory)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				return fs.ErrorDirNotFound
@@ -1396,6 +1532,9 @@ func (f *Fs) listBlobsPager(ctx context.Context, containerName, directory, prefi
 func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *container.BlobItem, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
 		d := fs.NewDir(remote, time.Time{})
+		if f.ci.PreservePOSIXProperties {
+			return &Directory{Dir: d, fs: f}, nil
+		}
 		return d, nil
 	}
 	o, err := f.newObjectWithInfo(ctx, remote, object)
@@ -1655,12 +1794,15 @@ func (f *Fs) createDirectoryMarker(ctx context.Context, container, dir string) e
 		if containerPath == "" {
 			break
 		}
-		o.remote = dir + "/"
+		o.remote = f.directoryMarkerRemote(dir)
 
 		// Check to see if object already exists
-		_, err := f.readMetaData(ctx, container, containerPath+"/")
+		_, err := f.readMetaData(ctx, container, f.directoryMarkerRemote(containerPath))
 		if err == nil {
 			return nil
+		}
+		if f.ci.PreservePOSIXProperties && err != fs.ErrorObjectNotFound {
+			return err
 		}
 
 		// Upload it if not
@@ -1679,6 +1821,117 @@ func (f *Fs) createDirectoryMarker(ctx context.Context, container, dir string) e
 	}
 
 	return nil
+}
+
+// directoryMarkerRemote returns the blob name used to persist a directory.
+func (f *Fs) directoryMarkerRemote(dir string) string {
+	if f.ci.PreservePOSIXProperties {
+		return strings.TrimSuffix(dir, "/")
+	}
+	return strings.TrimSuffix(dir, "/") + "/"
+}
+
+// readDirectoryMarker finds raw-name and trailing-slash markers, regardless of upload options.
+func (f *Fs) readDirectoryMarker(ctx context.Context, containerName, dir string) (*blob.GetPropertiesResponse, string, error) {
+	dir = strings.TrimSuffix(dir, "/")
+	for _, marker := range []string{dir, dir + "/"} {
+		props, err := f.readMetaData(ctx, containerName, marker)
+		if err == fs.ErrorObjectNotFound {
+			continue
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		if props.ContentLength != nil && isDirectoryMarker(*props.ContentLength, props.Metadata, marker) {
+			return props, marker, nil
+		}
+	}
+	return nil, "", fs.ErrorObjectNotFound
+}
+
+// Directory represents a directory with POSIX properties stored in a marker blob.
+type Directory struct {
+	*fs.Dir
+	fs *Fs
+}
+
+// Fs returns the filesystem containing the directory.
+func (d *Directory) Fs() fs.Info {
+	return d.fs
+}
+
+// Metadata returns the metadata stored on the directory marker.
+func (d *Directory) Metadata(ctx context.Context) (fs.Metadata, error) {
+	containerName, containerPath := d.fs.split(d.fs.directoryMarkerRemote(d.Remote()))
+	props, _, err := d.fs.readDirectoryMarker(ctx, containerName, containerPath)
+	if err == fs.ErrorObjectNotFound {
+		fs.Debugf(d, "Directory has no metadata marker")
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	meta := fs.Metadata{}
+	for key, value := range props.Metadata {
+		if value != nil {
+			meta[strings.ToLower(key)] = *value
+		}
+	}
+	return meta, nil
+}
+
+// ModTime returns the modification time stored on the directory marker.
+func (d *Directory) ModTime(ctx context.Context) time.Time {
+	meta, err := d.Metadata(ctx)
+	if err != nil {
+		fs.Errorf(d, "Failed to read directory modification time: %v", err)
+		return d.Dir.ModTime(ctx)
+	}
+	if value, ok := meta[modTimeKey]; ok {
+		when, err := time.Parse(time.RFC3339Nano, value)
+		if err == nil {
+			return when
+		}
+		fs.Errorf(d, "Failed to parse directory modification time: %v", err)
+	}
+	return d.Dir.ModTime(ctx)
+}
+
+// SetMetadata replaces the POSIX properties on the directory marker.
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	_, err := d.fs.MkdirMetadata(ctx, d.Remote(), metadata)
+	return err
+}
+
+// MkdirMetadata creates or updates a directory marker with local POSIX properties.
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	if !fs.GetConfig(ctx).PreservePOSIXProperties {
+		return nil, fs.ErrorNotImplemented
+	}
+	meta, err := mapPOSIXMetadata(metadata)
+	if err != nil {
+		return nil, err
+	}
+	containerName, containerPath := f.split(dir)
+	if containerName == "" || containerPath == "" {
+		if err := f.Mkdir(ctx, dir); err != nil {
+			return nil, err
+		}
+		return fs.NewDir(dir, time.Time{}), nil
+	}
+	if err := f.makeContainer(ctx, containerName); err != nil {
+		return nil, err
+	}
+	when, err := time.Parse(time.RFC3339Nano, metadata["mtime"])
+	if err != nil {
+		return nil, fmt.Errorf("directory mtime: %w", err)
+	}
+	meta[dirMetaKey] = dirMetaValue
+	o := &Object{fs: f, remote: f.directoryMarkerRemote(dir), modTime: when, meta: meta}
+	if err := o.Update(ctx, strings.NewReader(""), o); err != nil {
+		return nil, err
+	}
+	return &Directory{Dir: fs.NewDir(dir, when), fs: f}, nil
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -1806,16 +2059,35 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if f.hns && container != "" && directory != "" {
 		return f.rmdirHNS(ctx, container, directory)
 	}
-	// Remove directory marker file
-	if f.opt.DirectoryMarkers && container != "" && directory != "" {
-		o := &Object{
-			fs:     f,
-			remote: dir + "/",
+	if container != "" && directory != "" {
+		_, marker, err := f.readDirectoryMarker(ctx, container, directory)
+		if err != nil && err != fs.ErrorObjectNotFound {
+			return err
 		}
-		fs.Debugf(o, "Removing directory marker")
-		err := o.Remove(ctx)
-		if err != nil {
-			return fmt.Errorf("removing directory marker failed: %w", err)
+		if err == nil {
+			if err := f.isEmpty(ctx, container, directory); err != nil {
+				return err
+			}
+			fs.Debugf(dir, "Removing directory marker %q", marker)
+			if err := f.deleteBlob(ctx, container, marker); err != nil {
+				return fmt.Errorf("removing directory marker failed: %w", err)
+			}
+			// An upload may have replaced a trailing-slash marker with a raw-name marker.
+			other := strings.TrimSuffix(directory, "/")
+			if marker == other {
+				other += "/"
+			}
+			props, err := f.readMetaData(ctx, container, other)
+			if err != nil && err != fs.ErrorObjectNotFound {
+				return err
+			}
+			if err == nil && props.ContentLength != nil && isDirectoryMarker(*props.ContentLength, props.Metadata, other) {
+				if err := f.deleteBlob(ctx, container, other); err != nil {
+					return fmt.Errorf("removing directory marker failed: %w", err)
+				}
+			}
+		} else if f.opt.DirectoryMarkers {
+			return fs.ErrorDirNotFound
 		}
 	}
 	if container == "" || directory != "" {
@@ -3214,6 +3486,11 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	_, ui.isDirMarker = o.meta[dirMetaKey]
 	metadataMu.Unlock()
 	if !ui.isDirMarker {
+		if err := fs.CheckUploadPreservation(ctx, o.fs, src.Fs()); err != nil {
+			return ui, err
+		}
+	}
+	if !ui.isDirMarker {
 		err = o.fs.mkdirParent(ctx, o.remote)
 		if err != nil {
 			return ui, err
@@ -3291,6 +3568,11 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	if src != o {
+		if err := fs.CheckUploadPreservation(ctx, o.fs, src.Fs()); err != nil {
+			return err
+		}
+	}
 	if o.accessTier == blob.AccessTierArchive {
 		if o.fs.opt.ArchiveTierDelete {
 			fs.Debugf(o, "deleting archive tier blob before updating")
@@ -3340,15 +3622,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	blb := o.getBlobSVC()
+	containerName, containerPath := o.split()
+	return o.fs.deleteBlob(ctx, containerName, containerPath)
+}
+
+// deleteBlob removes the blob at the encoded container and path.
+func (f *Fs) deleteBlob(ctx context.Context, containerName, containerPath string) error {
+	blb := f.getBlobSVC(containerName, containerPath)
 	opt := blob.DeleteOptions{}
-	if o.fs.opt.DeleteSnapshots != "" {
-		action := blob.DeleteSnapshotsOptionType(o.fs.opt.DeleteSnapshots)
+	if f.opt.DeleteSnapshots != "" {
+		action := blob.DeleteSnapshotsOptionType(f.opt.DeleteSnapshots)
 		opt.DeleteSnapshots = &action
 	}
-	return o.fs.pacer.Call(func() (bool, error) {
+	return f.pacer.Call(func() (bool, error) {
 		_, err := blb.Delete(ctx, &opt)
-		return o.fs.shouldRetry(ctx, err)
+		return f.shouldRetry(ctx, err)
 	})
 }
 
@@ -3422,4 +3710,7 @@ var (
 	_ fs.MimeTyper       = &Object{}
 	_ fs.GetTierer       = &Object{}
 	_ fs.SetTierer       = &Object{}
+	_ fs.MkdirMetadataer = &Fs{}
+	_ fs.Metadataer      = &Directory{}
+	_ fs.SetMetadataer   = &Directory{}
 )

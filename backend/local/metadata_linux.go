@@ -57,18 +57,17 @@ func readMetadataFromFileStatx(o *Object, m *fs.Metadata) (err error) {
 		flags = 0
 	}
 	var stat unix.Statx_t
+	mask := unix.STATX_TYPE | unix.STATX_MODE | unix.STATX_UID | unix.STATX_GID |
+		unix.STATX_ATIME | unix.STATX_MTIME | unix.STATX_CTIME | unix.STATX_BTIME
+	if o.fs.preservePOSIXProperties {
+		mask = unix.STATX_ALL
+	}
 	//  statx() was added to Linux in kernel 4.11
-	err = unix.Statx(unix.AT_FDCWD, o.path, flags, (0 |
-		unix.STATX_TYPE | // Want stx_mode & S_IFMT
-		unix.STATX_MODE | // Want stx_mode & ~S_IFMT
-		unix.STATX_UID | // Want stx_uid
-		unix.STATX_GID | // Want stx_gid
-		unix.STATX_ATIME | // Want stx_atime
-		unix.STATX_MTIME | // Want stx_mtime
-		unix.STATX_CTIME | // Want stx_ctime
-		unix.STATX_BTIME), // Want stx_btime
-		&stat)
+	err = unix.Statx(unix.AT_FDCWD, o.path, flags, mask, &stat)
 	if err != nil {
+		if o.fs.preservePOSIXProperties && err == unix.ENOSYS {
+			return readMetadataFromFileFstatat(o, m)
+		}
 		return err
 	}
 	m.Set("mode", fmt.Sprintf("%0o", stat.Mode))
@@ -83,6 +82,36 @@ func readMetadataFromFileStatx(o *Object, m *fs.Metadata) (err error) {
 	setTime("atime", stat.Atime)
 	setTime("mtime", stat.Mtime)
 	setTime("btime", stat.Btime)
+	if o.fs.preservePOSIXProperties {
+		m.Set("statx-mask", fmt.Sprintf("%d", stat.Mask))
+		m.Set("attributes", fmt.Sprintf("%d", stat.Attributes&stat.Attributes_mask))
+		m.Set("attributes-mask", fmt.Sprintf("%d", stat.Attributes_mask))
+		m.Set("dev", fmt.Sprintf("%d", unix.Mkdev(stat.Dev_major, stat.Dev_minor)))
+		if stat.Mask&unix.STATX_NLINK != 0 {
+			m.Set("nlink", fmt.Sprintf("%d", stat.Nlink))
+		}
+		if stat.Mask&unix.STATX_INO != 0 {
+			m.Set("ino", fmt.Sprintf("%d", stat.Ino))
+		}
+		setTime("ctime", stat.Ctime)
+		for key, bit := range map[string]uint32{
+			"mode": unix.STATX_MODE, "uid": unix.STATX_UID, "gid": unix.STATX_GID,
+			"mtime": unix.STATX_MTIME, "ctime": unix.STATX_CTIME, "btime": unix.STATX_BTIME,
+		} {
+			if stat.Mask&bit == 0 {
+				delete(*m, key)
+			}
+		}
+		// Linux can omit STATX_ATIME on noatime mounts while still returning a valid atime.
+		if stat.Mask&unix.STATX_ATIME == 0 && time.Unix(stat.Atime.Sec, int64(stat.Atime.Nsec)).UnixNano() <= 0 {
+			delete(*m, "atime")
+		}
+		if stat.Mode&unix.S_IFMT == unix.S_IFCHR || stat.Mode&unix.S_IFMT == unix.S_IFBLK {
+			m.Set("rdev", fmt.Sprintf("%x", unix.Mkdev(stat.Rdev_major, stat.Rdev_minor)))
+		} else {
+			delete(*m, "rdev")
+		}
+	}
 	return nil
 }
 
@@ -116,5 +145,14 @@ func readMetadataFromFileFstatat(o *Object, m *fs.Metadata) (err error) {
 	}
 	setTime("atime", stat.Atim)
 	setTime("mtime", stat.Mtim)
+	if o.fs.preservePOSIXProperties {
+		m.Set("nlink", fmt.Sprintf("%d", stat.Nlink))
+		m.Set("ino", fmt.Sprintf("%d", stat.Ino))
+		m.Set("dev", fmt.Sprintf("%d", stat.Dev))
+		setTime("ctime", stat.Ctim)
+		if stat.Mode&unix.S_IFMT == unix.S_IFCHR || stat.Mode&unix.S_IFMT == unix.S_IFBLK {
+			m.Set("rdev", fmt.Sprintf("%x", stat.Rdev))
+		}
+	}
 	return nil
 }
