@@ -1,14 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -1313,4 +1316,155 @@ func TestCkBoolFieldUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, record.Fields.IsDeleted)
 	assert.True(t, record.Fields.IsDeleted.Value)
+}
+
+func TestCheckIndexingState(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		zoneName     string
+		responseJSON string
+		status       int
+		wantInLog    string
+		dontWantLog  string
+	}{
+		{
+			name:     "Finished",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": [{
+					"recordName": "rec-1",
+					"fields": {
+						"state": {"value": "FINISHED"}
+					}
+				}]
+			}`,
+			status:      http.StatusOK,
+			dontWantLog: "indexing",
+		},
+		{
+			name:     "FailedWithError",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": [{
+					"recordName": "_00000000-0000-0000-0000-000000000000",
+					"recordType": "CheckIndexingState",
+					"fields": {
+						"indexJobId": {"value": "11111111-1111-1111-1111-111111111111", "type": "STRING"},
+						"progress": {"value": 100, "type": "INT64"},
+						"state": {"value": "FAILED", "type": "STRING"},
+						"error": {"value": "CKCloudDBException:No index with requested name: CPLContainerRelationNotHiddenOrDeletedByAddedDate", "type": "STRING"}
+					},
+					"zoneID": {"zoneName": "PrimarySync", "zoneType": "REGULAR_CUSTOM_ZONE"}
+				}]
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library indexing state is FAILED (CKCloudDBException:No index with requested name: CPLContainerRelationNotHiddenOrDeletedByAddedDate), listings may be incomplete",
+		},
+		{
+			name:     "FailedWithoutError",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": [{
+					"fields": {
+						"state": {"value": "FAILED"},
+						"progress": {"value": 50}
+					}
+				}]
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library indexing state is FAILED (progress 50%), listings may be incomplete",
+		},
+		{
+			name:     "MissingStateField",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": [{
+					"fields": {}
+				}]
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library is still indexing, listings may be incomplete",
+		},
+		{
+			name:     "RunningWithProgress",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": [{
+					"fields": {
+						"state": {"value": "RUNNING"},
+						"progress": {"value": 0}
+					}
+				}]
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library indexing state is RUNNING (progress 0%), listings may be incomplete",
+		},
+		{
+			name:     "RunningNoProgress",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": [{
+					"fields": {
+						"state": {"value": "RUNNING"}
+					}
+				}]
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library indexing state is RUNNING, listings may be incomplete",
+		},
+		{
+			name:     "EmptyRecords",
+			zoneName: "PrimarySync",
+			responseJSON: `{
+				"records": []
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library is still indexing, listings may be incomplete",
+		},
+		{
+			name:     "SharedZoneRunning",
+			zoneName: "SharedSync-test",
+			responseJSON: `{
+				"records": [{
+					"fields": {
+						"state": {"value": "RUNNING"},
+						"progress": {"value": 42}
+					}
+				}]
+			}`,
+			status:    http.StatusOK,
+			wantInLog: "iclouddrive photos: library SharedSync-test indexing state is RUNNING (progress 42%), listings may be incomplete",
+		},
+		{
+			name:         "RequestError",
+			zoneName:     "PrimarySync",
+			responseJSON: `{"error": "internal error"}`,
+			status:       http.StatusInternalServerError,
+			wantInLog:    "iclouddrive photos: could not check indexing state:",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			fs.SetLogger(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+			defer fs.SetLogger(slog.NewTextHandler(io.Discard, nil))
+
+			ps := newHTTPTestPhotosService(t, "check-indexing-state", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.responseJSON))
+			})
+
+			ps.checkIndexingState(context.Background(), tc.zoneName)
+
+			logOutput := strings.TrimSpace(buf.String())
+			if logOutput != "" {
+				t.Logf("Logged: %s", logOutput)
+			}
+			if tc.wantInLog != "" {
+				assert.True(t, strings.Contains(logOutput, tc.wantInLog), "expected %q in log output, got: %s", tc.wantInLog, logOutput)
+			}
+			if tc.dontWantLog != "" {
+				assert.False(t, strings.Contains(logOutput, tc.dontWantLog), "did not expect %q in log output, got: %s", tc.dontWantLog, logOutput)
+			}
+		})
+	}
 }

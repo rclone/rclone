@@ -2318,9 +2318,9 @@ func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string
 	var response struct {
 		Records []struct {
 			Fields struct {
-				State struct {
-					Value string `json:"value"`
-				} `json:"state"`
+				State    *ckStringField `json:"state"`
+				Progress *ckIntField    `json:"progress"`
+				Error    *ckStringField `json:"error"`
 			} `json:"fields"`
 		} `json:"records"`
 	}
@@ -2330,8 +2330,41 @@ func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string
 		return
 	}
 
-	if len(response.Records) == 0 || response.Records[0].Fields.State.Value != indexingStateReady {
-		fs.Logf(nil, "iclouddrive photos: library is still indexing, listings may be incomplete")
+	libName := "library"
+	if zoneName != "" && zoneName != "PrimarySync" {
+		libName = fmt.Sprintf("library %s", zoneName)
+	}
+
+	if len(response.Records) == 0 {
+		fs.Logf(nil, "iclouddrive photos: %s is still indexing, listings may be incomplete", libName)
+		return
+	}
+
+	rec := response.Records[0]
+	state := ""
+	if rec.Fields.State != nil {
+		state = rec.Fields.State.Value
+	}
+
+	if state == indexingStateReady {
+		return
+	}
+
+	var detail string
+	if rec.Fields.Error != nil && rec.Fields.Error.Value != "" {
+		detail = rec.Fields.Error.Value
+	} else if rec.Fields.Progress != nil {
+		detail = fmt.Sprintf("progress %d%%", rec.Fields.Progress.Value)
+	}
+
+	if state != "" {
+		if detail != "" {
+			fs.Logf(nil, "iclouddrive photos: %s indexing state is %s (%s), listings may be incomplete", libName, state, detail)
+		} else {
+			fs.Logf(nil, "iclouddrive photos: %s indexing state is %s, listings may be incomplete", libName, state)
+		}
+	} else {
+		fs.Logf(nil, "iclouddrive photos: %s is still indexing, listings may be incomplete", libName)
 	}
 }
 
