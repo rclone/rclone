@@ -1507,18 +1507,38 @@ func (f *Fs) removeOldChunks(ctx context.Context, remote string) {
 }
 
 func removeStaleChunks(ctx context.Context, oldObject *Object, currentChunks []fs.Object) {
-	currentRemotes := make(map[string]struct{}, len(currentChunks))
-	for _, chunk := range currentChunks {
-		currentRemotes[chunk.Remote()] = struct{}{}
-	}
 	for _, chunk := range oldObject.chunks {
-		if _, found := currentRemotes[chunk.Remote()]; found {
+		if chunkReplaced(oldObject.f, chunk.Remote(), currentChunks) {
 			continue
 		}
 		if err := chunk.Remove(ctx); err != nil {
 			fs.Errorf(chunk, "Failed to remove old chunk: %v", err)
 		}
 	}
+}
+
+// chunkReplaced reports whether remote is one of the chunks just written.
+// On a case-insensitive base, a server-side copy onto a case variant
+// (b.txt -> B.txt) overwrites the old chunks in place, so the names differ
+// only by case and must not be deleted as stale.
+func chunkReplaced(f *Fs, remote string, currentChunks []fs.Object) bool {
+	for _, chunk := range currentChunks {
+		if sameChunkRemote(f, remote, chunk.Remote()) {
+			return true
+		}
+	}
+	return false
+}
+
+func sameChunkRemote(f *Fs, a, b string) bool {
+	if f.features == nil || !f.features.CaseInsensitive {
+		return a == b
+	}
+	if f.base.Features().IsLocal {
+		a = encoder.OS.FromStandardPath(a)
+		b = encoder.OS.FromStandardPath(b)
+	}
+	return strings.EqualFold(a, b)
 }
 
 // Put into the remote path with the given modTime and size.
