@@ -803,7 +803,8 @@ func TestFilterAddDirRuleOrFileRule(t *testing.T) {
 --- Directory filter rules ---
 + (^|/)a/b/c/$
 + (^|/)a/b/$
-+ (^|/)a/$`,
++ (^|/)a/$
++ ^.*$`,
 		},
 	} {
 		f, err := NewFilter(nil)
