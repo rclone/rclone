@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"slices"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 	"unsafe"
@@ -901,4 +902,36 @@ func TestDirRenameParentEntries(t *testing.T) {
 	<-done
 
 	assert.Equal(t, before, slices.Sorted(maps.Keys(root.items)))
+}
+
+// TestDirModTimeRace checks that re-reading a parent's entries doesn't
+// race with reading the modification time of a child directory.
+func TestDirModTimeRace(t *testing.T) {
+	_, _, dir, _ := dirCreate(t)
+	root := dir.parent
+	require.NotNil(t, root)
+
+	var wg sync.WaitGroup
+	stop := make(chan struct{})
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				_ = dir.ModTime()
+			}
+		}
+	}()
+	for range 2000 {
+		entries := fs.DirEntries{fs.NewDir("dir", time.Now())}
+		root.mu.Lock()
+		err := root._readDirFromEntries(entries, nil, time.Now())
+		root.mu.Unlock()
+		require.NoError(t, err)
+	}
+	close(stop)
+	wg.Wait()
 }
