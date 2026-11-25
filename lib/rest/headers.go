@@ -110,6 +110,10 @@ func CheckContentRange(resp *http.Response, options []fs.OpenOption, size int64)
 	}
 
 	responseRange := resp.Header.Get("Content-Range")
+	if responseRange == "" {
+		fs.Debugf(nil, "No Content-Range in response to range request %q - not checking range", requestRange)
+		return nil
+	}
 	got, err := ParseContentRange(responseRange)
 	if err != nil {
 		return fmt.Errorf("invalid Content-Range %q: %w", responseRange, err)
