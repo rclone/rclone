@@ -220,6 +220,15 @@ type loginResponse struct {
 	} `json:"data"`
 }
 
+// userInfoResponse is the response from the web API user info
+type userInfoResponse struct {
+	response
+	Data struct {
+		SizeCap  int64 `json:"size_cap"`
+		SizeCurr int64 `json:"size_curr"`
+	} `json:"data"`
+}
+
 // login authenticates with the web API using email and password
 // and saves the token in the config for reuse.
 func (f *Fs) login(ctx context.Context) error {
@@ -913,6 +922,41 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+// About gets quota information from the Linkbox web API
+//
+// The API reports the account quota rather than the quota of the remote root,
+// which is the same for every Linkbox remote of the account.
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	f.webTokenMu.Lock()
+	webToken := f.webToken
+	f.webTokenMu.Unlock()
+	opts := &rest.Opts{
+		Method:  "GET",
+		RootURL: linkboxWebAPIURL,
+		Path:    "user/info",
+		Parameters: url.Values{
+			"token": {webToken},
+		},
+	}
+	var result userInfoResponse
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, opts, nil, &result)
+		return f.shouldRetryWeb(ctx, resp, err, &result, opts)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting quota failed: %w", err)
+	}
+	total, used := result.Data.SizeCap, result.Data.SizeCurr
+	if total <= 0 || used < 0 || used > total {
+		return nil, fmt.Errorf("unexpected quota: total=%d used=%d", total, used)
+	}
+	return &fs.Usage{
+		Total: fs.NewUsageValue(total),
+		Used:  fs.NewUsageValue(used),
+		Free:  fs.NewUsageValue(total - used),
+	}, nil
+}
+
 // Features returns the optional features of this Fs
 // Info provides a read only interface to information about a filesystem.
 func (f *Fs) Features() *fs.Features {
@@ -1057,5 +1101,6 @@ var (
 	_ fs.Fs              = &Fs{}
 	_ fs.Purger          = &Fs{}
 	_ fs.DirCacheFlusher = &Fs{}
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = &Object{}
 )
