@@ -139,3 +139,20 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("ObjectInfoWrap", func(t *testing.T) { testObjectInfo(t, f, true) })
 	t.Run("ComputeHash", func(t *testing.T) { testComputeHash(t, f) })
 }
+
+// unknownSizeObject is an object whose size is not known.
+type unknownSizeObject struct {
+	fs.Object
+}
+
+func (unknownSizeObject) Size() int64 { return -1 }
+
+func TestObjectSizeUnknown(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "", true, nil)
+	require.NoError(t, err)
+	o := &Object{
+		Object: unknownSizeObject{},
+		f:      &Fs{cipher: c, opt: Options{}},
+	}
+	assert.Equal(t, int64(-1), o.Size())
+}
