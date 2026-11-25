@@ -2050,7 +2050,10 @@ func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err err
 		ci.NameTransform = nil
 	}
 	remoteWithSuffix := SuffixName(ctx, dst.Remote())
-	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
+	overwritten, err := backupDir.NewObject(ctx, remoteWithSuffix)
+	if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+		return err
+	}
 	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)
 	return err
 }
