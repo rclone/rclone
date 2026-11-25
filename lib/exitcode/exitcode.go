@@ -24,4 +24,6 @@ const (
 	NoFilesTransferred
 	// DurationExceeded is returned when transfer duration exceeded the quota.
 	DurationExceeded
+	// ErrorsExceeded is returned when the number of errors exceeded the quota.
+	ErrorsExceeded
 )

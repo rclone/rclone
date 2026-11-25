@@ -2203,6 +2203,19 @@ Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 10 if the duration limit is reached.
 
+### --max-errors int
+
+Rclone will stop transferring when this many errors have occurred.
+Errors from previous `--retries` attempts are counted too.
+Defaults to 0 (off).
+
+When the limit is reached no new transfers will be started. Transfers
+already in progress are not interrupted. With the default `--cutoff-mode`
+of `HARD` rclone stops with a fatal error, with `SOFT` it lets the
+transfers in progress finish.
+
+Rclone will exit with exit code 11 if the error limit is reached.
+
 ### --max-transfer SizeSuffix
 
 Rclone will stop transferring when it has reached the size specified.
@@ -2215,7 +2228,8 @@ Rclone will exit with exit code 8 if the transfer limit is reached.
 
 ### --cutoff-mode HARD|SOFT|CAUTIOUS
 
-Configure the behavior of `--max-transfer` and `--max-duration`.
+Configure the behavior of `--max-transfer`, `--max-duration` and
+`--max-errors`.
 
 `HARD` will stop transferring immediately when rclone reaches the limit.
 This is the default.
@@ -2224,6 +2238,7 @@ This is the default.
 
 `CAUTIOUS` will try to prevent rclone from reaching the limit. Only applicable
 for `--max-transfer`.
+For `--max-errors` it acts like `SOFT`.
 
 ### -M, --metadata
 
@@ -3605,6 +3620,7 @@ it will log a high priority message if the retry was successful.
 - `9` - Operation successful, but no files transferred (Requires
   [`--error-on-no-transfer`](#error-on-no-transfer))
 - `10` - Duration exceeded - limit set by --max-duration reached
+- `11` - Errors exceeded - limit set by --max-errors reached
 
 ## Environment variables
 

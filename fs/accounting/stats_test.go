@@ -196,6 +196,30 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, time.Time{}, s.RetryAfter())
 }
 
+func TestStatsTotalErrors(t *testing.T) {
+	ctx := context.Background()
+	s := NewStats(ctx)
+	assert.Equal(t, int64(0), s.GetTotalErrors())
+
+	_ = s.Error(fmt.Errorf("error 1"))
+	_ = s.Error(fmt.Errorf("error 2"))
+	assert.Equal(t, int64(2), s.GetErrors())
+	assert.Equal(t, int64(2), s.GetTotalErrors())
+
+	// ResetErrors is called between retries so keeps the total
+	s.ResetErrors()
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.Equal(t, int64(2), s.GetTotalErrors())
+
+	s.Errors(3)
+	assert.Equal(t, int64(3), s.GetErrors())
+	assert.Equal(t, int64(5), s.GetTotalErrors())
+
+	s.ResetCounters()
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.Equal(t, int64(0), s.GetTotalErrors())
+}
+
 func TestStatsTotalDuration(t *testing.T) {
 	ctx := context.Background()
 	startTime := time.Now()

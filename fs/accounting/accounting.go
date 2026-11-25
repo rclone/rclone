@@ -30,6 +30,17 @@ var ErrorMaxTransferLimitReachedFatal = fserrors.FatalError(ErrorMaxTransferLimi
 // transfer limit is reached and a graceful stop is required.
 var ErrorMaxTransferLimitReachedGraceful = fserrors.NoRetryError(ErrorMaxTransferLimitReached)
 
+// ErrorMaxErrorsReached defines error when the --max-errors limit is reached.
+var ErrorMaxErrorsReached = errors.New("max errors limit reached as set by --max-errors")
+
+// ErrorMaxErrorsReachedFatal is returned from operations.Copy when the
+// max errors limit is reached with --cutoff-mode hard.
+var ErrorMaxErrorsReachedFatal = fserrors.FatalError(ErrorMaxErrorsReached)
+
+// ErrorMaxErrorsReachedGraceful is returned from operations.Copy when the
+// max errors limit is reached and a graceful stop is required.
+var ErrorMaxErrorsReachedGraceful = fserrors.NoRetryError(ErrorMaxErrorsReached)
+
 // Start sets up the accounting, in particular the bandwidth limiting
 func Start(ctx context.Context) {
 	// Start the token bucket limiter
