@@ -229,6 +229,44 @@ func TestDirForgetAllDropsUnreferencedDir(t *testing.T) {
 	assert.NotEqual(t, inode, node.Inode())
 }
 
+// TestDirForgetAllNoRearmWithZeroDirCacheTime checks that forgetting
+// a directory with virtual entries and --dir-cache-time 0s does not
+// rearm the cleanup timer with a zero duration, which would fire
+// immediately and spin in cacheCleanup/ForgetAll while a virtual
+// entry remains.
+func TestDirForgetAllNoRearmWithZeroDirCacheTime(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.DirCacheTime = 0
+	_, vfs := newTestVFSOpt(t, &opt)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// A virtual file entry with no object yet counts as still
+	// writing, so it survives the purge in ForgetAll.
+	root.AddVirtual("newfile", 0, false)
+
+	// Watch for the cleanup timer firing: ForgetAll must not
+	// rearm it when the cache time is zero.
+	fired := make(chan struct{}, 1)
+	root.cleanupTimer.Stop()
+	root.cleanupTimer = time.AfterFunc(time.Hour, func() {
+		select {
+		case fired <- struct{}{}:
+		default:
+		}
+	})
+	defer root.cleanupTimer.Stop()
+
+	assert.True(t, root.ForgetAll())
+
+	select {
+	case <-fired:
+		t.Fatal("cleanup timer rearmed with zero DirCacheTime")
+	case <-time.After(100 * time.Millisecond):
+	}
+}
+
 func TestDirForgetPath(t *testing.T) {
 	_, vfs, dir, file1 := dirCreate(t)
 

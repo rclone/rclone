@@ -263,7 +263,9 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 		}
 		d.items = make(map[string]Node)
 		d.cleanupTimer.Stop()
-	} else {
+	} else if d.vfs.Opt.DirCacheTime > 0 {
+		// A zero cache time would rearm the timer to fire at once,
+		// looping through cacheCleanup while a virtual entry remains.
 		d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	}
 
