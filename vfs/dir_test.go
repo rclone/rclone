@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"slices"
 	"sort"
 	"testing"
@@ -146,6 +147,124 @@ func TestDirForgetAll(t *testing.T) {
 	assert.Equal(t, 0, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
 	assert.True(t, root.read.IsZero())
+}
+
+// TestDirForgetAllKeepsDirNode checks that forgetting the directory
+// cache keeps child directory nodes so a later lookup returns the
+// same node (and inode number) instead of creating a new one.
+//
+// The kernel may still be holding a directory node, e.g. as a process
+// working directory, and a new node for the same path makes getcwd
+// fail with ENOENT.
+func TestDirForgetAllKeepsDirNode(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	inode := dir.Inode()
+
+	// Simulate the idle directory cache expiring
+	root.ForgetAll()
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	require.True(t, node.IsDir())
+	assert.Same(t, dir, node.(*Dir))
+	assert.Equal(t, inode, node.Inode())
+}
+
+// forgottenDirInode returns the inode of the "dir" directory after
+// forgetting the directory cache, along with the VFS. The directory
+// itself is not returned, so nothing in the caller references it.
+//
+//go:noinline
+func forgottenDirInode(t *testing.T) (*VFS, uint64) {
+	_, vfs, dir, _ := dirCreate(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	inode := dir.Inode()
+
+	// Simulate the idle directory cache expiring
+	root.ForgetAll()
+
+	return vfs, inode
+}
+
+// TestDirForgetAllDropsUnreferencedDir checks that a forgotten child
+// directory nobody references is freed, so a later lookup creates a
+// new node instead of reusing the old one.
+func TestDirForgetAllDropsUnreferencedDir(t *testing.T) {
+	vfs, inode := forgottenDirInode(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// Turn off automatic GC so each runtime.GC below runs a fresh,
+	// complete cycle instead of joining one already in progress.
+	oldGCPercent := debug.SetGCPercent(-1)
+	defer debug.SetGCPercent(oldGCPercent)
+
+	// Let any in-flight cache cleanup finish before collecting.
+	time.Sleep(100 * time.Millisecond)
+
+	// Nothing references the directory now, so a collection must
+	// clear the weak reference. Repeat the collection: a GC already
+	// in progress can delay the clearing by a cycle.
+	cleared := false
+	for i := 0; i < 10 && !cleared; i++ {
+		runtime.GC()
+		root.mu.RLock()
+		cleared = root.forgotten["dir"].Value() == nil
+		root.mu.RUnlock()
+		time.Sleep(10 * time.Millisecond)
+	}
+	require.True(t, cleared, "unreferenced directory was not freed")
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	require.True(t, node.IsDir())
+	assert.NotEqual(t, inode, node.Inode())
+}
+
+// TestDirForgetAllNoRearmWithZeroDirCacheTime checks that forgetting
+// a directory with virtual entries and --dir-cache-time 0s does not
+// rearm the cleanup timer with a zero duration, which would fire
+// immediately and spin in cacheCleanup/ForgetAll while a virtual
+// entry remains.
+func TestDirForgetAllNoRearmWithZeroDirCacheTime(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.DirCacheTime = 0
+	_, vfs := newTestVFSOpt(t, &opt)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// A virtual file entry with no object yet counts as still
+	// writing, so it survives the purge in ForgetAll.
+	root.AddVirtual("newfile", 0, false)
+
+	// Watch for the cleanup timer firing: ForgetAll must not
+	// rearm it when the cache time is zero.
+	fired := make(chan struct{}, 1)
+	root.cleanupTimer.Stop()
+	root.cleanupTimer = time.AfterFunc(time.Hour, func() {
+		select {
+		case fired <- struct{}{}:
+		default:
+		}
+	})
+	defer root.cleanupTimer.Stop()
+
+	assert.True(t, root.ForgetAll())
+
+	select {
+	case <-fired:
+		t.Fatal("cleanup timer rearmed with zero DirCacheTime")
+	case <-time.After(100 * time.Millisecond):
+	}
 }
 
 func TestDirForgetPath(t *testing.T) {
