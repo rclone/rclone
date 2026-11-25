@@ -2041,8 +2041,15 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 	return backupDir, nil
 }
 
-// MoveBackupDir moves a file to the backup dir
+// MoveBackupDir moves a file to the backup dir.
+//
+// dst.Remote() is already the name on the destination, including any
+// --name-transform. Move would apply that transform again, so a replaced
+// p-file.txt was backed up as p-p-file.txt and a deleted other.txt as
+// p-other.txt. The backup keeps the destination name, plus --suffix.
 func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err error) {
+	ctx, ci := fs.AddConfig(ctx)
+	ci.NameTransform = nil
 	remoteWithSuffix := SuffixName(ctx, dst.Remote())
 	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
 	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)

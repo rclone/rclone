@@ -2495,6 +2495,37 @@ func TestSyncBackupDirSuffixOnly(t *testing.T) {
 	testSyncBackupDir(t, "", ".bak", false)
 }
 
+// A destination name is already final. Moving it into --backup-dir must not
+// run --name-transform a second time (issue #10339).
+func TestSyncBackupDirNameTransformNotReapplied(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move")
+	}
+	r.Mkdir(ctx, r.Fremote)
+
+	ci.BackupDir = r.FremoteName + "/bak"
+	ci.NameTransform = []string{"prefix=p-"}
+
+	replaced := r.WriteObject(ctx, "dst/p-file.txt", "OLD", t1)
+	deleted := r.WriteObject(ctx, "dst/other.txt", "X", t1)
+	updated := r.WriteFile("file.txt", "NEW_LONGER", t2)
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, fdst, r.Flocal, false))
+
+	replaced.Path = "bak/p-file.txt"
+	deleted.Path = "bak/other.txt"
+	updated.Path = "dst/p-file.txt"
+	r.CheckRemoteItems(t, replaced, deleted, updated)
+}
+
 // Test with Suffix set
 func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
 	ctx := context.Background()
