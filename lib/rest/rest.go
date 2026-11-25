@@ -206,17 +206,51 @@ func checkDrainAndClose(r io.ReadCloser, err *error) {
 	}
 }
 
+// bodyLimitReader reads from an io.Reader but returns ErrBodyTooLarge
+// once more than limit bytes have been read, so a server streaming a
+// large or endless response can't make a decoder read it without bound.
+type bodyLimitReader struct {
+	r     io.Reader
+	limit int64
+}
+
+// Read implements io.Reader
+func (l *bodyLimitReader) Read(p []byte) (int, error) {
+	if l.limit < 0 {
+		return 0, ErrBodyTooLarge
+	}
+	// Read one byte past the limit so an over-long body is rejected
+	// rather than silently truncated.
+	if int64(len(p)) > l.limit+1 {
+		p = p[:l.limit+1]
+	}
+	n, err := l.r.Read(p)
+	l.limit -= int64(n)
+	if l.limit < 0 {
+		return n, ErrBodyTooLarge
+	}
+	return n, err
+}
+
 // DecodeJSON decodes resp.Body into result
+//
+// It reads at most drainLimit bytes of resp.Body and returns
+// ErrBodyTooLarge if the body is bigger than that, so a misbehaving
+// server can't make rclone buffer an unbounded response in memory.
 func DecodeJSON(resp *http.Response, result any) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
-	decoder := json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(&bodyLimitReader{r: resp.Body, limit: drainLimit})
 	return decoder.Decode(result)
 }
 
 // DecodeXML decodes resp.Body into result
+//
+// It reads at most drainLimit bytes of resp.Body and returns
+// ErrBodyTooLarge if the body is bigger than that, so a misbehaving
+// server can't make rclone buffer an unbounded response in memory.
 func DecodeXML(resp *http.Response, result any) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
-	decoder := xml.NewDecoder(resp.Body)
+	decoder := xml.NewDecoder(&bodyLimitReader{r: resp.Body, limit: drainLimit})
 	// MEGAcmd has included escaped HTML entities in its XML output, so we have to be able to
 	// decode them.
 	decoder.Strict = false
