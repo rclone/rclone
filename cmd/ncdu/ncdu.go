@@ -997,6 +997,9 @@ outer:
 				case key(tcell.KeyEsc), key(tcell.KeyCtrlC), 'q':
 					if u.showBox || c == key(tcell.KeyEsc) {
 						u.showBox = false
+						u.boxMenuButton = 0
+						u.boxMenu = []string{}
+						u.boxMenuHandler = nil
 					} else {
 						break outer
 					}
