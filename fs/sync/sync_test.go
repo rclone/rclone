@@ -1596,6 +1596,23 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}
 }
 
+func TestSyncTrackRenamesCompareDest(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	r := fstest.NewRun(t)
+	if !operations.CanServerSideMove(r.Fremote) || r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() == hash.None {
+		t.Skip("Skipping as track renames is not supported")
+	}
+	ci.TrackRenames = true
+	ci.CompareDest = []string{r.FremoteName + "/CompareDest"}
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+	r.WriteObject(ctx, "CompareDest/existing", "same contents", t1)
+	r.WriteFile("existing", "same contents", t1)
+	require.NoError(t, Sync(ctx, fdst, r.Flocal, false))
+	_, err = fdst.NewObject(ctx, "existing")
+	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
 func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
