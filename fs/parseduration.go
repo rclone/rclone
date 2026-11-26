@@ -15,16 +15,23 @@ type Duration time.Duration
 // DurationOff is the default value for flags which can be turned off
 const DurationOff = Duration((1 << 63) - 1)
 
-// Turn Duration into a string
+// String turns a Duration into a string that ParseDuration parses back
+// to the same value.
+//
+// It uses the largest d, w, M or y unit that gives a whole number or
+// one decimal place, otherwise Go's duration format.
 func (d Duration) String() string {
 	if d == DurationOff {
 		return "off"
 	}
 	for i := len(ageSuffixes) - 2; i >= 0; i-- {
 		ageSuffix := &ageSuffixes[i]
-		if math.Abs(float64(d)) >= float64(ageSuffix.Multiplier) {
+		if math.Abs(float64(d)) >= float64(ageSuffix.Multiplier) && time.Duration(d)%(ageSuffix.Multiplier/10) == 0 {
 			timeUnits := float64(d) / float64(ageSuffix.Multiplier)
-			return strconv.FormatFloat(timeUnits, 'f', -1, 64) + ageSuffix.Suffix
+			s := strconv.FormatFloat(timeUnits, 'f', -1, 64) + ageSuffix.Suffix
+			if back, err := ParseDuration(s); err == nil && back == time.Duration(d) {
+				return s
+			}
 		}
 	}
 	return time.Duration(d).String()

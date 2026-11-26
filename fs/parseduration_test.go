@@ -115,6 +115,14 @@ func TestDurationString(t *testing.T) {
 		{time.Hour * 24 * 365, "1y"},
 		{time.Hour * 24 * 365 * 3 / 2, "1.5y"},
 		{-time.Hour * 24 * 365 * 3 / 2, "-1.5y"},
+		{time.Hour * 24 * 10, "10d"},
+		{-time.Hour * 24 * 10, "-10d"},
+		{time.Hour * 24 * 44, "44d"},
+		{time.Hour * 24 * 100, "100d"},
+		{time.Hour * 24 * 45, "1.5M"},
+		{time.Hour * 36, "1.5d"},
+		{time.Hour * 25, "25h0m0s"},
+		{time.Hour*48 + 30*time.Minute, "48h30m0s"},
 	} {
 		got := Duration(test.in).String()
 		assert.Equal(t, test.want, got)
@@ -123,6 +131,26 @@ func TestDurationString(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, test.in, reverse)
 	}
+}
+
+func TestDurationStringRoundTrip(t *testing.T) {
+	check := func(d time.Duration) {
+		t.Helper()
+		s := Duration(d).String()
+		got, err := ParseDuration(s)
+		require.NoErrorf(t, err, "%d as %q", int64(d), s)
+		assert.Equalf(t, d, got, "%d as %q", int64(d), s)
+	}
+	for n := time.Duration(1); n <= 1000; n++ {
+		for _, unit := range []time.Duration{time.Minute, time.Hour, 24 * time.Hour, 7 * 24 * time.Hour, 30 * 24 * time.Hour, 365 * 24 * time.Hour} {
+			for _, d := range []time.Duration{n * unit, n*unit + time.Nanosecond, n*unit + 12*time.Hour} {
+				check(d)
+				check(-d)
+			}
+		}
+	}
+	check(0)
+	check(time.Duration(DurationOff))
 }
 
 func TestDurationReadableString(t *testing.T) {
