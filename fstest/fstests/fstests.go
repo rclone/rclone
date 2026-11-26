@@ -882,7 +882,8 @@ func Run(t *testing.T, opt *Opt) {
 		})
 
 		// TestFsOpenChunkWriter tests writing in chunks to fs
-		// then reads back the contents and check if they match
+		// then reads back the contents and check if they match,
+		// then overwrites the file and checks again
 		//
 		// The chunks are the size the chunk writer asks for, the
 		// last one short, as a multi-thread copy writes them
@@ -920,6 +921,12 @@ func Run(t *testing.T, opt *Opt) {
 				})
 			}
 			info, out, err := open(totalSize)
+			// Grow the file to the backend's multipart minimum, unless
+			// that is too big to hold in memory
+			if tooSmall, ok := errors.AsType[*fs.FileTooSmallError](err); ok && tooSmall.MinSize <= int64(128*fs.Mebi) {
+				totalSize = tooSmall.MinSize + int64(size1MB)
+				info, out, err = open(totalSize)
+			}
 			if errors.Is(err, fs.ErrorFileTooSmall) {
 				t.Skipf("file too small for multipart upload: %v", err)
 			}
@@ -938,27 +945,38 @@ func Run(t *testing.T, opt *Opt) {
 				require.NoError(t, err)
 			}
 
-			// Cut the file into chunks of the size the writer asked for
-			var contents []string
-			for offset := int64(0); offset < totalSize; offset += info.ChunkSize {
-				contents = append(contents, random.String(int(min(info.ChunkSize, totalSize-offset))))
+			write := func(out fs.ChunkWriter) string {
+				// Cut the file into chunks of the size the writer asked for
+				var contents []string
+				for offset := int64(0); offset < totalSize; offset += info.ChunkSize {
+					contents = append(contents, random.String(int(min(info.ChunkSize, totalSize-offset))))
+				}
+
+				// Write the chunks out of order, chunk 0 last
+				for i := 1; i <= len(contents); i++ {
+					chunkNumber := i % len(contents)
+					n, err := out.WriteChunk(ctx, chunkNumber, strings.NewReader(contents[chunkNumber]))
+					assert.NoError(t, err)
+					assert.Equal(t, int64(len(contents[chunkNumber])), n)
+				}
+
+				assert.NoError(t, out.Close(ctx))
+				return strings.Join(contents, "")
 			}
 
-			// Write the chunks out of order, chunk 0 last
-			for i := 1; i <= len(contents); i++ {
-				chunkNumber := i % len(contents)
-				n, err := out.WriteChunk(ctx, chunkNumber, strings.NewReader(contents[chunkNumber]))
-				assert.NoError(t, err)
-				assert.Equal(t, int64(len(contents[chunkNumber])), n)
-			}
-
-			assert.NoError(t, out.Close(ctx))
-
+			contents := write(out)
 			obj := fstest.NewObject(ctx, t, f, path)
-			originalContents := strings.Join(contents, "")
-			fileContents := ReadObject(ctx, t, obj, -1)
-			isEqual := originalContents == fileContents
-			assert.True(t, isEqual, "contents of file differ")
+			assert.True(t, contents == ReadObject(ctx, t, obj, -1), "contents of file differ")
+
+			// Overwrite it, as a multi-thread copy does
+			_, out, err = open(totalSize)
+			require.NoError(t, err)
+			contents = write(out)
+			obj = fstest.NewObject(ctx, t, f, path)
+			assert.True(t, contents == ReadObject(ctx, t, obj, -1), "contents of overwritten file differ")
+			entries, err := f.List(ctx, "writer-at-subdir")
+			require.NoError(t, err)
+			assert.Len(t, entries, 1)
 
 			assert.NoError(t, obj.Remove(ctx))
 			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
