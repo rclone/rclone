@@ -31,7 +31,7 @@ func TestCanUploadModTime(t *testing.T) {
 }
 
 func TestPrecision(t *testing.T) {
-	assert.Equal(t, time.Second, (&Fs{uploadModTime: true}).Precision())
+	assert.Equal(t, time.Second, (&Fs{uploadModTime: true, batchModTime: true}).Precision())
 	assert.Equal(t, fs.ModTimeNotSupported, (&Fs{uploadModTime: false}).Precision())
 }
 
