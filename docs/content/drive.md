@@ -2096,9 +2096,9 @@ Scroll down and click "+ Add users". Add yourself as a test user and press save.
    Note that publishing the app does not mean that it has been verified by Google. You may still see
    an "unverified app" warning when authorizing rclone.
 
-11. Provide the noted client ID and client secret to rclone.
+10. Provide the noted client ID and client secret to rclone.
 
-12. Run the web-based authorization flow from within `rclone config`, by answering
+11. Run the web-based authorization flow from within `rclone config`, by answering
     "Y" when it asks "Token already configured - replace it?".
 
 Be aware that, due to the "enhanced security" recently introduced by
