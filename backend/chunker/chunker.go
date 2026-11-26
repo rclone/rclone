@@ -146,6 +146,9 @@ func init() {
 		Name:        "chunker",
 		Description: "Transparently chunk/split large files",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Required: true,
@@ -349,6 +352,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		BucketBased:              true,
 		CanHaveEmptyDirectories:  true,
 		ServerSideAcrossConfigs:  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
 		ReadDirMetadata:          true,
 		WriteDirMetadata:         true,
 		WriteDirSetModTime:       true,
@@ -2158,6 +2164,28 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 	return o.mainChunk().SetModTime(ctx, mtime)
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.mainChunk().(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// SetMetadata sets metadata for an Object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	do, ok := o.mainChunk().(fs.SetMetadataer)
+	if !ok {
+		return fs.ErrorNotImplemented
+	}
+	return do.SetMetadata(ctx, metadata)
+}
+
 // Hash returns the selected checksum of the file.
 // If no checksum is available it returns "".
 //
@@ -2435,6 +2463,17 @@ func (oi *ObjectInfo) Hash(ctx context.Context, hashType hash.Type) (string, err
 		return "", errUnsupported
 	}
 	return value, err
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (oi *ObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := oi.src.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
 }
 
 // ID returns the ID of the Object if known, or "" if not

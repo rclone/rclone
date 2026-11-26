@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/fs"
@@ -1014,6 +1015,61 @@ func testMD5AllSlow(t *testing.T, f *Fs) {
 	require.NoError(t, operations.Purge(ctx, baseFs, ""))
 }
 
+// Test that object metadata is stored on the meta object of chunked files
+func testObjectMetadata(t *testing.T, f *Fs) {
+	if !f.base.Features().ReadMetadata || !f.base.Features().WriteMetadata {
+		t.Skip("this test requires metadata support in the wrapped remote")
+	}
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Metadata = true
+
+	chunkFs, ok := deriveFs(ctx, t, f, "objmeta", settings{
+		"chunk_size":  "1k",
+		"meta_format": "simplejson",
+	}).(*Fs)
+	require.True(t, ok, "fs must be a chunker remote")
+	baseFs := chunkFs.base
+	defer func() {
+		_ = operations.Purge(ctx, baseFs, "")
+	}()
+
+	mtime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	metadata := fs.Metadata{
+		"mtime": mtime.Format(time.RFC3339Nano),
+	}
+	if baseFs.Features().UserMetadata {
+		metadata["potato"] = "jersey"
+	}
+	item := fstest.Item{Path: "file", ModTime: mtime}
+	contents := random.String(3 * int(fs.Kibi))
+	obj := fstests.PutTestContentsMetadata(ctx, t, chunkFs, &item, false, contents, true, "", metadata)
+
+	o, ok := obj.(*Object)
+	require.True(t, ok)
+	assert.True(t, o.isComposite(), "file must be chunked")
+	assert.NotNil(t, o.main, "chunked file must have a meta object")
+
+	got, err := o.Metadata(ctx)
+	require.NoError(t, err)
+	gotTime, err := time.Parse(time.RFC3339Nano, got["mtime"])
+	require.NoError(t, err)
+	fstest.AssertTimeEqualWithPrecision(t, "mtime", mtime, gotTime, chunkFs.Precision())
+	if baseFs.Features().UserMetadata {
+		assert.Equal(t, "jersey", got["potato"])
+	}
+
+	// SetMetadata must update the meta object
+	mtime = fstest.Time("2002-02-03T04:05:06.499999999Z")
+	require.NoError(t, o.SetMetadata(ctx, fs.Metadata{"mtime": mtime.Format(time.RFC3339Nano)}))
+	got, err = o.Metadata(ctx)
+	require.NoError(t, err)
+	gotTime, err = time.Parse(time.RFC3339Nano, got["mtime"])
+	require.NoError(t, err)
+	fstest.AssertTimeEqualWithPrecision(t, "mtime", mtime, gotTime, chunkFs.Precision())
+	fstest.AssertTimeEqualWithPrecision(t, "modtime", mtime, o.ModTime(ctx), chunkFs.Precision())
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("PutLarge", func(t *testing.T) {
@@ -1036,6 +1092,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("MetadataInput", func(t *testing.T) {
 		testMetadataInput(t, f)
+	})
+	t.Run("ObjectMetadata", func(t *testing.T) {
+		testObjectMetadata(t, f)
 	})
 	t.Run("FutureProof", func(t *testing.T) {
 		testFutureProof(t, f)
