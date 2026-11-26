@@ -1,8 +1,10 @@
 package filter
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"sync"
@@ -26,6 +28,43 @@ func TestNewFilterDefault(t *testing.T) {
 	assert.Len(t, f.metaRules.rules, 0)
 	assert.Nil(t, f.files)
 	assert.True(t, f.InActive())
+}
+
+func TestMixedRuleWarning(t *testing.T) {
+	var logs bytes.Buffer
+	fs.SetLogger(slog.NewTextHandler(&logs, nil))
+	t.Cleanup(func() { fs.SetLogger(slog.Default().Handler()) })
+
+	rulesFile := testFile(t, "+ keep\n")
+	t.Cleanup(func() { assert.NoError(t, os.Remove(rulesFile)) })
+	for _, test := range []struct {
+		name string
+		path RulesOpt
+		meta RulesOpt
+		want string
+	}{
+		{"include-exclude", RulesOpt{IncludeRule: []string{"keep"}, ExcludeRule: []string{"drop"}}, RulesOpt{}, "--filter"},
+		{"include-filter-from", RulesOpt{IncludeRule: []string{"keep"}, FilterFrom: []string{rulesFile}}, RulesOpt{}, "--filter"},
+		{"exclude-filter", RulesOpt{ExcludeRule: []string{"drop"}, FilterRule: []string{"+ keep"}}, RulesOpt{}, "--filter"},
+		{"all", RulesOpt{IncludeRule: []string{"keep"}, ExcludeRule: []string{"drop"}, FilterFrom: []string{rulesFile}}, RulesOpt{}, "--filter"},
+		{"same-family", RulesOpt{FilterRule: []string{"- drop"}, FilterFrom: []string{rulesFile}}, RulesOpt{}, ""},
+		{"separate-rule-sets", RulesOpt{IncludeRule: []string{"keep"}}, RulesOpt{FilterRule: []string{"+ key=value"}}, ""},
+		{"metadata", RulesOpt{}, RulesOpt{ExcludeRule: []string{"key=*"}, FilterRule: []string{"+ key=value"}}, "--metadata-filter"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			logs.Reset()
+			opt := Opt
+			opt.RulesOpt, opt.MetaRules = test.path, test.meta
+			_, err := NewFilter(&opt)
+			require.NoError(t, err)
+			if test.want == "" {
+				assert.Empty(t, logs.String())
+			} else {
+				assert.Equal(t, 1, strings.Count(logs.String(), "level=ERROR"))
+				assert.Contains(t, logs.String(), test.want)
+			}
+		})
+	}
 }
 
 func TestParseHashFilter(t *testing.T) {
