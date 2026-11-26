@@ -12,6 +12,7 @@ import (
 
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -101,15 +102,20 @@ func TestZipManySubDirs(t *testing.T) {
 	buf := mustCreateZip(t, dir)
 	zr := readZip(t, buf)
 
-	// paths may include directory prefixes; assert by suffix
-	got, name := zipReadFile(t, zr, func(n string) bool { return strings.HasSuffix(n, "/top.txt") || n == "top.txt" })
-	require.Equal(t, "top", string(got), "bad content for %s", name)
+	var names []string
+	for _, f := range zr.File {
+		names = append(names, f.Name)
+	}
+	assert.ElementsMatch(t, []string{"top.txt", "b/", "b/mid.txt", "b/c/", "b/c/deep.txt"}, names)
 
-	got, name = zipReadFile(t, zr, func(n string) bool { return strings.HasSuffix(n, "/mid.txt") || n == "mid.txt" })
-	require.Equal(t, "mid", string(got), "bad content for %s", name)
+	got, _ := zipReadFile(t, zr, func(n string) bool { return n == "top.txt" })
+	require.Equal(t, "top", string(got))
 
-	got, name = zipReadFile(t, zr, func(n string) bool { return strings.HasSuffix(n, "/deep.txt") || n == "deep.txt" })
-	require.Equal(t, "deep", string(got), "bad content for %s", name)
+	got, _ = zipReadFile(t, zr, func(n string) bool { return n == "b/mid.txt" })
+	require.Equal(t, "mid", string(got))
+
+	got, _ = zipReadFile(t, zr, func(n string) bool { return n == "b/c/deep.txt" })
+	require.Equal(t, "deep", string(got))
 }
 
 func TestZipLargeFiles(t *testing.T) {
