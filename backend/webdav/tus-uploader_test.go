@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -27,10 +28,27 @@ func newTusTestUploader(t *testing.T, server *httptest.Server, contents string) 
 		srv:   rest.NewClient(server.Client()),
 		pacer: fs.NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(0))),
 	}
-	// Wrap the reader so NewUpload buffers it, as it does for transfer readers.
-	upload := NewUpload(io.LimitReader(strings.NewReader(contents), int64(len(contents))), int64(len(contents)), nil, "")
-	require.NotNil(t, upload)
+	// Wrap the reader so NewUpload spools it, as it does for transfer readers.
+	upload, err := NewUpload(io.LimitReader(strings.NewReader(contents), int64(len(contents))), int64(len(contents)), nil, "")
+	require.NoError(t, err)
 	return NewUploader(f, server.URL, upload, 0)
+}
+
+func TestNewUploadSpoolsNonSeekableInput(t *testing.T) {
+	const contents = "a non-seekable upload body"
+	upload, err := NewUpload(io.LimitReader(strings.NewReader(contents), int64(len(contents))), int64(len(contents)), nil, "")
+	require.NoError(t, err)
+	file, ok := upload.stream.(*os.File)
+	require.True(t, ok)
+	name := file.Name()
+	data, err := io.ReadAll(file)
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(data))
+	_, err = file.Seek(0, io.SeekStart)
+	require.NoError(t, err)
+	require.NoError(t, upload.Close())
+	_, err = os.Stat(name)
+	assert.ErrorIs(t, err, os.ErrNotExist)
 }
 
 func tusTestHandler(t *testing.T, contents string, fail *atomic.Bool) http.HandlerFunc {
@@ -74,6 +92,7 @@ func TestTusUploadReleasesBuffer(t *testing.T) {
 
 			released := func() weak.Pointer[Upload] {
 				uploader := newTusTestUploader(t, server, tc.contents)
+				defer func() { _ = uploader.upload.Close() }()
 				err := uploader.Upload(context.Background())
 				if tc.fail {
 					require.ErrorIs(t, err, ErrOffsetMismatch)
@@ -82,6 +101,7 @@ func TestTusUploadReleasesBuffer(t *testing.T) {
 					assert.True(t, uploader.upload.Finished())
 					require.NoError(t, uploader.Upload(context.Background()))
 				}
+				require.NoError(t, uploader.upload.Close())
 				ref := weak.Make(uploader.upload)
 				runtime.KeepAlive(uploader)
 				return ref
@@ -103,6 +123,7 @@ func TestTusUploadRetry(t *testing.T) {
 	defer server.Close()
 
 	uploader := newTusTestUploader(t, server, contents)
+	defer func() { require.NoError(t, uploader.upload.Close()) }()
 	require.ErrorIs(t, uploader.Upload(context.Background()), ErrOffsetMismatch)
 	assert.Zero(t, uploader.upload.Offset())
 	fail.Store(false)
