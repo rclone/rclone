@@ -2080,21 +2080,25 @@ Scroll down and click "+ Add users". Add yourself as a test user and press save.
    If you chose "Internal" you don't need to publish and can skip straight to
    Step 10 but your destination drive must be part of the same Google Workspace.)
 
-9. Go to "Audience" and then click "PUBLISH APP" button and confirm.
-   Add yourself as a test user if you haven't already.
+9. Go to "Audience" and click the "PUBLISH APP" button, then confirm.
+   Publishing the app changes its status from "Testing" to "In production". This is important because
+   refresh tokens for external apps in testing mode expire after 7 days (unless only basic identity
+   scopes are requested).
+   If Google asks you to provide additional information before publishing the app, go to "Branding"
+   in the left panel and enter the following:
+   - Application home page: `https://rclone.org/`
+   - Application privacy policy link: `https://rclone.org/privacy/`
+   - Application terms of service link: Leave empty (optional).
+   - Authorized domains: `rclone.org`
 
-    (If the "PUBLISH APP" button is greyed out, Google now requires a
-    homepage URL and a privacy policy URL before publishing, even for a
-    personal single-user app. Go to "Branding" in the left panel, fill in
-    "Application home page" and "Application privacy policy link" - a free
-    GitHub Pages site is fine for these if you don't have a domain of your
-    own - then "Authorized domains" with the domain you used, and click
-    Save. Return to "Audience" and the "PUBLISH APP" button should now be
-    available.)
+   Save the changes and return to "Audience" to publish the app.
+   You can use the rclone URLs above; you do not need to create your own website or privacy policy.
+   Note that publishing the app does not mean that it has been verified by Google. You may still see
+   an "unverified app" warning when authorizing rclone.
 
-10. Provide the noted client ID and client secret to rclone.
+11. Provide the noted client ID and client secret to rclone.
 
-11. Run the web-based authorization flow from within `rclone config`, by answering
+12. Run the web-based authorization flow from within `rclone config`, by answering
     "Y" when it asks "Token already configured - replace it?".
 
 Be aware that, due to the "enhanced security" recently introduced by
