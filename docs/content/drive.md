@@ -374,6 +374,27 @@ do this instead:
 - use rclone without specifying the `--drive-impersonate` option, like this:
   `rclone -v lsf gdrive:backup`
 
+#### Domain-wide delegation without a service account key
+
+If your organisation doesn't allow service account keys (for example
+with the `iam.disableServiceAccountKeyCreation` organisation policy),
+skip "Create new key" in step 1 and give rclone a JSON file holding
+only the type and the email address of the service account:
+
+```json
+{
+  "type": "service_account",
+  "client_email": "rclone@my-project.iam.gserviceaccount.com"
+}
+```
+
+rclone then has the token signed by the IAM Credentials API, using
+Application Default Credentials (for example the service account
+attached to the VM, or `gcloud auth application-default login`).
+Those credentials need the "Service Account Token Creator" role
+(`roles/iam.serviceAccountTokenCreator`) on the service account, and
+`--drive-impersonate` is required.
+
 ### Shared drives (team drives)
 
 If you want to configure the remote to point to a Google Shared Drive
