@@ -236,6 +236,16 @@ func (mask MultiEncoder) Encode(in string) string {
 			return string(QuoteRune) + "．"
 		case "．．":
 			return string(QuoteRune) + "．" + string(QuoteRune) + "．"
+		// With only one of the period encodings these would both
+		// become "．．" and collide with ".."
+		case ".．":
+			if mask.Has(EncodeLeftPeriod) {
+				return "．" + string(QuoteRune) + "．"
+			}
+		case "．.":
+			if mask.Has(EncodeRightPeriod) {
+				return string(QuoteRune) + "．．"
+			}
 		}
 	}
 
@@ -713,6 +723,14 @@ func (mask MultiEncoder) Decode(in string) string {
 			return "．"
 		case string(QuoteRune) + "．" + string(QuoteRune) + "．":
 			return "．．"
+		case "．" + string(QuoteRune) + "．":
+			if mask.Has(EncodeLeftPeriod) {
+				return ".．"
+			}
+		case string(QuoteRune) + "．．":
+			if mask.Has(EncodeRightPeriod) {
+				return "．."
+			}
 		}
 	}
 
