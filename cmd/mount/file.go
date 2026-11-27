@@ -27,6 +27,7 @@ var _ fusefs.Node = (*File)(nil)
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(f, "")("a=%+v, err=%v", a, &err)
 	a.Valid = time.Duration(f.fsys.opt.AttrTimeout)
+	a.Inode = f.File.Inode()
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512

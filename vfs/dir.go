@@ -192,6 +192,13 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// Parent returns the parent directory or nil for the root
+func (d *Dir) Parent() *Dir {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.parent
+}
+
 // hasVirtual returns whether the directory or children has virtual entries
 func (d *Dir) hasVirtual() bool {
 	return d._virtuals.Load() != 0
