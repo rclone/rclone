@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"flag"
 	"io"
 	stdfs "io/fs"
@@ -596,4 +597,74 @@ func TestAuthProxyDownloadOutlivesCache(t *testing.T) {
 	rest, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.True(t, contents == string(start)+string(rest), "download corrupted")
+}
+
+// TestAuthProxyFilter checks per-user _filter and _config from the auth proxy
+// over the HTTP server.
+func TestAuthProxyFilter(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "allow"), 0777))
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "deny"), 0777))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "allow/a.txt"), []byte("from allow\n"), 0666))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "deny/b.txt"), []byte("from deny\n"), 0666))
+
+	overrides, err := json.Marshal(map[string]any{
+		"alice": map[string]any{
+			"_filter": map[string]any{"IncludeRule": []string{"allow/**"}},
+			"_config": map[string]any{"IgnoreCaseSync": true},
+		},
+		"bob": map[string]any{
+			"_filter": map[string]any{"IncludeRule": []string{"deny/**"}},
+		},
+	})
+	require.NoError(t, err)
+	t.Setenv("RCLONE_TEST_PROXY_USER_OVERRIDES", string(overrides))
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	proxy.Opt.AuthProxy = "go run " + prog + " " + root
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+
+	s, testURL := start(context.Background(), t, nil)
+	defer func() { assert.NoError(t, s.Shutdown()) }()
+
+	do := func(method, urlPath, user string) (int, string) {
+		req, err := http.NewRequest(method, testURL+urlPath, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth(user, "pw")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		body, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		require.NoError(t, err)
+		return resp.StatusCode, string(body)
+	}
+
+	status, body := do("GET", "/ALLOW/A.TXT", "alice")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "from allow\n", body)
+
+	status, _ = do("GET", "/deny/b.txt", "alice")
+	assert.Equal(t, http.StatusNotFound, status)
+	status, _ = do("HEAD", "/deny/b.txt", "alice")
+	assert.Equal(t, http.StatusNotFound, status)
+
+	status, body = do("GET", "/", "alice")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, body, "allow")
+	assert.NotContains(t, body, "deny")
+
+	status, body = do("GET", "/deny/b.txt", "bob")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "from deny\n", body)
+
+	status, _ = do("GET", "/allow/a.txt", "bob")
+	assert.Equal(t, http.StatusNotFound, status)
+
+	status, body = do("GET", "/", "bob")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, body, "deny")
+	assert.NotContains(t, body, "allow")
 }
