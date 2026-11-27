@@ -142,11 +142,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Make sure the root directory exists
-	rootDirID := f.dirIDPath("")
-	// TODO: make directory ID backup
-	err = f.wrapped.Mkdir(ctx, rootDirID)
+	rootDir, err := f.makeDirIDPath(ctx, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create root dir at %q: %s", rootDirID, err)
+		return nil, fmt.Errorf("failed to create root dir at %q: %s", rootDir, err)
 	}
 
 	f.dirCache = dircache.New(root, "", f)
@@ -415,12 +413,9 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 func (f *Fs) CreateDir(ctx context.Context, parentID string, leafName string) (newID string, err error) {
 	node := f.node(leafName, parentID)
 	newID = uuid.NewString()
-	dirPath := f.dirIDPath(newID)
 
-	// Put directory ID backup file, thus creating the directory
-	data := f.encryptReader(bytes.NewBuffer([]byte(newID)))
-	info := object.NewStaticObjectInfo(path.Join(dirPath, dirIDBackupC9r), time.Now(), -1, true, nil, nil)
-	_, err = f.wrapped.Put(ctx, data, info)
+	// Create the directory
+	_, err = f.makeDirIDPath(ctx, newID)
 	if err != nil {
 		return
 	}
@@ -962,6 +957,15 @@ func (f *Fs) dirIDPath(dirID string) string {
 	dirPath := path.Join("d", encryptedDirID[:2], encryptedDirID[2:])
 	// TODO: verify that dirid.c9r inside the directory contains dirID
 	return dirPath
+}
+
+// makeDirIDPath creates the directory at the encrypted path for the given ID and returns the path.
+func (f *Fs) makeDirIDPath(ctx context.Context, dirID string) (dirPath string, err error) {
+	dirPath = f.dirIDPath(dirID)
+	data := f.encryptReader(bytes.NewBuffer([]byte(dirID)))
+	info := object.NewStaticObjectInfo(path.Join(dirPath, dirIDBackupC9r), time.Now(), -1, true, nil, nil)
+	_, err = f.wrapped.Put(ctx, data, info)
+	return
 }
 
 // node represents a filesystem node as it is represented in the underlying storage, as either a .c9r node with encrypted name, or a .c9s node with sha1 of encrypted name.
