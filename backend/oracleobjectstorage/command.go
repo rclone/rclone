@@ -30,7 +30,7 @@ const (
 var commandHelp = []fs.CommandHelp{{
 	Name:  operationRename,
 	Short: "change the name of an object.",
-	Long: `This command can be used to rename a object.
+	Long: `This command can be used to rename an object.
 
 Usage example:
 

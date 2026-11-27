@@ -13,6 +13,7 @@
   --bg-toc-toggle-hover: #e4ecf4;
   --text: #212529;
   --text-dark: #333;
+  --text-code: #272822;
   --text-heading: #343a40;
   --text-secondary: #495057;
   --text-muted: #6c757d;
@@ -50,6 +51,7 @@
     --bg-toc-toggle-hover: #313131;
     --text: #dddddd;
     --text-dark: #cccccc;
+    --text-code: #f8f8f2;
     --text-heading: #dddddd;
     --text-secondary: #aaaaaa;
     --text-muted: #888888;
@@ -78,6 +80,8 @@
 
 /* ===== Reset / Base ===== */
 *, *::before, *::after { box-sizing: border-box; }
+/* Stop mobile browsers from enlarging the text in some blocks only */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
     margin: 0;
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -115,7 +119,7 @@ pre {
     line-height: 1.42857143;
     word-break: break-all;
     word-wrap: break-word;
-    color: var(--text-dark);
+    color: var(--text-code);
     background: var(--bg-code);
     border: 1px solid var(--border);
     border-radius: 0.5rem;
@@ -895,8 +899,8 @@ h2, h3, h4, h5, h6 { position: relative; }
 
 /* ===== Syntax Highlighting (Chroma) ===== */
 /* Light theme: monokailight — backgrounds use var(--bg-code) */
-.bg { color:#272822; background-color:var(--bg-code); }
-.chroma { color:#272822; background-color:var(--bg-code); }
+.bg { color:var(--text-code); background-color:var(--bg-code); }
+.chroma { color:var(--text-code); background-color:var(--bg-code); }
 .chroma .err { color:#960050; background-color:#1e0010 }
 .chroma .lnlinks { outline:none; text-decoration:none; color:inherit }
 .chroma .lntd { vertical-align:top; padding:0; margin:0; border:0; }
@@ -971,8 +975,8 @@ h2, h3, h4, h5, h6 { position: relative; }
 
 /* Dark theme: monokai */
 @media (prefers-color-scheme: dark) {
-  .bg { color:#f8f8f2; background-color:var(--bg-code); }
-  .chroma { color:#f8f8f2; background-color:var(--bg-code); }
+  .bg { color:var(--text-code); background-color:var(--bg-code); }
+  .chroma { color:var(--text-code); background-color:var(--bg-code); }
   .chroma .err { color:#960050; background-color:#1e0010 }
   .chroma .hl { background-color:#3c3d38 }
   .chroma .k { color:#66d9ef }

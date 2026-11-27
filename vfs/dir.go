@@ -39,7 +39,7 @@ type Dir struct {
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
 
-	modTimeMu sync.Mutex // protects the following
+	modTimeMu sync.Mutex // protects the following - leaf lock: take no other locks while holding it
 	modTime   time.Time
 
 	_virtuals atomic.Int32 // number of virtual directory entries in this directory and children
@@ -396,8 +396,9 @@ func (d *Dir) renameTree(dirPath string) {
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
 
+	modTime := fsDir.ModTime(d.vfs.ctx)
 	d.modTimeMu.Lock()
-	d.modTime = fsDir.ModTime(d.vfs.ctx)
+	d.modTime = modTime
 	d.modTimeMu.Unlock()
 	d.mu.Lock()
 	oldPath := d.path
@@ -756,8 +757,11 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 				node = newDir(d.vfs, d.f, d, item)
 			}
 			dir := node.(*Dir)
+			modTime := item.ModTime(d.vfs.ctx)
 			dir.mu.Lock()
-			dir.modTime = item.ModTime(d.vfs.ctx)
+			dir.modTimeMu.Lock()
+			dir.modTime = modTime
+			dir.modTimeMu.Unlock()
 			dir.entry = item
 			if dirTree != nil {
 				err = dir._readDirFromDirTree(dirTree, when)

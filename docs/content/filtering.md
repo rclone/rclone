@@ -159,7 +159,7 @@ filter will prevent rclone from using [directory filter rules](#directory_filter
 as it will instead check every path against
 the supplied regular expression(s).
 
-Here is how the `{{regexp}}` is transformed into an full regular
+Here is how the `{{regexp}}` is transformed into a full regular
 expression to match the entire path:
 
 ```text

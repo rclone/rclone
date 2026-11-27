@@ -8,6 +8,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/pool"
 )
 
 // AccountFn is a function which will be called after every read
@@ -231,6 +232,42 @@ func (h *ReOpen) Read(p []byte) (n int, err error) {
 		err = accErr
 	}
 	return n, err
+}
+
+// remaining returns the number of bytes left to read or -1 if unknown
+func (h *ReOpen) remaining() int64 {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.end < 0 {
+		return -1
+	}
+	offset := h.offset
+	if h.newOffset >= 0 {
+		offset = h.newOffset
+	}
+	return h.end - h.start - offset
+}
+
+// WriteTo writes data to w until there's no more data to write or
+// when an error occurs. The return value n is the number of bytes
+// written.
+//
+// If w implements io.ReaderFrom then that is used so w's own
+// buffering applies. Otherwise the data is copied through a buffer
+// from the global pool so the source is read in large blocks.
+func (h *ReOpen) WriteTo(w io.Writer) (n int64, err error) {
+	// Hide WriteTo so the copies below don't call back into here
+	r := struct{ io.Reader }{h}
+	if rf, ok := w.(io.ReaderFrom); ok {
+		return rf.ReadFrom(r)
+	}
+	// Don't use a pool buffer bigger than the data
+	if remaining := h.remaining(); remaining >= 0 && remaining < pool.BufferSize {
+		return io.Copy(w, r)
+	}
+	buf := pool.Global().Get()
+	defer pool.Global().Put(buf)
+	return io.CopyBuffer(w, r, buf)
 }
 
 // ReadAt reads len(p) bytes at absolute offset off without changing

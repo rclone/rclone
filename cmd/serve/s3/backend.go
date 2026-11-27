@@ -227,7 +227,10 @@ func (b *s3Backend) SetObjectTagging(ctx context.Context, bucketName, objectName
 		return err
 	}
 	node, err := _vfs.Stat(fp)
-	if err != nil || !node.IsFile() {
+	if err != nil {
+		return notFound(err, gofakes3.KeyNotFound(objectName))
+	}
+	if !node.IsFile() {
 		return gofakes3.KeyNotFound(objectName)
 	}
 	t := b.tenant(ctx)
@@ -313,7 +316,7 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 	}
 	_, err = _vfs.Stat(bucket)
 	if err != nil {
-		return nil, gofakes3.BucketNotFound(bucket)
+		return nil, notFound(err, gofakes3.BucketNotFound(bucket))
 	}
 	if prefix == nil {
 		prefix = emptyPrefix
@@ -343,6 +346,16 @@ func formatHeaderTime(t time.Time) string {
 	return t.UTC().Format("Mon, 02 Jan 2006 15:04:05") + " GMT"
 }
 
+// notFound returns notFoundErr if err means the path doesn't exist and
+// err otherwise, so that a failure reading the remote is reported to
+// the client as an error and not as a missing bucket or key.
+func notFound(err error, notFoundErr error) error {
+	if errors.Is(err, vfs.ENOENT) {
+		return notFoundErr
+	}
+	return err
+}
+
 // HeadObject returns the fileinfo for the given object name.
 //
 // Note that the metadata is not supported yet.
@@ -353,7 +366,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 	}
 	_, err = _vfs.Stat(bucketName)
 	if err != nil {
-		return nil, gofakes3.BucketNotFound(bucketName)
+		return nil, notFound(err, gofakes3.BucketNotFound(bucketName))
 	}
 
 	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
@@ -368,7 +381,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 	}
 	node, err := _vfs.Stat(fp)
 	if err != nil {
-		return nil, gofakes3.KeyNotFound(objectName)
+		return nil, notFound(err, gofakes3.KeyNotFound(objectName))
 	}
 
 	if !node.IsFile() {
@@ -422,7 +435,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}
 	_, err = _vfs.Stat(bucketName)
 	if err != nil {
-		return nil, gofakes3.BucketNotFound(bucketName)
+		return nil, notFound(err, gofakes3.BucketNotFound(bucketName))
 	}
 
 	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
@@ -440,7 +453,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}
 	node, err := _vfs.Stat(fp)
 	if err != nil {
-		return nil, gofakes3.KeyNotFound(objectName)
+		return nil, notFound(err, gofakes3.KeyNotFound(objectName))
 	}
 
 	if !node.IsFile() {
@@ -514,7 +527,10 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 // objectName stands for if its directory fp exists.
 func (b *s3Backend) dirMarkerObject(_vfs *vfs.VFS, fp, objectName string) (*gofakes3.Object, error) {
 	node, err := _vfs.Stat(fp)
-	if err != nil || !node.IsDir() {
+	if err != nil {
+		return nil, notFound(err, gofakes3.KeyNotFound(objectName))
+	}
+	if !node.IsDir() {
 		return nil, gofakes3.KeyNotFound(objectName)
 	}
 	return &gofakes3.Object{
@@ -590,7 +606,7 @@ func (b *s3Backend) PutObject(
 	}
 	_, err = _vfs.Stat(bucketName)
 	if err != nil {
-		return result, gofakes3.BucketNotFound(bucketName)
+		return result, notFound(err, gofakes3.BucketNotFound(bucketName))
 	}
 
 	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
@@ -787,7 +803,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	}
 	_, err = _vfs.Stat(bucketName)
 	if err != nil {
-		return gofakes3.BucketNotFound(bucketName)
+		return notFound(err, gofakes3.BucketNotFound(bucketName))
 	}
 	t := b.tenant(ctx)
 
@@ -854,7 +870,7 @@ func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 	}
 	_, err = _vfs.Stat(name)
 	if err != nil {
-		return gofakes3.BucketNotFound(name)
+		return notFound(err, gofakes3.BucketNotFound(name))
 	}
 
 	// The bucket may hold empty directories, which S3 clients can't
@@ -877,8 +893,10 @@ func (b *s3Backend) BucketExists(ctx context.Context, name string) (exists bool,
 		return false, err
 	}
 	_, err = _vfs.Stat(name)
-	if err != nil {
+	if errors.Is(err, vfs.ENOENT) {
 		return false, nil
+	} else if err != nil {
+		return false, err
 	}
 
 	return true, nil
@@ -898,7 +916,10 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		return result, err
 	}
 	cStat, err := _vfs.Stat(fp)
-	if err != nil || cStat.IsDir() != isMarker {
+	if err != nil {
+		return result, notFound(err, gofakes3.KeyNotFound(srcKey))
+	}
+	if cStat.IsDir() != isMarker {
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {

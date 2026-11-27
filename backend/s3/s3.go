@@ -498,7 +498,7 @@ It reads the following items from the response for a single part PUT:
 
 For multipart uploads these items aren't read.
 
-If an source object of unknown length is uploaded then rclone **will** do a
+If a source object of unknown length is uploaded then rclone **will** do a
 HEAD request.
 
 Setting this flag increases the chance for undetected upload failures,
@@ -841,8 +841,9 @@ use |-vv| to see the debug level logs.
 			Default:  sdkLogMode(0),
 			Advanced: true,
 		}, {
-			Name: "ibm_api_key",
-			Help: "IBM API Key to be used to obtain IAM token",
+			Name:      "ibm_api_key",
+			Help:      "IBM API Key to be used to obtain IAM token",
+			Sensitive: true,
 		}, {
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
@@ -4721,23 +4722,8 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	// create checksum of buffer for integrity checking
 	// currently there is no way to calculate the md5 without reading the chunk a 2nd time (1st read is in uploadMultipart)
 	// possible in AWS SDK v2 with trailers?
-	//
-	// io.Copy reads with a 32 KiB buffer from a reader that implements
-	// neither WriterTo nor a memory backed Read - which is what a local
-	// file opened by a multi-thread copy is - so give it a bigger one to
-	// keep the source reads a useful size. It isn't taken from the pool,
-	// where it could wait for ever on --max-buffer-memory. A reader with
-	// WriterTo, such as a pool.RW, doesn't need one.
 	m := md5.New()
-	var (
-		currentChunkSize int64
-		err              error
-	)
-	if _, ok := reader.(io.WriterTo); ok {
-		currentChunkSize, err = io.Copy(m, reader)
-	} else {
-		currentChunkSize, err = io.CopyBuffer(m, reader, make([]byte, multipart.BufferSize))
-	}
+	currentChunkSize, err := io.Copy(m, reader)
 	if err != nil {
 		return -1, err
 	}

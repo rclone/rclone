@@ -566,7 +566,7 @@ func init() {
 This takes the following parameters:
 
 - concurrency - int - do this many commands concurrently. Defaults to |--transfers| if not set.
-- inputs - an list of inputs to the commands with an extra |_path| parameter
+- inputs - a list of inputs to the commands with an extra |_path| parameter
 
 |||json
 {

@@ -49,7 +49,7 @@ Enter a string value. Press Enter for the default ("").
 remote> myRemote:path
 Comma separated list of supported checksum types.
 Enter a string value. Press Enter for the default ("md5,sha1").
-hashsums> md5
+hashes> md5
 Maximum time to keep checksums in cache. 0 = no cache, off = cache forever.
 max_age> off
 Edit advanced config? (y/n)
@@ -61,7 +61,7 @@ Remote config
 [Hasher1]
 type = hasher
 remote = myRemote:path
-hashsums = md5
+hashes = md5
 max_age = off
 --------------------
 y) Yes this is OK

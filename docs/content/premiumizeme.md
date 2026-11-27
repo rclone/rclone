@@ -88,7 +88,7 @@ List all the files in your premiumize.me
 rclone ls remote:
 ```
 
-To copy a local directory to an premiumize.me directory called backup
+To copy a local directory to a premiumize.me directory called backup
 
 ```console
 rclone copy /home/source remote:backup

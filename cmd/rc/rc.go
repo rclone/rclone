@@ -52,7 +52,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "rc commands parameter",
 	Short: `Run a command against a running rclone.`,
 	Long: strings.ReplaceAll(`This runs a command against a running rclone.  Use the |--url| flag to
-specify an non default URL to connect on.  This can be either a
+specify a non-default URL to connect on.  This can be either a
 ":port" which is taken to mean <http://localhost:port> or a
 "host:port" which is taken to mean <http://host:port>.
 

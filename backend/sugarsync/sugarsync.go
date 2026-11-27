@@ -178,6 +178,11 @@ func init() {
 			Advanced:  true,
 			Sensitive: true,
 		}, {
+			Name:      "username",
+			Help:      "Username (email address) used during setup - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,

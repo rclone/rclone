@@ -196,6 +196,30 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, time.Time{}, s.RetryAfter())
 }
 
+func TestStatsTotalErrors(t *testing.T) {
+	ctx := context.Background()
+	s := NewStats(ctx)
+	assert.Equal(t, int64(0), s.GetTotalErrors())
+
+	_ = s.Error(fmt.Errorf("error 1"))
+	_ = s.Error(fmt.Errorf("error 2"))
+	assert.Equal(t, int64(2), s.GetErrors())
+	assert.Equal(t, int64(2), s.GetTotalErrors())
+
+	// ResetErrors is called between retries so keeps the total
+	s.ResetErrors()
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.Equal(t, int64(2), s.GetTotalErrors())
+
+	s.Errors(3)
+	assert.Equal(t, int64(3), s.GetErrors())
+	assert.Equal(t, int64(5), s.GetTotalErrors())
+
+	s.ResetCounters()
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.Equal(t, int64(0), s.GetTotalErrors())
+}
+
 func TestStatsTotalDuration(t *testing.T) {
 	ctx := context.Background()
 	startTime := time.Now()
@@ -327,6 +351,37 @@ func TestRemoteStats(t *testing.T) {
 		assert.Equal(t, float64(10), rs["transferTime"])
 		assert.Greater(t, rs["elapsedTime"], float64(0))
 	})
+}
+
+func TestRemoteStatsConcurrentError(t *testing.T) {
+	ctx := context.Background()
+	s := NewStats(ctx)
+
+	// RemoteStats must not read s.errors / s.lastError without holding
+	// the lock while Error writes them - run with -race to check.
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 1000 {
+				_ = s.Error(fmt.Errorf("test error"))
+			}
+		}()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 1000 {
+				_, err := s.RemoteStats(false)
+				assert.NoError(t, err)
+			}
+		}()
+	}
+	wg.Wait()
+
+	rs, err := s.RemoteStats(false)
+	require.NoError(t, err)
+	assert.Equal(t, "test error", rs["lastError"])
 }
 
 // make time ranges from string description for testing

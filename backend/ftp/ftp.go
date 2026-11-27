@@ -134,6 +134,25 @@ So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "trust_pasv_ip",
+			Help: `Trust the IP address in the server's PASV reply.
+
+By default rclone ignores the IP address in the PASV reply and
+makes the data connection to the same host as the control
+connection. Enable this option to trust the IP address in the
+PASV reply instead, which is needed for servers whose PASV reply
+legitimately points at a different host than the control
+connection.
+
+The default is false to prevent a malicious server making direct
+connections to other hosts on your network.
+
+Try this option if transfers hang or fail with connection-refused
+errors after upgrading to >= v1.76.0.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -268,6 +287,7 @@ type Options struct {
 	DisableUTF8             bool                 `config:"disable_utf8"`
 	WritingMDTM             bool                 `config:"writing_mdtm"`
 	ForceListHidden         bool                 `config:"force_list_hidden"`
+	TrustPasvIP             bool                 `config:"trust_pasv_ip"`
 	IdleTimeout             fs.Duration          `config:"idle_timeout"`
 	CloseTimeout            fs.Duration          `config:"close_timeout"`
 	ShutTimeout             fs.Duration          `config:"shut_timeout"`
@@ -522,6 +542,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
 	}
+	if f.opt.TrustPasvIP {
+		ftpConfig = append(ftpConfig, ftp.DialWithTrustPasvIP(true))
+	}
 	if f.opt.DisableMLSD {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
 	}
@@ -760,6 +783,17 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return f.drainPool(ctx)
 }
 
+// pasvError returns err with advice to set --ftp-trust-pasv-ip if the data
+// connection failed because the IP in the server's PASV reply was ignored
+func (f *Fs) pasvError(err error) error {
+	var pasvErr *ftp.PasvIPIgnoredError
+	// trust_pasv_ip makes no difference when connecting through a proxy
+	if f.opt.SocksProxy != "" || f.proxyURL != nil || !errors.As(err, &pasvErr) {
+		return err
+	}
+	return fmt.Errorf("%w: rclone ignored the IP %s in the server's PASV reply for security - set --ftp-trust-pasv-ip if you trust this server", pasvErr.Err, pasvErr.PasvHost)
+}
+
 // translateErrorFile turns FTP errors into rclone errors if possible for a file
 func translateErrorFile(err error) error {
 	if errX := textprotoError(err); errX != nil {
@@ -847,7 +881,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
-		return nil, translateErrorFile(err)
+		return nil, translateErrorFile(f.pasvError(err))
 	}
 	for _, file := range files {
 		f.entryToStandard(file)
@@ -930,7 +964,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	select {
 	case listErr = <-errchan:
 		timer.Stop()
-		return nil, translateErrorDir(listErr)
+		return nil, translateErrorDir(f.pasvError(listErr))
 	case files = <-resultchan:
 		timer.Stop()
 	case <-timer.C:
@@ -1373,7 +1407,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("open: %w", err)
+		return nil, fmt.Errorf("open: %w", o.fs.pasvError(err))
 	}
 
 	rc = &ftpReadCloser{rc: readers.NewLimitedReadCloser(fd, limit), c: c, f: o.fs}
@@ -1419,7 +1453,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// recycle connection in advance to let remove() find free token
 		o.fs.putFtpConnection(nil, err)
 		remove()
-		return fmt.Errorf("update stor: %w", err)
+		return fmt.Errorf("update stor: %w", o.fs.pasvError(err))
 	}
 	o.fs.putFtpConnection(&c, nil)
 	if o.fs.opt.NoCheckUpload {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
@@ -594,4 +595,42 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1, file4)
+}
+
+func TestCopyFileMaxErrors(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.Stats(ctx).ResetCounters()
+
+	file1 := r.WriteFile("TestCopyFileMaxErrors/file1", "file1 contents", t1)
+	file2 := r.WriteFile("TestCopyFileMaxErrors/file2", "file2 contents", t2)
+	file3 := r.WriteFile("TestCopyFileMaxErrors/file3", "file3 contents", t2)
+
+	ci.MaxErrors = 1
+	ci.CutoffMode = fs.CutoffModeHard
+
+	// file1: no errors yet so the file gets transferred
+	accounting.Stats(ctx).ResetCounters()
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+
+	// file2: limit reached in hard mode gives a fatal error
+	_ = accounting.Stats(ctx).Error(errors.New("boom"))
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	require.Error(t, err)
+	require.ErrorIs(t, err, accounting.ErrorMaxErrorsReached)
+	assert.True(t, fserrors.IsFatalError(err))
+	r.CheckRemoteItems(t, file1)
+
+	// file3: limit reached in soft mode gives a no retry error
+	ci.CutoffMode = fs.CutoffModeSoft
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file3.Path, file3.Path)
+	require.Error(t, err)
+	require.ErrorIs(t, err, accounting.ErrorMaxErrorsReached)
+	assert.True(t, fserrors.IsNoRetryError(err))
+	assert.False(t, fserrors.IsFatalError(err))
+	r.CheckLocalItems(t, file1, file2, file3)
+	r.CheckRemoteItems(t, file1)
 }

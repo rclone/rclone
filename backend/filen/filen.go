@@ -2,6 +2,7 @@
 package filen
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -254,6 +255,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		ChunkWriterDoesntSeek:   true,
+		CaseInsensitive:         true,
 	}).Fill(ctx, fileSystem)
 
 	fileSystem.root = Directory{
@@ -448,6 +450,7 @@ type chunkWriter struct {
 	pacer           *fs.Pacer
 	bucketAndRegion chan client.V3UploadResponse
 	chunkSize       int64
+	chunkBufs       sync.Pool // of *chunkBuffers, so WriteChunk doesn't allocate per call
 
 	chunksLock      sync.Mutex
 	knownChunks     map[int64][]byte // known chunks to be hashed
@@ -464,28 +467,32 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	return fserrors.ShouldRetry(err), err
 }
 
+// chunkBuffers holds a sub-chunk of a WriteChunk call while it is uploaded
+type chunkBuffers struct {
+	upload    *sdk.ChunkBuffer // encrypted in place by each upload attempt
+	plaintext []byte           // the sub-chunk as read from the source
+}
+
 func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error) {
 	realChunkNumber := int64(chunkNumber) * (cw.chunkSize) / sdk.ChunkSize
-	chunk := make([]byte, sdk.ChunkSize, sdk.ChunkSize+cw.EncryptionKey.Cipher.Overhead())
+	bufs, _ := cw.chunkBufs.Get().(*chunkBuffers)
+	if bufs == nil {
+		bufs = &chunkBuffers{upload: cw.NewChunkBuffer(), plaintext: make([]byte, sdk.ChunkSize)}
+	}
+	defer cw.chunkBufs.Put(bufs)
 
 	totalWritten := int64(0)
 	for sliceStart := int64(0); sliceStart < cw.chunkSize; sliceStart += sdk.ChunkSize {
-		chunk = chunk[:sdk.ChunkSize]
-		chunkRead := 0
-		for {
-			read, err := reader.Read(chunk[chunkRead:])
-			chunkRead += read
-			if err == io.EOF || chunkRead == sdk.ChunkSize {
-				break
-			}
-			if err != nil {
-				return 0, err
-			}
+		chunkRead, err := bufs.upload.Fill(reader)
+		if err != nil {
+			return 0, err
 		}
 		if chunkRead == 0 {
 			break
 		}
-		chunkReadSlice := chunk[:chunkRead]
+		// Each upload attempt encrypts bufs.upload in place, so keep the plaintext
+		// to refill it on retry, as the source reader can't seek back.
+		chunkReadSlice := bufs.plaintext[:copy(bufs.plaintext, bufs.upload.Plaintext())]
 		err = func() error {
 			cw.chunksLock.Lock()
 			defer cw.chunksLock.Unlock()
@@ -517,9 +524,16 @@ func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader i
 			return totalWritten, err
 		}
 		var resp *client.V3UploadResponse
+		retry := false
 		err = cw.pacer.Call(func() (bool, error) {
+			if retry {
+				if _, err := bufs.upload.Fill(bytes.NewReader(chunkReadSlice)); err != nil {
+					return false, err
+				}
+			}
+			retry = true
 			var err error
-			resp, err = cw.filen.UploadChunk(ctx, &cw.FileUpload, realChunkNumber, chunkReadSlice)
+			resp, err = cw.filen.UploadChunk(ctx, &cw.FileUpload, realChunkNumber, bufs.upload)
 			if err != nil {
 				return shouldRetry(ctx, err)
 			}
@@ -928,7 +942,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	defer f.filen.Unlock()
-	if oldParentPath == newParentPath {
+	if sdk.NamesEqual(oldParentPath, newParentPath) {
 		err = f.rename(ctx, obj.file, newPath, newName)
 	} else if newName == oldName {
 		err = f.move(ctx, obj.file, newPath, newParentPath)
@@ -1103,7 +1117,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirNotFound
 	}
 
-	if dstDir != nil {
+	// Filen names are case-insensitive, so for a case-only rename
+	// the destination is found and is the source directory itself
+	if dstDir != nil && dstDir.GetUUID() != srcDirInt.GetUUID() {
 		return fs.ErrorDirExists
 	}
 
@@ -1123,7 +1139,7 @@ func (f *Fs) dirMoveEntireDir(ctx context.Context, srcDir *types.Directory, oldP
 	var err error
 	if oldPath == newPath {
 		return fs.ErrorDirExists
-	} else if oldParentPath == newParentPath {
+	} else if sdk.NamesEqual(oldParentPath, newParentPath) {
 		err = f.rename(ctx, srcDir, newPath, newName)
 	} else if newName == oldName {
 		err = f.move(ctx, srcDir, newPath, newParentPath)

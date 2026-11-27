@@ -6,11 +6,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 
+	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -182,4 +186,49 @@ func TestOpenHTTPStatus(t *testing.T) {
 		assert.Equal(t, int32(1), hits.Load())
 		assert.Equal(t, int32(1), closed.Load())
 	})
+}
+
+// TestCaptchaTokenRefreshUsesCallerContext pins the fix for a mount that wedged
+// permanently: the token source used to keep the ctx the Fs was created with, so
+// one cancelled ctx there made every later refresh fail with "context canceled",
+// and the failed fetch was wrapped in fserrors.FatalError so nothing retried.
+func TestCaptchaTokenRefreshUsesCallerContext(t *testing.T) {
+	var sawCanceled atomic.Bool
+	client := &http.Client{Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		sawCanceled.Store(r.Context().Err() != nil)
+		// behave like a real transport: a cancelled context fails the request
+		if err := r.Context().Err(); err != nil {
+			return nil, err
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"captcha_token":"fresh","expires_in":300}`)),
+			Request:    r,
+		}, nil
+	})}
+	m := configmap.Simple{}
+	cts := &CaptchaTokenSource{
+		m:     m,
+		opt:   &Options{},
+		token: &api.CaptchaToken{},
+		rst:   newPikpakClient(client, &Options{}),
+	}
+	opts := &rest.Opts{Method: "GET", RootURL: "https://example.invalid/drive/v1/about"}
+
+	// a cancelled request context must fail this call only
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := cts.Token(cancelled, opts)
+	require.Error(t, err)
+	require.True(t, sawCanceled.Load(), "request should carry the cancelled caller context")
+
+	// ... and the next call with a live context must recover
+	token, err := cts.Token(context.Background(), opts)
+	require.NoError(t, err)
+	assert.Equal(t, "fresh", token)
+	assert.False(t, sawCanceled.Load(), "request should carry the caller context, not a stored one")
+	value, ok := m.Get("captcha_token")
+	assert.True(t, ok)
+	assert.Contains(t, value, "fresh")
 }

@@ -548,7 +548,7 @@ func SharedClientIDWarning(name, service, helpURL string, m configmap.Mapper) {
 	if clientID, _ := m.Get(config.ConfigClientID); clientID != "" {
 		return
 	}
-	fs.Logf(name, "This remote uses rclone's shared %s client_id, which is being retired and will stop working during 2026. Create your own client_id to avoid interruption: %s", service, helpURL)
+	fs.Logf(name, "This remote uses rclone's shared %s client_id, which will be heavily rate limited from 1st April 2027. Create your own client_id to avoid interruption: %s", service, helpURL)
 }
 
 // SharedClientIDConfigConfirm returns a config wizard Yes/No step

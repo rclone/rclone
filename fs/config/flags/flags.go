@@ -3,6 +3,8 @@
 package flags
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -148,25 +150,32 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 		if isOption {
 			_, isStringArray = opt.Default.([]string)
 		}
+		// redact renders v for the log, hiding it if the option is a password or sensitive
+		redact := func(v string) string {
+			if !isOption {
+				return fmt.Sprintf("%q", v)
+			}
+			return fs.RedactOptionValue(fs.GetConfig(context.Background()), opt, v)
+		}
 		if isStringArray {
 			// Treat stringArray differently, treating the environment variable as a CSV array
 			var list fs.CommaSepList
 			err := list.Set(envValue)
 			if err != nil {
-				fs.Fatalf(nil, "Invalid value when setting stringArray --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+				fs.Fatalf(nil, "Invalid value when setting stringArray --%s from environment variable %s=%s: %v", name, envKey, redact(envValue), err)
 			}
 			// Set both the Value (so items on the command line get added) and DefValue so the help is correct
 			opt.Value = ([]string)(list)
 			flag.DefValue = list.String()
 			for _, v := range list {
-				fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, v, envKey, envValue)
+				fs.Debugf(nil, "Setting --%s %s from environment variable %s=%s", name, redact(v), envKey, redact(envValue))
 			}
 		} else {
 			err := flags.Set(name, envValue)
 			if err != nil {
-				fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+				fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%s: %v", name, envKey, redact(envValue), err)
 			}
-			fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
+			fs.Debugf(nil, "Setting --%s %s from environment variable %s=%s", name, redact(flag.Value.String()), envKey, redact(envValue))
 			flag.DefValue = envValue
 			// This is a default from the environment, not an explicit
 			// flag on the command line, so don't let it take precedence

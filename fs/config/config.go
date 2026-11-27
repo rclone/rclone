@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mitchellh/go-homedir"
@@ -120,7 +121,9 @@ var (
 	configPath string
 	cacheDir   string
 	data       Storage
-	dataLoaded bool
+
+	dataLoadedMu sync.Mutex
+	dataLoaded   bool
 )
 
 func init() {
@@ -343,6 +346,9 @@ func SetConfigPath(path string) (err error) {
 // SetData sets new config file storage
 func SetData(newData Storage) {
 	// If no config file, use in-memory config (which is the default)
+	dataLoadedMu.Lock()
+	defer dataLoadedMu.Unlock()
+
 	if configPath == "" {
 		return
 	}
@@ -360,6 +366,10 @@ var ErrorConfigFileNotFound = errors.New("config file not found")
 
 // LoadedData ensures the config file storage is loaded and returns it
 func LoadedData() Storage {
+
+	dataLoadedMu.Lock()
+	defer dataLoadedMu.Unlock()
+
 	if !dataLoaded {
 		// Set RCLONE_CONFIG_DIR for backend config and subprocesses
 		// If empty configPath (in-memory only) the value will be "."
@@ -569,6 +579,8 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 	choices := configmap.Simple{}
 	ephemeral := configmap.Simple{}
 	m := fs.ConfigMap(ri.Prefix, ri.Options, name, nil)
+	// The user may set keys which aren't backend options
+	userM := fs.ConfigMap(ri.Prefix, nil, name, nil)
 
 	// Set the config
 	for k, v := range keyValues {
@@ -590,7 +602,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 		}
 		choices.Set(k, vStr)
 		if !strings.HasPrefix(k, fs.ConfigKeyEphemeralPrefix) {
-			m.Set(k, vStr)
+			userM.Set(k, vStr)
 		} else {
 			ephemeral.Set(k, vStr)
 		}

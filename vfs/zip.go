@@ -44,7 +44,7 @@ func CreateZip(ctx context.Context, dir *Dir, w io.Writer) (err error) {
 				}
 				fs.CheckClose(in, &err)
 			case *Dir:
-				name := root + e.Path()
+				name := root + e.Name()
 				if name != "" && name[len(name)-1] != '/' {
 					name += "/"
 				}

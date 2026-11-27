@@ -101,7 +101,7 @@ List all the files in your Koofr
 rclone ls koofr:
 ```
 
-To copy a local directory to an Koofr directory called backup
+To copy a local directory to a Koofr directory called backup
 
 ```console
 rclone copy /home/source koofr:backup

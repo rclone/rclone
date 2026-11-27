@@ -268,6 +268,10 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
+		if maxErrorsReached(ci) {
+			fs.Errorf(nil, "Not retrying as --max-errors limit reached")
+			break
+		}
 		if accounting.GlobalStats().Errored() && !accounting.GlobalStats().HadRetryError() {
 			fs.Errorf(nil, "Can't retry any of the errors - not attempting retries")
 			break
@@ -502,6 +506,11 @@ func initConfig() {
 	}
 }
 
+// maxErrorsReached returns true if the --max-errors limit has been reached
+func maxErrorsReached(ci *fs.ConfigInfo) bool {
+	return ci.MaxErrors > 0 && accounting.GlobalStats().GetTotalErrors() >= int64(ci.MaxErrors)
+}
+
 func resolveExitCode(err error) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
@@ -524,6 +533,8 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.TransferExceeded)
 	case errors.Is(err, fssync.ErrorMaxDurationReached):
 		os.Exit(exitcode.DurationExceeded)
+	case errors.Is(err, accounting.ErrorMaxErrorsReached), maxErrorsReached(ci):
+		os.Exit(exitcode.ErrorsExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitcode.RetryError)
 	case fserrors.IsNoRetryError(err), fserrors.IsNoLowLevelRetryError(err):

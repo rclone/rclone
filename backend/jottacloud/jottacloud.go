@@ -50,7 +50,8 @@ const (
 	defaultMountpoint  = "Archive"
 	jfsURL             = "https://jfs.jottacloud.com/jfs/"
 	apiURL             = "https://api.jottacloud.com/"
-	wwwURL             = "https://www.jottacloud.com/"
+	contentURL         = "https://content.jottacloud.com/"
+	webAppURL          = "https://app.jottacloud.com/"
 	cachePrefix        = "rclone-jcmd5-"
 	configDevice       = "device"
 	configMountpoint   = "mountpoint"
@@ -58,6 +59,9 @@ const (
 	configClientID     = "client_id"
 	configClientSecret = "client_secret"
 	configUsername     = "username"
+	configPassword     = "password"
+	configAuthCode     = "auth_code"
+	configVersionKey   = "configVersion"
 	configVersion      = 1
 
 	defaultTokenURL = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
@@ -170,6 +174,39 @@ func init() {
 				encoder.EncodeWin | // :?"*<>|
 				encoder.EncodeInvalidUtf8 |
 				encoder.EncodePercent),
+		}, {
+			Name:     configDevice,
+			Help:     "Device to use.\n\nLeave blank to use the default device \"" + defaultDevice + "\".",
+			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
+		}, {
+			Name:     configMountpoint,
+			Help:     "Mountpoint to use.\n\nLeave blank to use the default mountpoint \"" + defaultMountpoint + "\".",
+			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
+		}, {
+			Name: configVersionKey,
+			Help: "Config version - set automatically.",
+			Hide: fs.OptionHideBoth,
+		}, {
+			Name: configTokenURL,
+			Help: "Token server URL - set automatically.",
+			Hide: fs.OptionHideBoth,
+		}, {
+			Name:      configUsername,
+			Help:      "Username (e-mail address) - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:       configPassword,
+			Help:       "Password used during legacy setup - set automatically.",
+			IsPassword: true,
+			Hide:       fs.OptionHideBoth,
+		}, {
+			Name:      configAuthCode,
+			Help:      "Verification code used during legacy setup - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
 		}}...),
 	})
 }
@@ -207,7 +244,7 @@ used. You will be asked for your account's username and password.`,
 		// Jump to next state according to config chosen
 		return fs.ConfigGoto(conf.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
-		m.Set("configVersion", fmt.Sprint(configVersion))
+		m.Set(configVersionKey, fmt.Sprint(configVersion))
 		return fs.ConfigInput("standard_token", "config_login_token", `Personal login token.
 Generate it from the account security settings in the web interface of your
 service, for the official service on https://www.jottacloud.com/web/secure.`)
@@ -256,7 +293,7 @@ service, for the official service on https://www.jottacloud.com/web/secure.`)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get authentication provider configuration: %w", err)
 		}
-		m.Set("configVersion", fmt.Sprint(configVersion))
+		m.Set(configVersionKey, fmt.Sprint(configVersion))
 		m.Set(configClientID, service.clientID)
 		m.Set(configClientSecret, "")
 		m.Set(configTokenURL, wellKnown.TokenEndpoint)
@@ -270,9 +307,9 @@ service, for the official service on https://www.jottacloud.com/web/secure.`)
 			},
 		})
 	case "legacy": // configure a jottacloud backend using legacy authentication
-		m.Set("configVersion", fmt.Sprint(legacyConfigVersion))
+		m.Set(configVersionKey, fmt.Sprint(legacyConfigVersion))
 		return fs.ConfigConfirm("legacy_api", false, "config_machine_specific", `Do you want to create a machine specific API key?
-Rclone has it's own Jottacloud API KEY which works fine as long as one
+Rclone has its own Jottacloud API KEY which works fine as long as one
 only uses rclone on a single machine. When you want to use rclone with
 this account on more than one machine it's recommended to create a
 machine specific API key. These keys can NOT be shared between
@@ -286,25 +323,25 @@ machines.`)
 			}
 			m.Set(configClientID, deviceRegistration.ClientID)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
-			fs.Debugf(nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
+			fs.Debugf(nil, "Got clientID %q and clientSecret %s", deviceRegistration.ClientID, fs.RedactValue(fs.GetConfig(ctx), deviceRegistration.ClientSecret))
 		}
 		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address) of your account.")
 	case "legacy_username":
 		m.Set(configUsername, conf.Result)
 		return fs.ConfigPassword("legacy_password", "config_password", "Password of your account. This is only used in setup, it will not be stored.")
 	case "legacy_password":
-		m.Set("password", conf.Result)
-		m.Set("auth_code", "")
+		m.Set(configPassword, conf.Result)
+		m.Set(configAuthCode, "")
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_auth_code":
 		authCode := strings.ReplaceAll(conf.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
-		m.Set("auth_code", authCode)
+		m.Set(configAuthCode, authCode)
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_do_auth":
 		username, _ := m.Get(configUsername)
-		password, _ := m.Get("password")
+		password, _ := m.Get(configPassword)
 		password = obscure.MustReveal(password)
-		authCode, _ := m.Get("auth_code")
+		authCode, _ := m.Get(configAuthCode)
 
 		srv := rest.NewClient(fshttp.NewClient(ctx))
 		clientID, _ := m.Get(configClientID)
@@ -327,8 +364,8 @@ machines.`)
 		if err == errAuthCodeRequired {
 			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification code.\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
 		}
-		m.Set("password", "")
-		m.Set("auth_code", "")
+		m.Set(configPassword, "")
+		m.Set(configAuthCode, "")
 		if err != nil {
 			return nil, fmt.Errorf("failed to get oauth token: %w", err)
 		}
@@ -916,7 +953,8 @@ func grantTypeFilter(req *http.Request) {
 func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuthClient *http.Client, ts *oauthutil.TokenSource, err error) {
 	// Check config version
 	var ver int
-	version, ok := m.Get("configVersion")
+	version, _ := m.Get(configVersionKey)
+	ok := version != ""
 	if ok {
 		ver, err = strconv.Atoi(version)
 		if err != nil {
@@ -936,7 +974,7 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 	if ver == configVersion {
 		oauthConfig.ClientID = defaultClientID
 		// if custom endpoints are set use them else stick with defaults
-		if tokenURL, ok := m.Get(configTokenURL); ok {
+		if tokenURL, _ := m.Get(configTokenURL); tokenURL != "" {
 			oauthConfig.TokenURL = tokenURL
 			// jottacloud is weird. we need to use the tokenURL as authURL
 			oauthConfig.AuthURL = tokenURL
@@ -1670,12 +1708,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.New("couldn't create public link - no uri received")
 	}
 	if result.PublicSharePath != "" {
-		webLink := joinPath(wwwURL, result.PublicSharePath)
+		webLink := joinPath(webAppURL, result.PublicSharePath)
 		fs.Debugf(nil, "Web link: %s", webLink)
 	} else {
 		fs.Debugf(nil, "No web link received")
 	}
-	directLink := joinPath(wwwURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
+	directLink := joinPath(contentURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
 	fs.Debugf(nil, "Direct link: %s", directLink)
 	return directLink, nil
 }

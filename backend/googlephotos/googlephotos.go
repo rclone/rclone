@@ -101,7 +101,7 @@ func gphotosOAuthOptions() []fs.Option {
 	opts := []fs.Option{}
 	for _, opt := range oauthutil.SharedOptions {
 		if opt.Name == config.ConfigClientID {
-			opt.Help = "OAuth Client Id.\n\nCreating your own is now strongly recommended.\nIf you leave this blank rclone uses a shared client_id which is being retired and will stop working during 2026.\nSee https://rclone.org/googlephotos/#making-your-own-client-id for how to create your own."
+			opt.Help = "OAuth Client Id.\n\nCreating your own is now strongly recommended.\nIf you leave this blank rclone uses a shared client_id which will be heavily rate limited from 1st April 2027.\nSee https://rclone.org/googlephotos/#making-your-own-client-id for how to create your own."
 		}
 		if opt.Name == config.ConfigClientSecret {
 			opt.Help = "OAuth Client Secret.\n\nLeave blank to use rclone's shared client_id.\nIf you created your own client_id then enter its client secret here."

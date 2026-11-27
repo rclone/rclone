@@ -118,7 +118,7 @@ will look like this:
 [gdrive]
 type = drive
 scope = drive
-drive_id = 1234567...
+team_drive = 1234567...
 root_folder_id = 0Abcd...
 token = {"access_token":...}
 ```
@@ -249,7 +249,7 @@ This option defaults to the first found method, which is usually `mount`
 so you generally won't need it.
 
 `persist` is a reserved boolean (true/false) option.
-In future it will allow to persist on-the-fly remotes in the plugin
+In future it will allow you to persist on-the-fly remotes in the plugin
 `rclone.conf` file.
 
 ## Connection Strings
@@ -274,7 +274,7 @@ with equivalent connection string:
 
 This difference exists because flag options `-o key=val` include not only
 backend parameters but also mount/VFS flags and possibly other settings.
-Also it allows to discriminate the `remote` option from the `crypt-remote`
+Also it allows you to discriminate the `remote` option from the `crypt-remote`
 (or similarly named backend parameters) and arguably simplifies scripting
 due to clearer value substitution.
 

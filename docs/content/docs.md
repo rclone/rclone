@@ -152,7 +152,7 @@ The main rclone commands with most used first
 
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable line-length -->
-- [rclone config](/commands/rclone_config/) - Enter an interactive configurationsession.
+- [rclone config](/commands/rclone_config/) - Enter an interactive configuration session.
 - [rclone copy](/commands/rclone_copy/) - Copy files from source to dest, skipping already copied.
 - [rclone sync](/commands/rclone_sync/) - Make source and dest identical, modifying destination only.
 - [rclone bisync](/commands/rclone_bisync/) - [Bidirectional synchronization](/bisync/) between two paths.
@@ -242,7 +242,7 @@ the config file (configured with `rclone config`).
 
 ### remote:/path/to/dir
 
-On most backends this is refers to the same directory as
+On most backends this refers to the same directory as
 `remote:path/to/dir` and that format should be preferred.  On a very
 small number of remotes (FTP, SFTP, Dropbox for business) this will
 refer to a different directory.  On these, paths without a leading `/`
@@ -1156,7 +1156,7 @@ to use half of it - 5 Mbit/s. This is 5/8 = 0.625 MiB/s so you would
 use a `--bwlimit 0.625M` parameter for rclone.
 
 On Unix systems (Linux, macOS, …) the bandwidth limiter can be toggled by
-sending a `SIGUSR2` signal to rclone. This allows to remove the limitations
+sending a `SIGUSR2` signal to rclone. This allows you to remove the limitations
 of a long running rclone transfer and to restore it back to the value specified
 with `--bwlimit` quickly when needed. Assuming there is only one rclone instance
 running, you can toggle the limiter like this:
@@ -2203,6 +2203,19 @@ Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 10 if the duration limit is reached.
 
+### --max-errors int
+
+Rclone will stop transferring when this many errors have occurred.
+Errors from previous `--retries` attempts are counted too.
+Defaults to 0 (off).
+
+When the limit is reached no new transfers will be started. Transfers
+already in progress are not interrupted. With the default `--cutoff-mode`
+of `HARD` rclone stops with a fatal error, with `SOFT` it lets the
+transfers in progress finish.
+
+Rclone will exit with exit code 11 if the error limit is reached.
+
 ### --max-transfer SizeSuffix
 
 Rclone will stop transferring when it has reached the size specified.
@@ -2215,7 +2228,8 @@ Rclone will exit with exit code 8 if the transfer limit is reached.
 
 ### --cutoff-mode HARD|SOFT|CAUTIOUS
 
-Configure the behavior of `--max-transfer` and `--max-duration`.
+Configure the behavior of `--max-transfer`, `--max-duration` and
+`--max-errors`.
 
 `HARD` will stop transferring immediately when rclone reaches the limit.
 This is the default.
@@ -2224,6 +2238,7 @@ This is the default.
 
 `CAUTIOUS` will try to prevent rclone from reaching the limit. Only applicable
 for `--max-transfer`.
+For `--max-errors` it acts like `SOFT`.
 
 ### -M, --metadata
 
@@ -3605,6 +3620,7 @@ it will log a high priority message if the retry was successful.
 - `9` - Operation successful, but no files transferred (Requires
   [`--error-on-no-transfer`](#error-on-no-transfer))
 - `10` - Duration exceeded - limit set by --max-duration reached
+- `11` - Errors exceeded - limit set by --max-errors reached
 
 ## Environment variables
 

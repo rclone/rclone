@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -477,4 +478,89 @@ func TestFileDirConflicts(t *testing.T) {
 		err := test.call(test.key)
 		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidRequest), "%s: %v", test.key, err)
 	}
+}
+
+// listErrorFs fails listings of failDir once err is set.
+type listErrorFs struct {
+	fs.Fs
+	failDir string
+	err     error
+}
+
+// List the objects and directories in dir
+func (f *listErrorFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	if f.err != nil && dir == f.failDir {
+		return nil, f.err
+	}
+	return f.Fs.List(ctx, dir)
+}
+
+// newListErrorBackend is newTestBackend with listings of failDir failing.
+func newListErrorBackend(t *testing.T, failDir string) *s3Backend {
+	ctx := context.Background()
+	// don't use newTestBackend, as the VFS for the same root would be reused
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "bucket"), 0777))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "bucket", "object.txt"), []byte("normal object"), 0666))
+	f, err := fs.NewFs(ctx, root)
+	require.NoError(t, err)
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{endpoint}
+	w, err := newServer(ctx, &listErrorFs{Fs: f, failDir: failDir, err: errors.New("listing failed")}, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	return newBackend(w)
+}
+
+func isNotFound(err error) bool {
+	return gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey) || gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchBucket)
+}
+
+// TestStatErrors checks that a failure to read the remote is returned
+// as an error and not reported as a missing bucket or key, which
+// clients treat as final and don't retry.
+func TestStatErrors(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("NotFound", func(t *testing.T) {
+		b, _ := newTestBackend(t)
+		_, err := b.HeadObject(ctx, "bucket", "missing.txt")
+		assert.True(t, isNotFound(err), "missing key: %v", err)
+		_, err = b.HeadObject(ctx, "missing", "object.txt")
+		assert.True(t, isNotFound(err), "missing bucket: %v", err)
+		exists, err := b.BucketExists(ctx, "missing")
+		require.NoError(t, err)
+		assert.False(t, exists)
+	})
+
+	t.Run("Object", func(t *testing.T) {
+		b := newListErrorBackend(t, "bucket")
+		_, err := b.HeadObject(ctx, "bucket", "object.txt")
+		assert.ErrorContains(t, err, "listing failed", "HeadObject")
+		_, err = b.GetObject(ctx, "bucket", "object.txt", nil)
+		assert.ErrorContains(t, err, "listing failed", "GetObject")
+		_, err = b.CopyObject(ctx, "bucket", "object.txt", "bucket", "copy.txt", map[string]string{})
+		assert.ErrorContains(t, err, "listing failed", "CopyObject")
+		err = b.SetObjectTagging(ctx, "bucket", "object.txt", "a=1")
+		assert.ErrorContains(t, err, "listing failed", "SetObjectTagging")
+		_, err = b.HeadObject(ctx, "bucket", "dir/")
+		assert.ErrorContains(t, err, "listing failed", "HeadObject dir marker")
+		_, err = b.GetObject(ctx, "bucket", "dir/", nil)
+		assert.ErrorContains(t, err, "listing failed", "GetObject dir marker")
+	})
+
+	t.Run("Bucket", func(t *testing.T) {
+		b := newListErrorBackend(t, "")
+		_, err := b.BucketExists(ctx, "bucket")
+		assert.ErrorContains(t, err, "listing failed", "BucketExists")
+		_, err = b.ListBucket(ctx, "bucket", nil, gofakes3.ListBucketPage{})
+		assert.ErrorContains(t, err, "listing failed", "ListBucket")
+		_, err = b.HeadObject(ctx, "bucket", "object.txt")
+		assert.ErrorContains(t, err, "listing failed", "HeadObject")
+		_, err = b.PutObject(ctx, "bucket", "new.txt", map[string]string{}, strings.NewReader("x"), 1)
+		assert.ErrorContains(t, err, "listing failed", "PutObject")
+		_, err = b.CreateMultipartUpload(ctx, "bucket", "new.txt", map[string]string{})
+		assert.ErrorContains(t, err, "listing failed", "CreateMultipartUpload")
+		err = b.DeleteBucket(ctx, "bucket")
+		assert.ErrorContains(t, err, "listing failed", "DeleteBucket")
+	})
 }

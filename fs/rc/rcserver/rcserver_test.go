@@ -391,14 +391,20 @@ func TestCheckServeRemote(t *testing.T) {
 		// Inline backend definitions can run commands (webdav bearer_token_command, sftp ssh)
 		{name: "inline webdav unauth", fsName: ":webdav,url=http://localhost,bearer_token_command=id:", wantErr: "inline remotes"},
 		{name: "inline sftp unauth", fsName: ":sftp,ssh=id:", wantErr: "inline remotes"},
-		{name: "inline local unauth", fsName: ":local:/etc", wantErr: "inline remotes"},
-		{name: "inline allowed when authed", fsName: ":local:/etc", authenticated: true, wantErr: ""},
+		{name: "inline memory unauth", fsName: ":memory:", wantErr: "inline remotes"},
+		{name: "inline webdav blocked even when authed", fsName: ":webdav,url=http://localhost,bearer_token_command=id:", authenticated: true, wantErr: "inline remotes"},
+		{name: "inline sftp blocked even when authed", fsName: ":sftp,ssh=id:", authenticated: true, wantErr: "inline remotes"},
+		{name: "inline memory blocked even when authed", fsName: ":memory:", authenticated: true, wantErr: "inline remotes"},
 		// Bare local paths allow arbitrary local file access
 		{name: "bare path unauth", fsName: "/etc/passwd", wantErr: "local paths"},
 		{name: "bare path allowed when authed", fsName: "/etc/passwd", authenticated: true, wantErr: ""},
+		// :local: without parameters is the same as a bare local path
+		{name: "inline local unauth", fsName: ":local:/etc", wantErr: "local paths"},
+		{name: "inline local allowed when authed", fsName: ":local:/etc", authenticated: true, wantErr: ""},
+		{name: "inline local with parameters blocked even when authed", fsName: ":local,copy_links:/etc", authenticated: true, wantErr: "connection string"},
 		// Connection string overrides can set command-executing options
 		{name: "connection string unauth", fsName: "remote,vendor=other:path", wantErr: "connection string"},
-		{name: "connection string allowed when authed", fsName: "remote,vendor=other:path", authenticated: true, wantErr: ""},
+		{name: "connection string blocked even when authed", fsName: "remote,vendor=other:path", authenticated: true, wantErr: "connection string"},
 		// global.* mutates process-wide config and is never allowed
 		{name: "global config unauth", fsName: "remote,global.http_proxy=x:path", wantErr: "global.http_proxy"},
 		{name: "global config blocked even when authed", fsName: "remote,global.http_proxy=x:path", authenticated: true, wantErr: "global.http_proxy"},
@@ -444,9 +450,50 @@ func TestServeRemoteUnauthenticated(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
-// With authentication configured the serve path may instantiate inline remotes
-// (the request is authenticated) but must still refuse to mutate process-wide
-// config via global.* options.
+// With --rc-no-auth the serve path serves local paths but must not
+// instantiate remotes configured by the request.
+func TestServeRemoteNoAuth(t *testing.T) {
+	tests := []testRun{{
+		Name:     "inline-remote-rejected",
+		URL:      "[:memory:]/file.txt",
+		Status:   http.StatusForbidden,
+		Contains: regexp.MustCompile(`inline remotes`),
+	}, {
+		Name:     "inline-local-served",
+		URL:      "[:local:" + testFs + "]/file.txt",
+		Status:   http.StatusOK,
+		Expected: "this is file1.txt\n",
+	}, {
+		Name:     "inline-local-with-parameters-rejected",
+		URL:      "[:local,copy_links:" + testFs + "]/file.txt",
+		Status:   http.StatusForbidden,
+		Contains: regexp.MustCompile(`connection string`),
+	}, {
+		Name:     "connection-string-rejected",
+		URL:      "[notfoundremote,vendor=other:]/",
+		Status:   http.StatusForbidden,
+		Contains: regexp.MustCompile(`connection string`),
+	}, {
+		Name:     "bare-local-path-served",
+		URL:      remoteURL + "file.txt",
+		Status:   http.StatusOK,
+		Expected: "this is file1.txt\n",
+	}, {
+		Name:     "named-remote-allowed-through",
+		URL:      "[notfoundremote:]/",
+		Status:   http.StatusInternalServerError,
+		Contains: regexp.MustCompile(`didn't find section in config file`),
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.NoAuth = true
+	testServer(t, tests, &opt)
+}
+
+// With authentication configured the serve path serves local paths but must
+// not instantiate remotes configured by the request, as a web page can make a
+// browser send a GET with its cached credentials without the server being
+// able to tell.
 func TestServeRemoteWithAuth(t *testing.T) {
 	const user, pass = "user", "pass"
 	tests := []testRun{{
@@ -457,6 +504,27 @@ func TestServeRemoteWithAuth(t *testing.T) {
 		Pass:     pass,
 		Status:   http.StatusOK,
 		Expected: "this is file1.txt\n",
+	}, {
+		Name:     "inline-local-served-when-authenticated",
+		URL:      "[:local:" + testFs + "]/file.txt",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusOK,
+		Expected: "this is file1.txt\n",
+	}, {
+		Name:     "inline-remote-rejected-when-authenticated",
+		URL:      "[:memory:]/file.txt",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusForbidden,
+		Contains: regexp.MustCompile(`inline remotes`),
+	}, {
+		Name:     "connection-string-rejected-when-authenticated",
+		URL:      "[notfoundremote,vendor=other:]/",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusForbidden,
+		Contains: regexp.MustCompile(`connection string`),
 	}, {
 		// global.* is blocked even for an authenticated request
 		Name:     "global-config-blocked-when-authenticated",

@@ -74,7 +74,7 @@ List all the files in your Quatrix
 rclone ls remote:
 ```
 
-To copy a local directory to an Quatrix directory called backup
+To copy a local directory to a Quatrix directory called backup
 
 ```console
 rclone copy /home/source remote:backup

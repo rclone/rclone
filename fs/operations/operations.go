@@ -471,7 +471,9 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
 		if dst != nil {
-			remote = transform.Path(ctx, dst.Remote(), false)
+			if !transform.Transforming(ctx) {
+				remote = dst.Remote()
+			}
 			if !SameObject(src, dst) {
 				err = DeleteFile(ctx, dst)
 				if err != nil {
@@ -2041,6 +2043,12 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 
 // MoveBackupDir moves a file to the backup dir
 func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err error) {
+	// dst.Remote() is already transformed, so don't transform it again
+	if transform.Transforming(ctx) {
+		var ci *fs.ConfigInfo
+		ctx, ci = fs.AddConfig(ctx)
+		ci.NameTransform = nil
+	}
 	remoteWithSuffix := SuffixName(ctx, dst.Remote())
 	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
 	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)

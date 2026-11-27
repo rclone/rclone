@@ -286,6 +286,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			// And remove the public link feature
 			f.features.PublicLink = nil
+			// Encrypted libraries ignore Range so every chunk
+			// would download the file from the start
+			f.features.NoMultiThreading = true
 
 			// renew the library password every 45 minutes
 			f.renew = NewRenew(45*time.Minute, func() error {
