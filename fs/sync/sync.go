@@ -854,11 +854,6 @@ func (s *syncCopyMove) run() error {
 		}
 	}
 
-	// Update modtimes for directories if necessary
-	if s.setDirModTime && s.setDirModTimeAfter {
-		s.processError(s.setDelayedDirModTimes(s.ctx))
-	}
-
 	// Prune empty directories
 	if s.deleteMode != fs.DeleteModeOff {
 		if s.currentError() != nil && !s.ci.IgnoreErrors {
@@ -866,6 +861,13 @@ func (s *syncCopyMove) run() error {
 		} else {
 			s.processError(s.deleteEmptyDirectories(s.ctx, s.fdst, s.dstEmptyDirs))
 		}
+	}
+
+	// Update modtimes for directories if necessary. This is done
+	// after pruning as deleting a directory can change the modtime
+	// of the directory it was in.
+	if s.setDirModTime && s.setDirModTimeAfter {
+		s.processError(s.setDelayedDirModTimes(s.ctx))
 	}
 
 	// Delete empty fsrc subdirectories
@@ -916,6 +918,8 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 	switch x := dst.(type) {
 	case fs.Object:
 		s.logger(s.ctx, operations.MissingOnSrc, nil, x, nil)
+		// Deleting it changes the modtime of the directory it is in
+		s.markDirModifiedObject(x)
 		switch s.deleteMode {
 		case fs.DeleteModeAfter:
 			// record object as needs deleting
@@ -939,6 +943,12 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 			s.dstEmptyDirs[dst.Remote()] = dst
 			s.dstEmptyDirsMu.Unlock()
 			s.logger(s.ctx, operations.MissingOnSrc, nil, dst, fs.ErrorIsDir)
+			// Deleting it changes the modtime of the directory it is in
+			parent := path.Dir(dst.Remote())
+			if parent == "." {
+				parent = ""
+			}
+			s.markDirModified(parent)
 		}
 		return true
 	default:

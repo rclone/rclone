@@ -3218,3 +3218,51 @@ func blankMissingHashes(logger, lsf *bytes.Buffer) {
 	logger.Reset()
 	logger.Write(bytes.Join(loggerSplit, []byte("\n")))
 }
+
+// Test that the modtime of a directory is right after a directory in it is deleted
+func TestSyncDirModTimeAfterDeletingSubdirectory(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().CanHaveEmptyDirectories {
+		t.Skip("destination can't have empty directories")
+	}
+	file1 := r.WriteBoth(ctx, "dir/file.txt", "unchanged", t1)
+	r.WriteObject(ctx, "dir/deleted/sub/file.txt", "deleted from the source", t1)
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "dir/empty"))
+	// Deleting the directories from the source changed the modtime of the directory they were in
+	_, err := operations.SetDirModTime(ctx, r.Flocal, nil, "dir", t2)
+	require.NoError(t, err)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckRemoteListing(t, []fstest.Item{file1}, []string{"dir"})
+	r.CheckDirectoryModTimes(t, "dir")
+}
+
+// Test that the modtime of a directory is right after deleting from
+// it when it matched the source beforehand, as it does if an earlier
+// sync set it but had errors so deleted nothing.
+func TestSyncDirModTimeAfterDeletingWhenAlreadyEqual(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().CanHaveEmptyDirectories || r.Fremote.Features().DirSetModTime == nil {
+		t.Skip("destination can't have empty directories or set their modification times")
+	}
+	file1 := r.WriteBoth(ctx, "files/file.txt", "unchanged", t1)
+	file2 := r.WriteBoth(ctx, "dirs/file.txt", "unchanged", t1)
+	r.WriteObject(ctx, "files/deleted.txt", "deleted from the source", t1)
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "dirs/deleted"))
+	for _, dir := range []string{"files", "dirs"} {
+		for _, f := range []fs.Fs{r.Flocal, r.Fremote} {
+			_, err := operations.SetDirModTime(ctx, f, nil, dir, t2)
+			require.NoError(t, err)
+		}
+	}
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckRemoteListing(t, []fstest.Item{file1, file2}, []string{"files", "dirs"})
+	r.CheckDirectoryModTimes(t, "files", "dirs")
+}
