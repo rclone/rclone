@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"log"
 	"path/filepath"
 	"strconv"
@@ -81,6 +82,13 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	for _, name := range []string{"editFilters", "editFiltersPath2"} {
+		if edit, err := in.GetBool(name); err == nil && edit {
+			return nil, rc.NewErrParamInvalid(fmt.Errorf("%s is interactive, so it can only be used on the command line", name))
+		} else if rc.NotErrParamNotFound(err) {
+			return nil, err
+		}
+	}
 	if opt.Resync, err = in.GetBool("resync"); rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
