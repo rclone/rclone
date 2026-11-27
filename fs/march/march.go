@@ -45,6 +45,7 @@ type March struct {
 	NoCheckDest            bool            // transfer all objects regardless without checking dst
 	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
 	NoProcessDstOnly       bool            // if set, when source listing finishes, cancel the dst listing
+	MatchTypeChanges       bool            // if set, call Match for a file in one and a directory in the other with the same name, which NoProcessDstOnly must not be set with
 	// internal state
 	srcListDir   listDirFn // function to call to list a directory in the src
 	dstListDir   listDirFn // function to call to list a directory in the dst
@@ -102,11 +103,13 @@ func (m *March) srcOrDstKey(entry fs.DirEntry, isSrc bool) string {
 		name = transform(name)
 	}
 	// Suffix entries to make identically named files and
-	// directories sort consistently with directories first.
+	// directories sort consistently with directories first. The
+	// suffix starts with a character which can't be in a name, so
+	// that nothing else sorts between them.
 	if isDirectory {
-		name += "D"
+		name += "/D"
 	} else {
-		name += "F"
+		name += "/F"
 	}
 	return name
 }
@@ -310,6 +313,7 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel fun
 		src, dst                 fs.DirEntry
 		srcHasMore, dstHasMore   = true, true
 		srcName, dstName         string
+		srcDir, dstDir           fs.DirEntry // directory held back as the other side has a file of the same name
 	)
 	srcDone := func() {
 		srcPrevName = srcName
@@ -365,13 +369,49 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel fun
 				panic("Out of order listing in destination")
 			}
 		}
+		// A directory was held back because the other side has a
+		// file of the same name. If the directory's side has that
+		// file too then they are unrelated, otherwise one has
+		// taken the place of the other.
+		if srcDir != nil {
+			if srcName == dstName {
+				srcOnly(srcDir)
+			} else {
+				match(dst, srcDir)
+				dstDone()
+			}
+			srcDir = nil
+			continue
+		}
+		if dstDir != nil {
+			if srcName == dstName {
+				dstOnly(dstDir)
+			} else {
+				match(dstDir, src)
+				srcDone()
+			}
+			dstDir = nil
+			continue
+		}
 		switch {
 		case src != nil && dst != nil:
 			// we can't use CompareDirEntries because srcName, dstName could
 			// be different from src.Remote() or dst.Remote()
 			srcType := fs.DirEntryType(src)
 			dstType := fs.DirEntryType(dst)
-			if srcName > dstName || (srcName == dstName && srcType > dstType) {
+			if m.MatchTypeChanges && srcType != dstType && srcName[:len(srcName)-1] == dstName[:len(dstName)-1] {
+				// The names only differ in the suffix for their
+				// type. Directories sort first so the directory
+				// is held back until it is known whether its
+				// side has a file of the same name too.
+				if _, isDir := src.(fs.Directory); isDir {
+					srcDir = src
+					srcDone()
+				} else {
+					dstDir = dst
+					dstDone()
+				}
+			} else if srcName > dstName || (srcName == dstName && srcType > dstType) {
 				dstOnly(dst)
 				dstDone()
 			} else if srcName < dstName || (srcName == dstName && srcType < dstType) {
@@ -547,11 +587,16 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	}, func(dst, src fs.DirEntry) {
 		recurse := m.Callback.Match(m.Ctx, dst, src)
 		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {
+			// A file has nothing in it to list
+			_, srcIsDir := src.(fs.Directory)
+			_, dstIsDir := dst.(fs.Directory)
 			jobs = append(jobs, listDirJob{
 				srcRemote: src.Remote(),
 				dstRemote: dst.Remote(),
 				srcDepth:  job.srcDepth - 1,
 				dstDepth:  job.dstDepth - 1,
+				noSrc:     !srcIsDir,
+				noDst:     !dstIsDir,
 			})
 		}
 	})

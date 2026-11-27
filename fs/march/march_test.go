@@ -446,6 +446,7 @@ func TestMatchListings(t *testing.T) {
 		d    = mockobject.Object("d")
 		uE1  = mockobject.Object("é") // one of the unicode E characters
 		uE2  = mockobject.Object("é")  // a different unicode E character
+		AE   = mockobject.Object("AE") // sorts between "AD" and "AF"
 		dirA = mockdir.New("A")
 		dirb = mockdir.New("b")
 	)
@@ -457,6 +458,7 @@ func TestMatchListings(t *testing.T) {
 		dstOnly    fs.DirEntries
 		matches    []matchPair // pairs of output
 		transforms []matchTransformFn
+		typeChange bool // set MatchTypeChanges
 	}{
 		{
 			what: "only src or dst",
@@ -646,6 +648,108 @@ func TestMatchListings(t *testing.T) {
 				{A, A},
 			},
 		},
+		{
+			what: "File and directory with same name without type changes",
+			input: fs.DirEntries{
+				a, nil,
+				dirA, A,
+				b, dirb,
+				c, c,
+			},
+			srcOnly: fs.DirEntries{dirA, a, b},
+			dstOnly: fs.DirEntries{A, dirb},
+			matches: []matchPair{
+				{c, c},
+			},
+		},
+		{
+			what:       "Directory in place of file and file in place of directory",
+			typeChange: true,
+			input: fs.DirEntries{
+				a, nil,
+				dirA, A,
+				b, dirb,
+				c, c,
+			},
+			srcOnly: fs.DirEntries{a},
+			matches: []matchPair{
+				{dirA, A},
+				{b, dirb},
+				{c, c},
+			},
+		},
+		{
+			what:       "Type change is last entry",
+			typeChange: true,
+			input: fs.DirEntries{
+				dirA, A,
+			},
+			matches: []matchPair{
+				{dirA, A},
+			},
+		},
+		{
+			what:       "Type change with a name which sorts between its two types",
+			typeChange: true,
+			input: fs.DirEntries{
+				dirA, AE,
+				AE, A,
+				c, c,
+			},
+			matches: []matchPair{
+				{dirA, A},
+				{AE, AE},
+				{c, c},
+			},
+		},
+		{
+			what:       "Type change in destination is last entry",
+			typeChange: true,
+			input: fs.DirEntries{
+				b, dirb,
+			},
+			matches: []matchPair{
+				{b, dirb},
+			},
+		},
+		{
+			what:       "File and directory with same name in source and file in destination",
+			typeChange: true,
+			input: fs.DirEntries{
+				dirA, A,
+				A, nil,
+				c, nil,
+			},
+			srcOnly: fs.DirEntries{dirA, c},
+			matches: []matchPair{
+				{A, A},
+			},
+		},
+		{
+			what:       "File and directory with same name in destination and file in source",
+			typeChange: true,
+			input: fs.DirEntries{
+				b, dirb,
+				nil, b,
+				nil, c,
+			},
+			dstOnly: fs.DirEntries{dirb, c},
+			matches: []matchPair{
+				{b, b},
+			},
+		},
+		{
+			what:       "File and directory with same name in both with type changes",
+			typeChange: true,
+			input: fs.DirEntries{
+				dirA, A,
+				A, dirA,
+			},
+			matches: []matchPair{
+				{dirA, dirA},
+				{A, A},
+			},
+		},
 	} {
 		t.Run(fmt.Sprintf("TestMatchListings-%s", test.what), func(t *testing.T) {
 			ctx := context.Background()
@@ -653,8 +757,9 @@ func TestMatchListings(t *testing.T) {
 
 			// Skeleton March for testing
 			m := March{
-				Ctx:        context.Background(),
-				transforms: test.transforms,
+				Ctx:              context.Background(),
+				transforms:       test.transforms,
+				MatchTypeChanges: test.typeChange,
 			}
 
 			// Make a channel to send the source (0) or dest (1) using a list.Sorter

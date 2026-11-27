@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync/trackrenames"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/errcount"
 	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
@@ -819,6 +820,10 @@ func (s *syncCopyMove) run() error {
 		NoCheckDest:            s.noCheckDest,
 		NoUnicodeNormalization: s.noUnicodeNormalization,
 		NoProcessDstOnly:       s.deleteMode == fs.DeleteModeOff && !s.usingLogger,
+		// A file and a directory of the same name can both be in a
+		// bucket based destination, or one which allows duplicates,
+		// so are left to be synced separately
+		MatchTypeChanges: s.deleteMode != fs.DeleteModeOff && !s.fdst.Features().BucketBased && !s.fdst.Features().DuplicateFiles,
 	}
 	s.processError(m.Run(s.ctx))
 
@@ -1152,8 +1157,98 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 	return false
 }
 
+// makeWay deletes dst, which is a file where the source has a
+// directory or a directory where the source has a file, so that
+// what is in the source can be copied in its place.
+//
+// This can't wait until the end of the sync as other deletes do. A
+// directory is deleted as Purge would, except that files go to the
+// --backup-dir if there is one.
+//
+// It returns false if dst is still there, which it is left if
+// deleting it isn't allowed, or if there have been errors as for
+// other deletes, or if not all of a directory would be deleted
+// because of --max-depth or the filters, or if it would only be
+// renamed with --suffix, or if src is a file which can't be read.
+func (s *syncCopyMove) makeWay(dst, src fs.DirEntry) bool {
+	if s.deleteMode == fs.DeleteModeOff || s.ci.Immutable || s.ci.IgnoreExisting || s.ci.MaxDepth >= 0 {
+		return false
+	}
+	if s.ci.Suffix != "" && s.ci.BackupDir == "" {
+		return false
+	}
+	if accounting.Stats(s.ctx).Errored() && !s.ci.IgnoreErrors {
+		return false
+	}
+	if srcObj, ok := src.(fs.Object); ok {
+		// Otherwise the destination would be left with neither
+		in, err := srcObj.Open(s.ctx)
+		if err != nil {
+			return false
+		}
+		_ = in.Close()
+	}
+	var err error
+	switch x := dst.(type) {
+	case fs.Object:
+		s.logger(s.ctx, operations.MissingOnSrc, nil, x, nil)
+		err = operations.DeleteFileWithBackupDir(s.ctx, x, s.backupDir)
+	case fs.Directory:
+		// Find everything in it first, so that nothing is deleted
+		// if something the filters exclude would be left in the way
+		var objs []fs.Object
+		excluded := false
+		err = walk.ListR(s.ctx, s.fdst, x.Remote(), true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+			entries.ForObject(func(o fs.Object) {
+				excluded = excluded || !s.fi.Opt.DeleteExcluded && !s.fi.IncludeObject(s.ctx, o)
+				objs = append(objs, o)
+			})
+			return nil
+		})
+		if err == nil && excluded {
+			return false
+		}
+		if err == nil {
+			for _, o := range objs {
+				s.logger(s.ctx, operations.MissingOnSrc, nil, o, nil)
+			}
+			s.logger(s.ctx, operations.MissingOnSrc, nil, dst, fs.ErrorIsDir)
+			toDelete := make(fs.ObjectsChan, s.ci.Checkers)
+			go func() {
+				defer close(toDelete)
+				for _, o := range objs {
+					select {
+					case toDelete <- o:
+					case <-s.ctx.Done():
+						return
+					}
+				}
+			}()
+			err = operations.DeleteFilesWithBackupDir(s.ctx, toDelete, s.backupDir)
+		}
+		if err == nil {
+			err = operations.Rmdirs(s.ctx, s.fdst, x.Remote(), false)
+		}
+	}
+	if err != nil {
+		fs.ErrorfCtx(s.ctx, dst, "Failed to delete to make way for what is in the source: %v", err)
+		s.processError(err)
+		return false
+	}
+	return true
+}
+
 // Match is called when src and dst are present, so sync src to dst
 func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse bool) {
+	if fs.DirEntryType(src) != fs.DirEntryType(dst) {
+		// A file has taken the place of a directory or the other way
+		// round. If what is in the destination can't be deleted they
+		// are synced as if they had different names.
+		if !s.makeWay(dst, src) {
+			recurse = s.DstOnly(dst)
+		}
+		return s.SrcOnly(src) || recurse
+	}
 	switch srcX := src.(type) {
 	case fs.Object:
 		s.markParentNotEmpty(src)
