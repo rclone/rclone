@@ -122,6 +122,28 @@ func TestItemDirty(t *testing.T) {
 	checkObject(t, r, "potato", "hello")
 }
 
+// Opening a clean item for a read/write handle with a stale nil
+// object must keep the cached data, unlike Open which treats nil as a
+// confirmed deletion
+func TestItemOpenForRWStaleNilObject(t *testing.T) {
+	r, c := newItemTestCache(t)
+	_, obj, item := newFile(t, r, c, "potato")
+
+	require.NoError(t, item.Open(obj))
+	require.NoError(t, item.Close(nil))
+	require.True(t, item.WrittenBack())
+
+	// A caller which read the file object before the writeback
+	// completed passes nil here
+	require.NoError(t, item.OpenForRW(nil))
+	require.NoError(t, item.Close(nil))
+
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), size)
+	assert.True(t, item.WrittenBack())
+}
+
 func TestItemSync(t *testing.T) {
 	_, c := newItemTestCache(t)
 	item, _ := c.get("potato")

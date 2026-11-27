@@ -99,7 +99,7 @@ func (fh *RWFileHandle) openPending() (err error) {
 	defer fh.file.muRW.Unlock()
 
 	o := fh.file.getObject()
-	err = fh.item.Open(o)
+	err = fh.item.OpenForRW(o)
 	if err != nil {
 		return fmt.Errorf("open RW handle failed to open cache file: %w", err)
 	}
