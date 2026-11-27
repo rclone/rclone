@@ -1266,6 +1266,8 @@ func parseDeltaRecords(records []json.RawMessage) *deltaParseResult {
 				r.changedAlbumRecords[albumRecord] = true
 				continue
 			}
+			r.deletedIDs[header.RecordName] = true
+			continue
 		}
 		switch header.RecordType {
 		case "CPLMaster":
@@ -1380,8 +1382,14 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 
 	// Build new Photo entries from delta master+asset pairs
 	var addedPhotos []*Photo
+	replacedIDs := make(map[string]bool)
 	for masterID, master := range result.newMasters {
-		built := buildPhotos(master, result.newAssets[masterID])
+		asset := result.newAssets[masterID]
+		replacedIDs[masterID] = true
+		if asset != nil {
+			replacedIDs[asset.RecordName] = true
+		}
+		built := buildPhotos(master, asset)
 		addedPhotos = append(addedPhotos, built...)
 	}
 
@@ -1418,7 +1426,7 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 		// Remove deleted/changed entries
 		filtered := make([]*Photo, 0, len(cached))
 		for _, p := range cached {
-			if !result.deletedIDs[p.ID] {
+			if !result.deletedIDs[p.ID] && !(isSmart && replacedIDs[p.ID]) {
 				filtered = append(filtered, p)
 			}
 		}
