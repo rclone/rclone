@@ -253,6 +253,10 @@ func globToDirGlobs(glob string) (out []string) {
 	// Get rid of multiple /s
 	glob = squashSlash.ReplaceAllString(glob, "/")
 
+	// An unrooted glob matches at any depth in the directory tree, so any
+	// directory may contain a match and none may be pruned
+	rooted := strings.HasPrefix(glob, "/")
+
 	// Split on / or **
 	// (** can contain /)
 	for {
@@ -274,6 +278,10 @@ func globToDirGlobs(glob string) (out []string) {
 		if len(out) == 0 || out[len(out)-1] != newGlob {
 			out = append(out, newGlob)
 		}
+	}
+
+	if !rooted && (len(out) == 0 || out[len(out)-1] != "/**") {
+		out = append(out, "/**")
 	}
 
 	return out
