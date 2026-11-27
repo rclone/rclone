@@ -2,9 +2,12 @@ package vfstest
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -188,6 +191,33 @@ func TestDirCacheFlush(t *testing.T) {
 	run.rmdir(t, "otherdir")
 	run.rm(t, "dir/file")
 	run.rmdir(t, "dir/subdir")
+	run.rmdir(t, "dir")
+	run.checkDir(t, "")
+}
+
+// TestDirCacheFlushCreatedFile tests that a file created through the
+// mount sees changes made on the remote after the dir cache is flushed
+func TestDirCacheFlushCreatedFile(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	run.mkdir(t, "dir")
+	run.createFile(t, "dir/file", "1")
+	assert.Equal(t, "1", run.readFile(t, "dir/file"))
+	run.checkDir(t, "dir/|dir/file 1")
+
+	ctx := context.Background()
+	obj, err := run.fremote.NewObject(ctx, "dir/file")
+	require.NoError(t, err)
+	contents := "updated on remote"
+	src := object.NewStaticObjectInfo("dir/file", time.Now(), int64(len(contents)), true, nil, nil)
+	require.NoError(t, obj.Update(ctx, strings.NewReader(contents), src))
+
+	run.forget("dir")
+	// Wait for the kernel entry and attribute caches to expire
+	time.Sleep(time.Duration(mountlib.Opt.AttrTimeout) + 500*time.Millisecond)
+	assert.Equal(t, contents, run.readFile(t, "dir/file"))
+
+	run.rm(t, "dir/file")
 	run.rmdir(t, "dir")
 	run.checkDir(t, "")
 }
