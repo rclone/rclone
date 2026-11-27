@@ -2306,7 +2306,7 @@ func (ps *PhotosService) LookupDownloadURL(ctx context.Context, recordName, zone
 	return res.Value.DownloadURL, nil
 }
 
-// checkIndexingState warns if the iCloud Photo Library is still indexing
+// checkIndexingState logs the iCloud Photo Library indexing state when it is not finished
 func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string) {
 	area, zoneID := ps.resolveZone(zoneName)
 
@@ -2318,9 +2318,9 @@ func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string
 	var response struct {
 		Records []struct {
 			Fields struct {
-				State struct {
-					Value string `json:"value"`
-				} `json:"state"`
+				State    ckStringField  `json:"state"`
+				Progress *ckIntField    `json:"progress"`
+				Error    *ckStringField `json:"error"`
 			} `json:"fields"`
 		} `json:"records"`
 	}
@@ -2330,9 +2330,31 @@ func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string
 		return
 	}
 
-	if len(response.Records) == 0 || response.Records[0].Fields.State.Value != indexingStateReady {
-		fs.Logf(nil, "iclouddrive photos: library is still indexing, listings may be incomplete")
+	state := "unknown"
+	var progress *ckIntField
+	var indexingError *ckStringField
+	if len(response.Records) > 0 {
+		fields := response.Records[0].Fields
+		state = fields.State.Value
+		progress = fields.Progress
+		indexingError = fields.Error
 	}
+	if state == indexingStateReady {
+		return
+	}
+	if state == "" {
+		state = "unknown"
+	}
+
+	message := fmt.Sprintf("iclouddrive photos: library indexing state is %s", state)
+	if indexingError != nil && indexingError.Value != "" {
+		message += fmt.Sprintf(" (%s)", indexingError.Value)
+	}
+	if progress != nil {
+		message += fmt.Sprintf(", progress %d%%", progress.Value)
+	}
+	message += ", listings may be incomplete"
+	fs.Logf(nil, "%s", message)
 }
 
 // requestWithReauth makes a CloudKit request with pacer retry and reauth on 401/421

@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	rclonelog "github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
@@ -65,6 +68,20 @@ func readJSONBody(r *http.Request, out any) error {
 		return err
 	}
 	return json.Unmarshal(data, out)
+}
+
+func capturePhotosLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	rclonelog.Handler.SetOutput(func(_ slog.Level, text string) {
+		buf.WriteString(text)
+	})
+	t.Cleanup(rclonelog.Handler.ResetOutput)
+	ci := fs.GetConfig(context.Background())
+	oldLevel := ci.LogLevel
+	ci.LogLevel = fs.LogLevelNotice
+	t.Cleanup(func() { ci.LogLevel = oldLevel })
+	return &buf
 }
 
 func testAlbumRecordJSON(name, recordName string, albumType int, parentID string) map[string]any {
@@ -124,6 +141,58 @@ func TestGetPhotos_DoesNotServeStaleCacheOnPagedDeltaFailure(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, photos)
 	assert.Nil(t, lib.pendingDelta, "failed delta apply must not leave pendingDelta stuck forever")
+}
+
+func TestCheckIndexingState(t *testing.T) {
+	const indexingError = "CKCloudDBException:No index with requested name: CPLContainerRelationNotHiddenOrDeletedByAddedDate"
+
+	tests := []struct {
+		name    string
+		fields  map[string]any
+		wantLog string
+		noLog   bool
+	}{
+		{
+			name: "failed",
+			fields: map[string]any{
+				"state":    map[string]any{"value": "FAILED"},
+				"progress": map[string]any{"value": 100},
+				"error":    map[string]any{"value": indexingError},
+			},
+			wantLog: "library indexing state is FAILED (" + indexingError + "), progress 100%, listings may be incomplete",
+		},
+		{
+			name: "running",
+			fields: map[string]any{
+				"state":    map[string]any{"value": "RUNNING"},
+				"progress": map[string]any{"value": 0},
+			},
+			wantLog: "library indexing state is RUNNING, progress 0%, listings may be incomplete",
+		},
+		{
+			name:   "finished",
+			fields: map[string]any{"state": map[string]any{"value": "FINISHED"}},
+			noLog:  true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			log := capturePhotosLog(t)
+			ps := newHTTPTestPhotosService(t, "indexing-state", func(w http.ResponseWriter, r *http.Request) {
+				writeJSON(t, w, map[string]any{"records": []any{map[string]any{"fields": test.fields}}})
+			})
+
+			ps.checkIndexingState(context.Background(), "PrimarySync")
+
+			if test.noLog {
+				assert.Empty(t, log.String())
+				return
+			}
+			assert.Contains(t, log.String(), test.wantLog)
+			assert.NotContains(t, log.String(), "library is still indexing")
+		})
+	}
 }
 
 func TestGetLibraries_RediscoversZonesWhenCacheExists(t *testing.T) {
