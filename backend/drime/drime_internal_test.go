@@ -201,6 +201,69 @@ func TestModTime(t *testing.T) {
 	assert.True(t, want.Equal(o.modTime))
 }
 
+// TestHashOnDemand checks a missing hash is computed by Drime, asking
+// again when the request is cut off.
+func TestHashOnDemand(t *testing.T) {
+	const sum = "82cf91c6f507ac8eb092f9fa036bafa3fe04478716707357c768d6927652b113"
+	ctx := context.Background()
+
+	t.Run("Immediate", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, func(w http.ResponseWriter) {
+			_, _ = w.Write([]byte(`{"verified":false,"serverHash":"` + sum + `"}`))
+		}, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server), id: "7"}
+		for range 2 {
+			h, err := o.Hash(ctx, hash.SHA256)
+			require.NoError(t, err)
+			assert.Equal(t, sum, h)
+		}
+		assert.Equal(t, []string{"POST /file-entries/7/verify-integrity"}, calls)
+	})
+
+	t.Run("CutOff", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, func(w http.ResponseWriter) {
+			if len(calls) < hashTries {
+				http.Error(w, `{"message":"timeout"}`, http.StatusGatewayTimeout)
+				return
+			}
+			_, _ = w.Write([]byte(`{"verified":false,"serverHash":"` + sum + `"}`))
+		}, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server), id: "7"}
+		h, err := o.Hash(ctx, hash.SHA256)
+		require.NoError(t, err)
+		assert.Equal(t, sum, h)
+		assert.Len(t, calls, hashTries)
+
+		calls = nil
+		o = &Object{fs: testFs(t, server), id: "7"}
+		server.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calls = append(calls, r.URL.Path)
+			http.Error(w, `{"message":"timeout"}`, http.StatusGatewayTimeout)
+		})
+		h, err = o.Hash(ctx, hash.SHA256)
+		require.NoError(t, err)
+		assert.Empty(t, h)
+		assert.Len(t, calls, hashTries)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, func(w http.ResponseWriter) {
+			http.Error(w, `{"message":"forbidden"}`, http.StatusForbidden)
+		}, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server), id: "7"}
+		h, err := o.Hash(ctx, hash.SHA256)
+		require.NoError(t, err)
+		assert.Empty(t, h)
+		assert.Len(t, calls, 1)
+	})
+}
+
 // TestFinishUpload checks the post upload hash verification
 func TestFinishUpload(t *testing.T) {
 	const sum = "82cf91c6f507ac8eb092f9fa036bafa3fe04478716707357c768d6927652b113"

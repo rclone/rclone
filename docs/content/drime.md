@@ -92,29 +92,21 @@ the upload against the source's SHA-256. If they match, Drime stores
 the hash. If not, the upload is deleted and reported as corrupted. Use
 `--ignore-checksum` to skip the check.
 
-Files uploaded without a modification time report the time they were
-last updated on Drime.
+Files uploaded by earlier versions of rclone or by other tools may have
+no hash, and report the time they were last updated on Drime as their
+modification time. When rclone needs a missing hash it asks Drime to
+compute and store it, so these files are not uploaded again unless
+their contents differ:
 
-Some files have no hash on Drime. This includes files uploaded by
-earlier versions of rclone, by other tools, with `rclone rcat`, or with
-`--ignore-checksum`. How a file is handled depends on whether it has a
-hash:
-
-| Situation | File has a hash | File has no hash |
+| Command | Modification time | Hash |
 |---|---|---|
-| Same size and modification time | Skipped | Skipped |
-| Same size, different modification time | Only the modification time is updated | Uploaded again, which records the hash |
-| Same size, `--checksum` or `rclone check` | Compared by hash | Treated as unchanged |
-| Different size | Uploaded again | Uploaded again |
+| `rclone sync` | Corrected | Stored |
+| `rclone sync --checksum` | Unchanged | Stored |
+| `rclone hashsum sha256 remote:` | Unchanged | Stored |
 
-To add a hash without waiting for the modification time to change,
-upload the file again with `--ignore-times`.
-
-Files uploaded by earlier versions of rclone have no hash and report
-their upload time as the modification time, so the first sync after
-upgrading uploads all of them again. To avoid this, run the sync once
-with `--refresh-times`, which sets the modification times without
-uploading.
+Drime gives up computing a hash after about two minutes, so files of
+several GB may be left without one. A sync uploads these again if their
+modification time differs, unless `--refresh-times` is used.
 
 
 ### Restricted filename characters

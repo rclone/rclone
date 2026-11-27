@@ -381,6 +381,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
 		WriteMimeType:           true,
+		SlowHash:                true,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 	f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
@@ -1513,7 +1514,55 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.SHA256 {
 		return "", hash.ErrUnsupported
 	}
+	if o.sha256 == "" && o.id != "" {
+		sum, err := o.serverHash(ctx, noHash)
+		if err != nil {
+			// e.g. no permission to verify the file
+			fs.Debugf(o, "Failed to read hash: %v", err)
+			return "", nil
+		}
+		o.sha256 = sum
+	}
 	return o.sha256, nil
+}
+
+// noHash is sent to verify-integrity to make Drime compute and record
+// the hash of a file when the expected value isn't known.
+const noHash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+// hashTries is how many times to ask Drime for the hash of a file.
+//
+// Drime replies only after reading the whole file and its gateway cuts
+// the request off after about two minutes, which abandons the hashing.
+// The first read after an upload is the slowest so it is worth asking
+// again, but very large files never finish.
+const hashTries = 3
+
+// serverHash makes Drime compare its stored data with sum and returns
+// the SHA-256 Drime computed, which it also records on the file.
+func (o *Object) serverHash(ctx context.Context, sum string) (string, error) {
+	var resp api.VerifyIntegrityResponse
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file-entries/" + o.id + "/verify-integrity",
+	}
+	var err error
+	for try := 1; try <= hashTries; try++ {
+		retry := false
+		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+			res, err := o.fs.srv.CallJSON(ctx, &opts, &api.VerifyIntegrityRequest{SHA256: sum}, &resp)
+			retry, err = shouldRetry(ctx, res, err)
+			return false, err
+		})
+		if err == nil {
+			return strings.ToLower(resp.ServerHash), nil
+		}
+		if !retry {
+			break
+		}
+		fs.Debugf(o, "Hashing on Drime failed (try %d/%d): %v", try, hashTries, err)
+	}
+	return "", err
 }
 
 // Size returns the size of an object in bytes
@@ -1715,7 +1764,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 //
 // A hash supplied by the client at upload time is stored without being
 // checked, so it is not sent. Verifying instead makes the server hash
-// the stored data, and only on a match does it record the hash.
+// the stored data.
 func (o *Object) finishUpload(ctx context.Context, info *api.Item, src fs.ObjectInfo) error {
 	err := o.setMetaData(info)
 	if err != nil {
@@ -1731,25 +1780,17 @@ func (o *Object) finishUpload(ctx context.Context, info *api.Item, src fs.Object
 	if err != nil || sum == "" {
 		return nil
 	}
-	var resp api.VerifyIntegrityResponse
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/file-entries/" + o.id + "/verify-integrity",
-	}
-	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err := o.fs.srv.CallJSON(ctx, &opts, &api.VerifyIntegrityRequest{SHA256: sum}, &resp)
-		return shouldRetry(ctx, res, err)
-	})
+	serverSum, err := o.serverHash(ctx, sum)
 	if err != nil {
-		// e.g. only the owner of a file may verify it
+		// e.g. no permission to verify the file
 		fs.Debugf(o, "Failed to verify upload: %v", err)
 		return nil
 	}
-	if !resp.Verified {
+	if serverSum != sum {
 		if rmErr := o.Remove(ctx); rmErr != nil {
 			fs.Errorf(o, "Failed to remove corrupted upload: %v", rmErr)
 		}
-		return fmt.Errorf("corrupted on transfer: SHA-256 differ src %q vs dst %q", sum, resp.ServerHash)
+		return fmt.Errorf("corrupted on transfer: SHA-256 differ src %q vs dst %q", sum, serverSum)
 	}
 	o.sha256 = sum
 	return nil
