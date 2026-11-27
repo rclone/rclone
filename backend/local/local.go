@@ -803,6 +803,16 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				}
 				mode = fi.Mode()
 			}
+			if runtime.GOOS == "windows" && fi.IsDir() && (mode&symlinkFlag) == 0 {
+				// The modification time Windows gives for a directory when
+				// listing the directory it is in can be out of date: it
+				// isn't brought up to date when something is created or
+				// deleted in the directory, only when the directory is
+				// next opened. So read it from the directory itself.
+				if dirFi, statErr := os.Lstat(filepath.Join(fsDirPath, name)); statErr == nil && dirFi.IsDir() {
+					fi = dirFi
+				}
+			}
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
