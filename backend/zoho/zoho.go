@@ -1685,14 +1685,82 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return nil
 }
 
+// getJSON does a GET of apiPath on the API server and decodes the JSON
+// response into result
+func (f *Fs) getJSON(ctx context.Context, apiPath string, result any) error {
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         apiPath,
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	return f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, result)
+		return f.shouldRetry(ctx, resp, err)
+	})
+}
+
+// teamForRoot finds the team which owns the root folder. A workspace
+// root is matched against each team's workspaces; if that finds
+// nothing the only team is used, if there is just one.
+func (f *Fs) teamForRoot(ctx context.Context) (teamID string, err error) {
+	var userInfo api.UserInfoResponse
+	err = f.getJSON(ctx, "/users/me", &userInfo)
+	if err != nil {
+		return "", err
+	}
+	var teams api.TeamWorkspaceResponse
+	err = f.getJSON(ctx, "/users/"+userInfo.Data.ID+"/teams", &teams)
+	if err != nil {
+		return "", err
+	}
+	for _, team := range teams.TeamWorkspace {
+		var workspaces api.TeamWorkspaceResponse
+		err = f.getJSON(ctx, "/teams/"+team.ID+"/workspaces", &workspaces)
+		if err != nil {
+			return "", err
+		}
+		for _, workspace := range workspaces.TeamWorkspace {
+			if workspace.ID == f.opt.RootFolderID {
+				return team.ID, nil
+			}
+		}
+	}
+	if len(teams.TeamWorkspace) == 1 {
+		return teams.TeamWorkspace[0].ID, nil
+	}
+	return "", errors.New("couldn't work out which team the root folder belongs to")
+}
+
 // About gets quota information
+//
+// The usage of the whole team is reported when it can be read,
+// otherwise just the usage of the root folder. The total is only
+// reported when the team has a known quota.
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	info, err := f.readMetaDataForID(ctx, f.opt.RootFolderID)
 	if err != nil {
 		return nil, err
 	}
 	usage = &fs.Usage{
-		Used: fs.NewUsageValue(info.Attributes.StorageInfo.Size),
+		Used: fs.NewUsageValue(info.Attributes.StorageInfo.StorageUsed),
+	}
+	teamID, err := f.teamForRoot(ctx)
+	if err != nil {
+		fs.Debugf(f, "About: reporting root folder usage only: %v", err)
+		return usage, nil
+	}
+	var team api.TeamInfo
+	err = f.getJSON(ctx, "/teams/"+teamID, &team)
+	if err != nil {
+		fs.Debugf(f, "About: reporting root folder usage only: %v", err)
+		return usage, nil
+	}
+	used := team.Data.Attributes.StorageInfo.StorageUsed
+	usage.Used = fs.NewUsageValue(used)
+	// Zoho reports 0 when the quota isn't known, so leave Total and Free unset
+	if total := team.Data.Attributes.LicenseObj.AllowedSpace; total > 0 {
+		usage.Total = fs.NewUsageValue(total)
+		usage.Free = fs.NewUsageValue(max(total-used, 0))
 	}
 	return usage, nil
 }
