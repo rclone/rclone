@@ -162,6 +162,30 @@ Set to 0 to disable chunked uploading.
 			Advanced: true,
 			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
 		}, {
+			Name: "range_upload_chunk_size",
+			Help: `Upload files bigger than this in chunks using partial PUT requests.
+
+Some WebDAV servers, such as Apache with mod_dav, accept a PUT request
+with a Content-Range header, which writes that part of the file. When
+this is set, rclone uploads files bigger than this to a temporary file
+next to the destination, one chunk of this size per request, then moves
+it into place.
+
+Use this when a proxy in front of the server limits the size of a
+request, for example Cloudflare, which refuses requests bigger than
+100 MB on its Free and Pro plans.
+
+rclone checks the size of the temporary file after each chunk, and
+stops with an error if the server ignored the Content-Range header.
+
+This isn't used by vendors with their own chunked uploads (nextcloud
+and infinitescale).
+
+Set to 0 to disable.
+`,
+			Advanced: true,
+			Default:  fs.SizeSuffix(0),
+		}, {
 			Name:     "owncloud_exclude_shares",
 			Help:     "Exclude ownCloud shares",
 			Advanced: true,
@@ -210,6 +234,7 @@ type Options struct {
 	Headers            fs.CommaSepList      `config:"headers"`
 	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
+	RangeChunkSize     fs.SizeSuffix        `config:"range_upload_chunk_size"`
 	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
 	UnixSocket         string               `config:"unix_socket"`
@@ -1682,6 +1707,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		if err != nil {
 			return err
+		}
+	} else if o.shouldUseRangeUpload(src) {
+		fs.Debugf(src, "Update will use partial PUT requests to upload in chunks")
+		err = o.updateRange(ctx, in, src, options...)
+		if err != nil {
+			return fmt.Errorf("range upload failed: %w", err)
 		}
 	} else {
 		fs.Debugf(src, "Update will use the normal upload strategy (no chunks)")
