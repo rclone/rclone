@@ -163,14 +163,18 @@ func (a *fileInfoImpl) String() string {
 }
 
 // create a fs.File compatible struct
-func newFile(ctx context.Context, obj fs.Object, fi stdfs.FileInfo) (stdfs.File, error) {
+//
+// If account is set, reading the file is accounted as a transfer.
+func newFile(ctx context.Context, obj fs.Object, fi stdfs.FileInfo, account bool) (stdfs.File, error) {
 	var f = new(fileImpl)
 	// create stdfs.File
 	f.entry = fi
 	f.ctx = ctx
 	f.err = nil
 	// create transfer
-	f.transfer = accounting.Stats(ctx).NewTransfer(obj, nil)
+	if account {
+		f.transfer = accounting.Stats(ctx).NewTransfer(obj, nil)
+	}
 	// get open options
 	var options []fs.OpenOption
 	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
@@ -179,8 +183,13 @@ func newFile(ctx context.Context, obj fs.Object, fi stdfs.FileInfo) (stdfs.File,
 	// open file
 	f.reader, f.err = operations.Open(ctx, obj, options...)
 	if f.err != nil {
-		defer f.transfer.Done(ctx, f.err)
+		if f.transfer != nil {
+			defer f.transfer.Done(ctx, f.err)
+		}
 		return nil, f.err
+	}
+	if f.transfer == nil {
+		return f, nil
 	}
 	// Account the transfer
 	acc := f.transfer.Account(ctx, f.reader)
@@ -215,13 +224,17 @@ func (a *fileImpl) Close() error {
 		a.err = a.reader.Close()
 	}
 	// close transfer
-	a.transfer.Done(a.ctx, a.err)
+	if a.transfer != nil {
+		a.transfer.Done(a.ctx, a.err)
+	}
 
 	return a.err
 }
 
 // NewArchiveFileInfo will take a fs.DirEntry and return a archives.Fileinfo
-func NewArchiveFileInfo(ctx context.Context, entry fs.DirEntry, prefix string, metadata fs.Metadata) archives.FileInfo {
+//
+// If account is set, reading the file is accounted as a transfer.
+func NewArchiveFileInfo(ctx context.Context, entry fs.DirEntry, prefix string, metadata fs.Metadata, account bool) archives.FileInfo {
 	fi := newFileInfo(ctx, entry, prefix, metadata)
 
 	return archives.FileInfo{
@@ -231,7 +244,7 @@ func NewArchiveFileInfo(ctx context.Context, entry fs.DirEntry, prefix string, m
 		Open: func() (stdfs.File, error) {
 			obj, isObject := entry.(fs.Object)
 			if isObject {
-				return newFile(ctx, obj, fi)
+				return newFile(ctx, obj, fi, account)
 			}
 			return nil, fmt.Errorf("%s is not a file", fi.Name())
 		},

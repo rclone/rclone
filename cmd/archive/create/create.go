@@ -315,6 +315,9 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 	if err != nil {
 		return err
 	}
+	// The archive is accounted as Rcat uploads it to dst, so only
+	// account reading the source files when nothing is uploaded.
+	accountFiles := dst == nil || ci.DryRun
 	// get source files
 	err = walk.ListR(ctx, src, "", false, ci.MaxDepth, walk.ListAll, func(entries fs.DirEntries) error {
 		// get directories
@@ -324,7 +327,7 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 				metadata = loadMetadata(ctx, o)
 			}
 			if fi.Include(o.Remote(), o.Size(), o.ModTime(ctx), metadata) {
-				info := files.NewArchiveFileInfo(ctx, o, prefix, metadata)
+				info := files.NewArchiveFileInfo(ctx, o, prefix, metadata, accountFiles)
 				list = append(list, info)
 			}
 		})
@@ -335,7 +338,7 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 				metadata = loadMetadata(ctx, o)
 			}
 			if fi.Include(o.Remote(), o.Size(), o.ModTime(ctx), metadata) {
-				info := files.NewArchiveFileInfo(ctx, o, prefix, metadata)
+				info := files.NewArchiveFileInfo(ctx, o, prefix, metadata, accountFiles)
 				list = append(list, info)
 				totalLength += o.Size()
 			}
