@@ -4,13 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/backend/mailru/api"
 	"github.com/rclone/rclone/backend/mailru/mrhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/multipart"
@@ -62,4 +67,47 @@ func TestUploadRetry(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, wantHash, gotHash)
 	assert.Equal(t, int32(2), attempts.Load(), "expected exactly one failed attempt and one retry")
+}
+
+// TestListM1Paging checks that a directory bigger than the server's page
+// size is listed completely.
+func TestListM1Paging(t *testing.T) {
+	const total, pageSize = 5, 2
+	var offsets []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/api/m1/folder", r.URL.Path)
+		offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+		require.NoError(t, err)
+		offsets = append(offsets, r.URL.Query().Get("offset"))
+		var info api.FolderInfoResponse
+		info.Body.Kind = "folder"
+		info.Body.Count.Files = total
+		// The server caps each page whatever limit is requested
+		for i := offset; i < total && i < offset+pageSize; i++ {
+			info.Body.List = append(info.Body.List, api.ListItem{
+				Kind: "file",
+				Home: fmt.Sprintf("/dir/file%d", i),
+				Hash: strings.Repeat("00", mrhash.Size),
+			})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(&info))
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+	f := &Fs{
+		srv:    rest.NewClient(server.Client()).SetRoot(server.URL),
+		source: oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "token"}),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(10*time.Millisecond))),
+	}
+
+	entries, err := f.listM1(ctx, "/dir", 0, maxInt32)
+	require.NoError(t, err)
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Remote())
+	}
+	assert.Equal(t, []string{"dir/file0", "dir/file1", "dir/file2", "dir/file3", "dir/file4"}, names)
+	assert.Equal(t, []string{"0", "2", "4"}, offsets)
 }
