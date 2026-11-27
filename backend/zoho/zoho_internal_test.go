@@ -69,3 +69,38 @@ func TestConfigRootFolderID(t *testing.T) {
 		assert.Equal(t, "select_edition", out.State)
 	})
 }
+
+func TestRegionDomain(t *testing.T) {
+	for _, test := range []struct {
+		region string
+		want   string
+	}{
+		{"com", "zoho.com"},
+		{"eu", "zoho.eu"},
+		{"in", "zoho.in"},
+		{"jp", "zoho.jp"},
+		{"com.cn", "zoho.com.cn"},
+		{"com.au", "zoho.com.au"},
+		{"ca", "zohocloud.ca"},
+	} {
+		assert.Equal(t, test.want, regionDomain(test.region))
+	}
+}
+
+func TestSetupRegion(t *testing.T) {
+	defer func() {
+		require.NoError(t, setupRegion(configmap.Simple{"region": "eu"}))
+	}()
+
+	require.Error(t, setupRegion(configmap.Simple{}))
+
+	require.NoError(t, setupRegion(configmap.Simple{"region": "ca"}))
+	assert.Equal(t, "https://accounts.zohocloud.ca", accountsURL)
+	assert.Equal(t, "https://workdrive.zohocloud.ca/api/v1", rootURL)
+	assert.Equal(t, "https://accounts.zohocloud.ca/oauth/v2/auth", oauthConfig.AuthURL)
+	assert.Equal(t, "https://accounts.zohocloud.ca/oauth/v2/token", oauthConfig.TokenURL)
+
+	require.NoError(t, setupRegion(configmap.Simple{"region": "eu"}))
+	assert.Equal(t, "https://accounts.zoho.eu", accountsURL)
+	assert.Equal(t, "https://workdrive.zoho.eu/api/v1", rootURL)
+}
