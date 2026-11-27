@@ -2,7 +2,9 @@ package rc
 
 import (
 	"testing"
+	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,6 +67,29 @@ func TestParseOptions(t *testing.T) {
 		assert.Equal(t, "nested_value", opt.StringOpt) // Nested takes precedence
 		assert.Equal(t, 42, opt.IntOpt)                // Flat is still parsed
 		assert.Empty(t, in)
+	})
+
+	t.Run("FlatNumbers", func(t *testing.T) {
+		// Numbers decoded from JSON should mean the same as in the
+		// nested form: sizes in bytes and durations in nanoseconds.
+		type numberOptions struct {
+			Size     fs.SizeSuffix `config:"size"`
+			Duration fs.Duration   `config:"duration"`
+			IntOpt   int           `config:"int_opt"`
+		}
+		for _, test := range []struct {
+			in   Params
+			want numberOptions
+		}{
+			{Params{"size": float64(44040192)}, numberOptions{Size: 44040192}},
+			{Params{"duration": float64(5e9)}, numberOptions{Duration: fs.Duration(5 * time.Second)}},
+			{Params{"int_opt": float64(1e6)}, numberOptions{IntOpt: 1000000}},
+		} {
+			var opt numberOptions
+			err := ParseOptions(test.in, "numbers", &opt)
+			require.NoError(t, err)
+			assert.Equal(t, test.want, opt)
+		}
 	})
 
 	t.Run("MapSkip", func(t *testing.T) {
