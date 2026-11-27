@@ -488,14 +488,20 @@ func (c *Cache) Remove(name string) (wasWriting bool) {
 	name = clean(name)
 	c.mu.Lock()
 	item := c.item[name]
-	if item != nil {
-		delete(c.item, name)
-	}
 	c.mu.Unlock()
 	if item == nil {
 		return false
 	}
-	return item.remove("file deleted")
+	// Remove the cache files before taking the item out of the map,
+	// otherwise a lookup in between makes a new item from the metadata
+	// being deleted.
+	wasWriting = item.removeDeleted()
+	c.mu.Lock()
+	if c.item[name] == item {
+		delete(c.item, name)
+	}
+	c.mu.Unlock()
+	return wasWriting
 }
 
 // SetModTime should be called to set the modification time of the cache file
