@@ -288,6 +288,11 @@ func (x *BwTimetable) UnmarshalJSON(in []byte) error {
 	if err != nil {
 		return err
 	}
+	// An empty timetable marshals as "" so accept it here
+	if s == "" {
+		*x = nil
+		return nil
+	}
 	return x.Set(s)
 }
 
