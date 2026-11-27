@@ -486,12 +486,12 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 						t.dstMatch <- nil
 						continue
 					}
-					leaf := path.Base(t.src.Remote())
+					remote := transform.Path(m.Ctx, t.src.Remote(), false)
 					if err := m.newObjectSem.Acquire(m.Ctx, 1); err != nil {
 						t.dstMatch <- nil
 						continue
 					}
-					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
+					dst, err := m.Fdst.NewObject(m.Ctx, remote)
 					m.newObjectSem.Release(1)
 					if err != nil {
 						dst = nil

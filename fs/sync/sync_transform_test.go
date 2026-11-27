@@ -252,6 +252,21 @@ func TestTransformCopy(t *testing.T) {
 	r.CheckRemoteItems(t, fstest.NewItem("sub dir_somesuffix/hello world_somesuffix.txt", "hello world", t1))
 }
 
+func TestTransformCopyNoTraverseIgnoreExisting(t *testing.T) {
+	r := newTransformRun(t)
+	ctx, ci := fs.AddConfig(t.Context())
+	ci.NoTraverse = true
+	ci.IgnoreExisting = true
+	require.NoError(t, transform.SetOptions(ctx, "all,prefix=mapped-"))
+
+	r.WriteFile("dir/input.txt", "new content", t1)
+	r.WriteFile("dir/other.txt", "other", t1)
+	existing := r.WriteObject(ctx, "mapped-dir/mapped-input.txt", "original content", t2)
+
+	require.NoError(t, CopyDir(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, existing, fstest.NewItem("mapped-dir/mapped-other.txt", "other", t1))
+}
+
 func TestDoubleTransform(t *testing.T) {
 	ctx := context.Background()
 	r := newTransformRun(t)
