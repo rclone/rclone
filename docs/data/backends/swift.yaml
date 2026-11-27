@@ -20,8 +20,11 @@ features:
 - ListR
 - Purge
 - PutStream
+- ReadMetadata
 - ReadMimeType
 - SlowModTime
+- UserMetadata
+- WriteMetadata
 - WriteMimeType
 hashes:
 - md5
