@@ -153,6 +153,17 @@ func TestPhotosObject_MetadataZeroDimensions(t *testing.T) {
 	assert.Equal(t, "false", metadata["hidden"])
 }
 
+func TestPhotosObject_MetadataPreservesAlbumResourceIdentity(t *testing.T) {
+	f := newTestPhotosFs()
+	photo := &api.Photo{ID: "master", AssetID: "selected-asset", Filename: "IMG_2420.MOV", ResourceKey: "resOriginalVidComplRes", SourceZone: "SharedSync-test"}
+	metadata, err := f.newPhotosObject(photo.Filename, photo, "PrimarySync").Metadata(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "selected-asset", metadata["icloud-asset-id"])
+	assert.Equal(t, "resOriginalVidComplRes", metadata["icloud-resource-key"])
+	assert.Equal(t, "master", metadata["icloud-resource-id"])
+	assert.Equal(t, "SharedSync-test", metadata["icloud-source-zone"])
+}
+
 // newTestPhotosService builds a PhotosService with pre-populated libraries and albums
 // for testing resolveAlbum and FindLeaf without HTTP calls
 func newTestPhotosService() *api.PhotosService {
