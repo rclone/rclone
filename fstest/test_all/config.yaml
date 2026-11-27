@@ -726,14 +726,6 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
-   ignore:
-     # These are caused by the archive backend returning the underlying objects
-     # with the parent backend having a different precision.
-     - TestServerSideCopyOverSelf
-     - TestServerSideMoveOverSelf
-     # The underlying objects returned aren't recognised as being at the
-     # destination path, so the move copies the file onto itself.
-     - TestMoveOntoItself
  - backend: "internxt"
    remote: "TestInternxt:"
    fastlist: false
