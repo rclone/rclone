@@ -3,6 +3,7 @@ package vfscache
 // FIXME need to test async writeback here
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/ranges"
@@ -868,4 +870,97 @@ func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
 	n, err = item.ReadAt(buf, 0)
 	require.NoError(t, err)
 	assert.Equal(t, contents, string(buf[:n]))
+}
+
+type prefixPutFs struct {
+	fs.Fs
+	prefix string
+}
+
+func (f *prefixPutFs) Features() *fs.Features {
+	ft := *f.Fs.Features()
+	ft.PutStream = nil
+	ft.PutUnchecked = nil
+	ft.Copy = nil
+	return &ft
+}
+
+func (f *prefixPutFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	prefixBytes := []byte(f.prefix)
+	newIn := io.MultiReader(bytes.NewReader(prefixBytes), in)
+	newSize := src.Size()
+	if newSize >= 0 {
+		newSize += int64(len(prefixBytes))
+	}
+	newSrc := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), newSize, false, nil, f.Fs)
+	return f.Fs.Put(ctx, newIn, newSrc, options...)
+}
+
+func TestItemStaleOnStoredSizeDifference(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.IgnoreSize = true
+	ci.IgnoreChecksum = true
+
+	r := fstest.NewRun(t)
+	pfs := &prefixPutFs{
+		Fs:     r.Fremote,
+		prefix: "PREFIX_DATA:",
+	}
+
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = 0
+	opt.HandleCaching = 0
+
+	c, err := New(ctx, pfs, &opt, addVirtual)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, c.CleanUp())
+		assertPathNotExist(t, c.root)
+	})
+
+	item, _ := c.get("file.txt")
+	require.NoError(t, item.Open(nil))
+	data := []byte("hello world")
+	n, err := item.WriteAt(data, 0)
+	require.NoError(t, err)
+	assert.Equal(t, len(data), n)
+
+	// Close uploads the file. Since pfs prepends prefix, stored object has different size and content.
+	require.NoError(t, item.Close(nil))
+
+	// Item must be marked stale because stored size differs from uploaded size
+	item.mu.Lock()
+	assert.True(t, item.info.Stale)
+	item.mu.Unlock()
+
+	// Metadata on disk must preserve the Stale flag across restarts
+	c.mu.Lock()
+	delete(c.item, item.name)
+	c.mu.Unlock()
+
+	itemReloaded, _ := c._get("file.txt")
+	itemReloaded.mu.Lock()
+	assert.True(t, itemReloaded.info.Stale)
+	itemReloaded.mu.Unlock()
+
+	// Reopen with the stored object. _checkObject must discard the stale cached data
+	obj, err := pfs.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	expectedContent := "PREFIX_DATA:hello world"
+	assert.Equal(t, int64(len(expectedContent)), obj.Size())
+
+	require.NoError(t, itemReloaded.Open(obj))
+	defer func() { require.NoError(t, itemReloaded.Close(nil)) }()
+
+	itemReloaded.mu.Lock()
+	assert.False(t, itemReloaded.info.Stale)
+	itemReloaded.mu.Unlock()
+
+	// Reading must fetch the full content from the remote, not return the stale local upload
+	buf := make([]byte, len(expectedContent))
+	n, err = itemReloaded.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, len(expectedContent), n)
+	assert.Equal(t, expectedContent, string(buf))
 }
