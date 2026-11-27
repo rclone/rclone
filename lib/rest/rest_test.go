@@ -232,6 +232,57 @@ func TestReadBodyLimit(t *testing.T) {
 	})
 }
 
+// TestDecodeBodyLimit checks that DecodeJSON and DecodeXML refuse to
+// read more than drainLimit bytes, so a server streaming a large or
+// endless response can't make rclone allocate memory without bound.
+func TestDecodeBodyLimit(t *testing.T) {
+	newResp := func(body io.Reader) *http.Response {
+		return &http.Response{Body: io.NopCloser(body)}
+	}
+	t.Run("JSONAtLimit", func(t *testing.T) {
+		// A JSON document padded to exactly drainLimit bytes must decode.
+		const prefix, suffix = `{"x":"`, `"}`
+		pad := drainLimit - len(prefix) - len(suffix)
+		body := append([]byte(prefix), bytes.Repeat([]byte("a"), pad)...)
+		body = append(body, suffix...)
+		require.Len(t, body, drainLimit)
+
+		var result struct {
+			X string `json:"x"`
+		}
+		require.NoError(t, DecodeJSON(newResp(bytes.NewReader(body)), &result))
+		assert.Len(t, result.X, pad)
+	})
+	t.Run("XMLAtLimit", func(t *testing.T) {
+		// An XML document padded to exactly drainLimit bytes must decode.
+		const prefix, suffix = `<x>`, `</x>`
+		pad := drainLimit - len(prefix) - len(suffix)
+		body := append([]byte(prefix), bytes.Repeat([]byte("a"), pad)...)
+		body = append(body, suffix...)
+		require.Len(t, body, drainLimit)
+
+		var result struct {
+			X string `xml:",chardata"`
+		}
+		require.NoError(t, DecodeXML(newResp(bytes.NewReader(body)), &result))
+		assert.Len(t, result.X, pad)
+	})
+	t.Run("JSONOverLimit", func(t *testing.T) {
+		// An unterminated (but valid so far) document forces the decoder
+		// to keep reading past drainLimit rather than stopping early.
+		body := append([]byte(`{"x":"`), bytes.Repeat([]byte("a"), drainLimit)...)
+		var result any
+		err := DecodeJSON(newResp(bytes.NewReader(body)), &result)
+		assert.ErrorIs(t, err, ErrBodyTooLarge)
+	})
+	t.Run("XMLOverLimit", func(t *testing.T) {
+		body := append([]byte(`<x>`), bytes.Repeat([]byte("a"), drainLimit)...)
+		var result any
+		err := DecodeXML(newResp(bytes.NewReader(body)), &result)
+		assert.ErrorIs(t, err, ErrBodyTooLarge)
+	})
+}
+
 func TestRedirectLeavesHost(t *testing.T) {
 	for _, test := range []struct {
 		name string
