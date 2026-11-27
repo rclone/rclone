@@ -592,6 +592,11 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "plaintext_passwords",
+	Default: false,
+	Help:    "Do not obscure remote password",
+	Groups:  "Config",
 }}
 
 // ConfigInfo is filesystem config options
@@ -708,6 +713,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	PlaintextPasswords         bool              `config:"plaintext_passwords"`
 }
 
 func init() {
