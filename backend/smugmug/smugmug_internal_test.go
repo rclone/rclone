@@ -1,0 +1,1563 @@
+package smugmug
+
+import (
+	"bytes"
+	"context"
+	cryptomd5 "crypto/md5"
+	"encoding/hex"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/rclone/rclone/backend/smugmug/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
+)
+
+func TestAlbumPathFromURLPath(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"/Galleries/Blue-Mesa", "/Galleries/Blue-Mesa"},
+		{"/Galleries/Blue-Mesa/i-AbCdEf1/A", "/Galleries/Blue-Mesa"},
+		{"Galleries/Blue-Mesa/i-AbCdEf1", "/Galleries/Blue-Mesa"},
+		{"/", "/"},
+	} {
+		got := albumPathFromURLPath(test.in)
+		if got != test.want {
+			t.Fatalf("albumPathFromURLPath(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestNormalizeAlbumURI(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"AbCdEf", "/api/v2/album/AbCdEf"},
+		{"/album/AbCdEf", "/api/v2/album/AbCdEf"},
+		{"/api/v2/album/AbCdEf", "/api/v2/album/AbCdEf"},
+	} {
+		got, err := normalizeAlbumURI(test.in)
+		if err != nil {
+			t.Fatalf("normalizeAlbumURI(%q) returned error: %v", test.in, err)
+		}
+		if got != test.want {
+			t.Fatalf("normalizeAlbumURI(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestNormalizeNodeURI(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"NdAbCd", "/api/v2/node/NdAbCd"},
+		{"/node/NdAbCd", "/api/v2/node/NdAbCd"},
+		{"/api/v2/node/NdAbCd", "/api/v2/node/NdAbCd"},
+		{"https://api.smugmug.com/api/v2/node/NdAbCd", "/api/v2/node/NdAbCd"},
+	} {
+		got, err := normalizeNodeURI(test.in)
+		if err != nil {
+			t.Fatalf("normalizeNodeURI(%q) returned error: %v", test.in, err)
+		}
+		if got != test.want {
+			t.Fatalf("normalizeNodeURI(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestRevealObscured(t *testing.T) {
+	want := strings.Repeat("s", 64)
+	got, err := revealObscured("api_secret", obscure.MustObscure(want))
+	if err != nil {
+		t.Fatalf("revealObscured returned error: %v", err)
+	}
+	if got != want {
+		t.Fatalf("revealObscured = %q, want %q", got, want)
+	}
+}
+
+func TestRevealObscuredAcceptsShortSecret(t *testing.T) {
+	want := "short-secret"
+	got, err := revealObscured("api_secret", obscure.MustObscure(want))
+	if err != nil {
+		t.Fatalf("revealObscured returned error: %v", err)
+	}
+	if got != want {
+		t.Fatalf("revealObscured = %q, want %q", got, want)
+	}
+}
+
+func TestRevealObscuredRejectsPlainAPISecret(t *testing.T) {
+	plainBase64URLSecret := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789AB"
+	_, err := revealObscured("api_secret", plainBase64URLSecret)
+	if err == nil {
+		t.Fatal("expected plain API secret to be rejected")
+	}
+}
+
+func testConfig(values configmap.Simple) configmap.Simple {
+	m := configmap.Simple{
+		"api_key":    "key",
+		"api_secret": obscure.MustObscure("secret"),
+	}
+	for key, value := range values {
+		m[key] = value
+	}
+	return m
+}
+
+func TestGetOptionsDefaultsToRootNode(t *testing.T) {
+	opt, err := getOptions(testConfig(nil))
+	if err != nil {
+		t.Fatalf("getOptions returned error: %v", err)
+	}
+	if opt.RootNode != "root" {
+		t.Fatalf("RootNode = %q, want %q", opt.RootNode, "root")
+	}
+	if opt.AlbumURI != "" {
+		t.Fatalf("AlbumURI = %q, want empty", opt.AlbumURI)
+	}
+}
+
+func TestGetOptionsKeepsAlbumMode(t *testing.T) {
+	opt, err := getOptions(testConfig(configmap.Simple{
+		"album_uri": "/api/v2/album/AbCdEf",
+	}))
+	if err != nil {
+		t.Fatalf("getOptions returned error: %v", err)
+	}
+	if opt.AlbumURI != "/api/v2/album/AbCdEf" {
+		t.Fatalf("AlbumURI = %q, want %q", opt.AlbumURI, "/api/v2/album/AbCdEf")
+	}
+	if opt.RootNode != "" {
+		t.Fatalf("RootNode = %q, want empty", opt.RootNode)
+	}
+}
+
+func TestGetOptionsRequiresAPIKey(t *testing.T) {
+	_, err := getOptions(configmap.Simple{
+		"api_secret": obscure.MustObscure("secret"),
+	})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "api_key") {
+		t.Fatalf("error %q does not contain api_key", err)
+	}
+}
+
+func TestGetOptionsRequiresAPISecret(t *testing.T) {
+	_, err := getOptions(configmap.Simple{
+		"api_key": "key",
+	})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "api_secret") {
+		t.Fatalf("error %q does not contain api_secret", err)
+	}
+}
+
+func TestConfigExistingTokenAsksRefresh(t *testing.T) {
+	m := testConfig(configmap.Simple{
+		configAccessToken:     "token",
+		"access_token_secret": obscure.MustObscure("secret"),
+	})
+	out, err := Config(context.Background(), "smug", m, fs.ConfigIn{})
+	if err != nil {
+		t.Fatalf("Config returned error: %v", err)
+	}
+	if out == nil || out.Option == nil {
+		t.Fatalf("Config returned %#v, want refresh question", out)
+	}
+	if out.State != "refresh" {
+		t.Fatalf("State = %q, want %q", out.State, "refresh")
+	}
+	if out.Option.Name != "config_refresh_token" {
+		t.Fatalf("Option.Name = %q, want %q", out.Option.Name, "config_refresh_token")
+	}
+}
+
+func TestConfigExistingTokenCanBeKept(t *testing.T) {
+	m := testConfig(configmap.Simple{
+		configAccessToken:     "token",
+		"access_token_secret": obscure.MustObscure("secret"),
+	})
+	out, err := Config(context.Background(), "smug", m, fs.ConfigIn{
+		State:  "refresh",
+		Result: "false",
+	})
+	if err != nil {
+		t.Fatalf("Config returned error: %v", err)
+	}
+	if out != nil {
+		t.Fatalf("Config returned %#v, want nil", out)
+	}
+}
+
+func TestNewFsEmptyDirectoryFeature(t *testing.T) {
+	ctx := context.Background()
+	baseConfig := testConfig(configmap.Simple{
+		configAccessToken:     "token",
+		"access_token_secret": obscure.MustObscure("0123456789abcdef"),
+	})
+
+	libraryConfig := configmap.Simple{}
+	for key, value := range baseConfig {
+		libraryConfig[key] = value
+	}
+	libraryConfig["root_node"] = "NdRoot"
+	f, err := NewFs(ctx, "smug", "", libraryConfig)
+	if err != nil {
+		t.Fatalf("NewFs library mode returned error: %v", err)
+	}
+	if !f.Features().CanHaveEmptyDirectories {
+		t.Fatal("library mode should advertise CanHaveEmptyDirectories")
+	}
+
+	albumConfig := configmap.Simple{}
+	for key, value := range baseConfig {
+		albumConfig[key] = value
+	}
+	albumConfig["album_uri"] = "/api/v2/album/AbCdEf"
+	f, err = NewFs(ctx, "smug", "", albumConfig)
+	if err != nil {
+		t.Fatalf("NewFs album mode returned error: %v", err)
+	}
+	if f.Features().CanHaveEmptyDirectories {
+		t.Fatal("album mode should not advertise CanHaveEmptyDirectories")
+	}
+}
+
+func TestMkdirExistingLibraryPath(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		dir         string
+		fullDir     string
+		loc         *libraryLocation
+		errContains string
+	}{
+		{
+			name:    "folder",
+			fullDir: "Projects",
+			loc:     &libraryLocation{node: api.Node{Type: "Folder"}},
+		},
+		{
+			name:    "album",
+			fullDir: "Projects/BlueMesa",
+			loc:     &libraryLocation{node: api.Node{Type: "Album"}},
+		},
+		{
+			name:    "virtual root",
+			fullDir: "Projects/BlueMesa/prints",
+			loc:     &libraryLocation{node: api.Node{Type: "Album"}, albumPrefix: "prints"},
+		},
+		{
+			name:        "virtual child",
+			dir:         "Projects/BlueMesa/prints",
+			fullDir:     "Projects/BlueMesa/prints",
+			loc:         &libraryLocation{node: api.Node{Type: "Album"}, albumPrefix: "prints"},
+			errContains: "virtual",
+		},
+		{
+			name:        "unsupported node",
+			fullDir:     "Projects/Page",
+			loc:         &libraryLocation{node: api.Node{Type: "Page"}},
+			errContains: "not a folder",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := mkdirExistingLibraryPath(test.dir, test.fullDir, test.loc)
+			if test.errContains == "" {
+				if err != nil {
+					t.Fatalf("mkdirExistingLibraryPath returned error: %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatal("expected error")
+			}
+			if !strings.Contains(err.Error(), test.errContains) {
+				t.Fatalf("error %q does not contain %q", err, test.errContains)
+			}
+		})
+	}
+}
+
+func TestCommandNodeInfoInParent(t *testing.T) {
+	f := &Fs{}
+	item := api.Node{
+		Name:   "RiverLight",
+		Type:   "Album",
+		URI:    "/api/v2/node/NdAlbum",
+		WebURI: "https://example.invalid/RiverLight",
+		Uris: map[string]api.Link{
+			"Album": {URI: "/api/v2/album/AbCdEf"},
+		},
+	}
+
+	got := f.commandNodeInfoInParent(item, "Projects")
+	if got.Path != "Projects/RiverLight" {
+		t.Fatalf("Path = %q, want %q", got.Path, "Projects/RiverLight")
+	}
+
+	got = f.commandNodeInfoInParent(item, "")
+	if got.Path != "RiverLight" {
+		t.Fatalf("Path = %q, want %q", got.Path, "RiverLight")
+	}
+}
+
+func TestNodeNameEncodesSlash(t *testing.T) {
+	f := &Fs{opt: Options{Enc: encoder.EncodeSlash}}
+	item := api.Node{Name: "Folder/Album"}
+
+	got := f.nodeName(item)
+	if got != "Folder／Album" {
+		t.Fatalf("nodeName = %q, want %q", got, "Folder／Album")
+	}
+}
+
+func TestResolveLibraryPathCachesNodes(t *testing.T) {
+	ctx := context.Background()
+	var rootGets, rootChildren, projectChildren int
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v2/node/NdRoot", func(w http.ResponseWriter, r *http.Request) {
+		rootGets++
+		_, _ = w.Write([]byte(`{"Response":{"Node":{"Name":"Root","Type":"Folder","Uri":"/api/v2/node/NdRoot"}}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdRoot!children", func(w http.ResponseWriter, r *http.Request) {
+		rootChildren++
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"Projects","Type":"Folder","Uri":"/api/v2/node/NdProjects"}]}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdProjects!children", func(w http.ResponseWriter, r *http.Request) {
+		projectChildren++
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"BlueMesa","Type":"Album","Uri":"/api/v2/node/NdAlbum","Uris":{"Album":{"Uri":"/api/v2/album/AbCdEf"}}}]}}`))
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	f := &Fs{
+		rootNodeURI: "/api/v2/node/NdRoot",
+		client:      server.Client(),
+		srv:         newSmugMugRESTClient(server.Client()).SetRoot(server.URL),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	f.dirCache = dircache.New("", f.rootNodeURI, f)
+
+	for range 2 {
+		loc, err := f.resolveLibraryPath(ctx, "Projects/BlueMesa/photo.jpg")
+		if err != nil {
+			t.Fatalf("resolveLibraryPath returned error: %v", err)
+		}
+		if loc.albumURI != "/api/v2/album/AbCdEf" || loc.albumPrefix != "photo.jpg" {
+			t.Fatalf("resolveLibraryPath returned albumURI=%q albumPrefix=%q", loc.albumURI, loc.albumPrefix)
+		}
+	}
+	if rootGets != 1 || rootChildren != 1 || projectChildren != 1 {
+		t.Fatalf("API calls = root:%d root children:%d project children:%d, want 1 each", rootGets, rootChildren, projectChildren)
+	}
+	if got, ok := f.dirCache.Get("Projects"); !ok || got != "/api/v2/node/NdProjects" {
+		t.Fatalf("dir cache Projects = %q, %v; want /api/v2/node/NdProjects, true", got, ok)
+	}
+}
+
+func TestResolveAlbumURIWebURLFallsBackToLibraryPath(t *testing.T) {
+	ctx := context.Background()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/2026/Raw/BlueMesa/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<html><title>BlueMesa</title></html>`))
+	})
+	mux.HandleFunc("/api/v2!authuser", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"Response":{"User":{"Uris":{"Node":{"Uri":"/api/v2/node/NdRoot"}}}}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdRoot", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"Response":{"Node":{"Name":"Root","Type":"Folder","Uri":"/api/v2/node/NdRoot"}}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdRoot!children", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"2026","Type":"Folder","Uri":"/api/v2/node/Nd2026"}]}}`))
+	})
+	mux.HandleFunc("/api/v2/node/Nd2026!children", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"Raw","Type":"Folder","Uri":"/api/v2/node/NdRaw"}]}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdRaw!children", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"BlueMesa","Type":"Album","Uri":"/api/v2/node/NdAlbum","Uris":{"Album":{"Uri":"/api/v2/album/AbCdEf"}}}]}}`))
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	f := &Fs{
+		client: server.Client(),
+		srv:    newSmugMugRESTClient(server.Client()).SetRoot(server.URL),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	for _, test := range []struct {
+		name    string
+		urlPath string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "exact album path",
+			urlPath: "/2026/Raw/BlueMesa/i-AbCdEf/A",
+			want:    "/api/v2/album/AbCdEf",
+		},
+		{
+			name:    "path below album",
+			urlPath: "/2026/Raw/BlueMesa/prints/i-AbCdEf/A",
+			wantErr: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := f.resolveAlbumURI(ctx, server.URL+test.urlPath)
+			if test.wantErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				if !strings.Contains(err.Error(), "did not resolve to an album") {
+					t.Fatalf("error %q does not say path did not resolve to an album", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("resolveAlbumURI returned error: %v", err)
+			}
+			if got != test.want {
+				t.Fatalf("resolveAlbumURI = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestAPILinkUnmarshal(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{`"/api/v2/node/NdAbCd"`, "/api/v2/node/NdAbCd"},
+		{`{"Uri":"/api/v2/node/NdAbCd"}`, "/api/v2/node/NdAbCd"},
+	} {
+		var got api.Link
+		if err := json.Unmarshal([]byte(test.in), &got); err != nil {
+			t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
+		}
+		if got.URI != test.want {
+			t.Fatalf("json.Unmarshal(%s) = %q, want %q", test.in, got.URI, test.want)
+		}
+	}
+}
+
+func TestAlbumImageAPILinkUnmarshal(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "string",
+			in:   `{"Uris":{"Image":"/api/v2/image/AbCdEf"}}`,
+			want: "/api/v2/image/AbCdEf",
+		},
+		{
+			name: "object",
+			in:   `{"Uris":{"Image":{"Uri":"/api/v2/image/AbCdEf"}}}`,
+			want: "/api/v2/image/AbCdEf",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var got api.AlbumImage
+			if err := json.Unmarshal([]byte(test.in), &got); err != nil {
+				t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
+			}
+			if got.Uris["Image"].URI != test.want {
+				t.Fatalf("json.Unmarshal(%s) = %q, want %q", test.in, got.Uris["Image"].URI, test.want)
+			}
+		})
+	}
+}
+
+func TestAlbumImageMetadataUnmarshal(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		in            string
+		wantKeywords  string
+		wantLatitude  float64
+		wantHasLat    bool
+		wantHidden    bool
+		wantHasHidden bool
+		wantTitle     string
+		wantCaption   string
+		wantLongitude float64
+		wantHasLong   bool
+		wantAltitude  float64
+		wantHasAlt    bool
+	}{
+		{
+			name:          "metadata values",
+			in:            `{"Title":"Cover","Caption":"Trail","Keywords":["travel","landscape"],"Hidden":false,"Latitude":"35.681236","Longitude":139.767125,"Altitude":"12.5"}`,
+			wantKeywords:  "travel,landscape",
+			wantLatitude:  35.681236,
+			wantHasLat:    true,
+			wantHidden:    false,
+			wantHasHidden: true,
+			wantTitle:     "Cover",
+			wantCaption:   "Trail",
+			wantLongitude: 139.767125,
+			wantHasLong:   true,
+			wantAltitude:  12.5,
+			wantHasAlt:    true,
+		},
+		{
+			name:         "string keywords",
+			in:           `{"Keywords":"travel,landscape"}`,
+			wantKeywords: "travel,landscape",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var got api.AlbumImage
+			if err := json.Unmarshal([]byte(test.in), &got); err != nil {
+				t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
+			}
+			if string(got.Keywords) != test.wantKeywords {
+				t.Fatalf("Keywords = %q, want %q", got.Keywords, test.wantKeywords)
+			}
+			if got.Title != test.wantTitle {
+				t.Fatalf("Title = %q, want %q", got.Title, test.wantTitle)
+			}
+			if got.Caption != test.wantCaption {
+				t.Fatalf("Caption = %q, want %q", got.Caption, test.wantCaption)
+			}
+			if got.Hidden != nil != test.wantHasHidden {
+				t.Fatalf("Hidden present = %v, want %v", got.Hidden != nil, test.wantHasHidden)
+			}
+			if got.Hidden != nil && *got.Hidden != test.wantHidden {
+				t.Fatalf("Hidden = %v, want %v", *got.Hidden, test.wantHidden)
+			}
+			latitude, hasLatitude := got.Latitude.Value()
+			if hasLatitude != test.wantHasLat {
+				t.Fatalf("Latitude present = %v, want %v", hasLatitude, test.wantHasLat)
+			}
+			if hasLatitude && latitude != test.wantLatitude {
+				t.Fatalf("Latitude = %v, want %v", latitude, test.wantLatitude)
+			}
+			longitude, hasLongitude := got.Longitude.Value()
+			if hasLongitude != test.wantHasLong {
+				t.Fatalf("Longitude present = %v, want %v", hasLongitude, test.wantHasLong)
+			}
+			if hasLongitude && longitude != test.wantLongitude {
+				t.Fatalf("Longitude = %v, want %v", longitude, test.wantLongitude)
+			}
+			altitude, hasAltitude := got.Altitude.Value()
+			if hasAltitude != test.wantHasAlt {
+				t.Fatalf("Altitude present = %v, want %v", hasAltitude, test.wantHasAlt)
+			}
+			if hasAltitude && altitude != test.wantAltitude {
+				t.Fatalf("Altitude = %v, want %v", altitude, test.wantAltitude)
+			}
+		})
+	}
+}
+
+func TestImageURIFromAlbumImageURI(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "plain album image",
+			in:   "/api/v2/album/AbCdEf/image/XyZ123",
+			want: "/api/v2/image/XyZ123",
+		},
+		{
+			name: "album image endpoint",
+			in:   "/api/v2/album/AbCdEf/image/XyZ123!albumimage",
+			want: "/api/v2/image/XyZ123",
+		},
+		{
+			name: "album image query",
+			in:   "/api/v2/album/AbCdEf/image/XyZ123?_verbosity=1",
+			want: "/api/v2/image/XyZ123",
+		},
+		{
+			name: "trailing slash",
+			in:   "/api/v2/album/AbCdEf/image/XyZ123/",
+			want: "/api/v2/image/XyZ123",
+		},
+		{
+			name: "no image segment",
+			in:   "/api/v2/album/AbCdEf",
+			want: "/api/v2/album/AbCdEf",
+		},
+		{
+			name: "empty image key",
+			in:   "/api/v2/album/AbCdEf/image/",
+			want: "/api/v2/album/AbCdEf/image/",
+		},
+		{
+			name: "empty",
+			in:   "",
+			want: "",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got := imageURIFromAlbumImageURI(test.in)
+			if got != test.want {
+				t.Fatalf("imageURIFromAlbumImageURI(%q) = %q, want %q", test.in, got, test.want)
+			}
+		})
+	}
+}
+
+func TestNewObjectUsesArchivedRenditionMetadata(t *testing.T) {
+	f := &Fs{}
+	const md5sum = "0123456789abcdef0123456789abcdef"
+	o := f.newObjectFromImageInAlbum("photo.jpg", api.AlbumImage{
+		URI:          "/api/v2/album/AbCdEf/image/ImgOne",
+		FileName:     "photo.jpg",
+		ArchivedURI:  "https://example.invalid/archived.jpg",
+		ArchivedSize: 7,
+		ArchivedMD5:  strings.ToUpper(md5sum),
+		OriginalSize: 99,
+		Size:         88,
+	}, "/api/v2/album/AbCdEf", "photo.jpg")
+
+	if o.Size() != 7 {
+		t.Fatalf("Size = %d, want 7", o.Size())
+	}
+	gotHash, err := o.Hash(context.Background(), hash.MD5)
+	if err != nil {
+		t.Fatalf("Hash returned error: %v", err)
+	}
+	if gotHash != md5sum {
+		t.Fatalf("Hash = %q, want %q", gotHash, md5sum)
+	}
+	if o.downloadURL != "https://example.invalid/archived.jpg" {
+		t.Fatalf("downloadURL = %q, want archived URL", o.downloadURL)
+	}
+}
+
+func TestNewObjectFallsBackToImageURIFromAlbumImageURI(t *testing.T) {
+	o := (&Fs{}).newObjectFromImageInAlbum("photo.jpg", api.AlbumImage{
+		URI:      "/api/v2/album/AbCdEf/image/XyZ123!albumimage",
+		FileName: "photo.jpg",
+	}, "/api/v2/album/AbCdEf", "photo.jpg")
+
+	if o.imageURI != "/api/v2/image/XyZ123" {
+		t.Fatalf("imageURI = %q, want %q", o.imageURI, "/api/v2/image/XyZ123")
+	}
+}
+
+func TestNewObjectUnknownSizeIsZero(t *testing.T) {
+	o := (&Fs{}).newObjectFromImageInAlbum("photo.jpg", api.AlbumImage{
+		URI:      "/api/v2/album/AbCdEf/image/ImgOne",
+		FileName: "photo.jpg",
+	}, "/api/v2/album/AbCdEf", "photo.jpg")
+	if o.Size() != 0 {
+		t.Fatalf("Size = %d, want 0", o.Size())
+	}
+}
+
+func TestSmugMugMetadataPatch(t *testing.T) {
+	patch, err := smugMugMetadataPatch(fs.Metadata{
+		"title":     "Cover",
+		"caption":   "Trail",
+		"keywords":  "travel,landscape",
+		"hidden":    "true",
+		"latitude":  "35.681236",
+		"longitude": "139.767125",
+		"altitude":  "12.5",
+		"unknown":   "ignored",
+	})
+	if err != nil {
+		t.Fatalf("smugMugMetadataPatch returned error: %v", err)
+	}
+	for key, want := range map[string]any{
+		"Title":     "Cover",
+		"Caption":   "Trail",
+		"Keywords":  "travel,landscape",
+		"Hidden":    true,
+		"Latitude":  35.681236,
+		"Longitude": 139.767125,
+		"Altitude":  12.5,
+	} {
+		if patch[key] != want {
+			t.Fatalf("patch[%q] = %#v, want %#v", key, patch[key], want)
+		}
+	}
+	if _, ok := patch["unknown"]; ok {
+		t.Fatal("unknown metadata key was not ignored")
+	}
+}
+
+func TestApplySmugMugUploadMetadata(t *testing.T) {
+	headers := map[string]string{}
+	err := applySmugMugUploadMetadata(headers, fs.Metadata{
+		"title":     "Cover",
+		"caption":   "Trail",
+		"keywords":  "travel,landscape",
+		"hidden":    "false",
+		"latitude":  "35.681236",
+		"longitude": "139.767125",
+		"altitude":  "12.5",
+	})
+	if err != nil {
+		t.Fatalf("applySmugMugUploadMetadata returned error: %v", err)
+	}
+	for key, want := range map[string]string{
+		"X-Smug-Title":     "Cover",
+		"X-Smug-Caption":   "Trail",
+		"X-Smug-Keywords":  "travel,landscape",
+		"X-Smug-Hidden":    "false",
+		"X-Smug-Latitude":  "35.681236",
+		"X-Smug-Longitude": "139.767125",
+		"X-Smug-Altitude":  "12.5",
+	} {
+		if headers[key] != want {
+			t.Fatalf("headers[%q] = %q, want %q", key, headers[key], want)
+		}
+	}
+}
+
+func TestObjectOpenUsesUnsignedDownloadClient(t *testing.T) {
+	ctx := context.Background()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "" {
+			t.Fatalf("download request sent Authorization header %q", got)
+		}
+		_, _ = w.Write([]byte("image"))
+	}))
+	defer server.Close()
+
+	baseClient := server.Client()
+	signedClient := *baseClient
+	signedClient.Transport = &oauth1Transport{
+		base: baseClient.Transport,
+		cred: oauthCredentials{
+			consumerKey:    "key",
+			consumerSecret: "secret",
+			token:          "token",
+			tokenSecret:    "token-secret",
+		},
+	}
+	f := &Fs{
+		client:         &signedClient,
+		downloadClient: baseClient,
+		pacer:          fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	o := &Object{
+		fs:          f,
+		downloadURL: server.URL,
+	}
+
+	in, err := o.Open(ctx)
+	if err != nil {
+		t.Fatalf("Open returned error: %v", err)
+	}
+	defer fs.CheckClose(in, &err)
+	got, err := io.ReadAll(in)
+	if err != nil {
+		t.Fatalf("ReadAll returned error: %v", err)
+	}
+	if string(got) != "image" {
+		t.Fatalf("download body = %q, want %q", got, "image")
+	}
+}
+
+func TestFindDownloadDetails(t *testing.T) {
+	details := findDownloadDetails(map[string]any{
+		"Response": map[string]any{
+			"Image": map[string]any{
+				"ArchivedUri":  "https://example.invalid/archive.jpg",
+				"ArchivedSize": float64(12),
+				"ArchivedMD5":  "0123456789abcdef0123456789abcdef",
+			},
+		},
+	})
+	if details.URL != "https://example.invalid/archive.jpg" {
+		t.Fatalf("URL = %q, want archived URL", details.URL)
+	}
+	if details.Size != 12 {
+		t.Fatalf("Size = %d, want 12", details.Size)
+	}
+	if details.MD5 != "0123456789abcdef0123456789abcdef" {
+		t.Fatalf("MD5 = %q, want archived MD5", details.MD5)
+	}
+}
+
+func TestUploadWithNonSeekableBodyReturnsHTTPError(t *testing.T) {
+	ctx := context.Background()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"Code":500,"Message":"server said no"}`))
+	}))
+	defer server.Close()
+
+	target, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatalf("url.Parse returned error: %v", err)
+	}
+	client := server.Client()
+	client.Transport = rewriteTransport{
+		base:   client.Transport,
+		target: target,
+	}
+	f := &Fs{
+		client: client,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	err = f.upload(ctx, bytes.NewBufferString("body"), 4, nil, "", &api.UploadResponse{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "server said no") {
+		t.Fatalf("upload error = %q, want SmugMug HTTP error body", err)
+	}
+}
+
+func TestUploadRetriesSeekableAccountingBody(t *testing.T) {
+	ctx := context.Background()
+	var requests int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("ReadAll returned error: %v", err)
+		}
+		if string(body) != "body" {
+			t.Errorf("request body = %q, want %q", body, "body")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if requests == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"Code":500,"Message":"retry me"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"stat":"ok","Image":{"ImageUri":"/api/v2/image/ImgOne","AlbumImageUri":"/api/v2/album/AbCdEf/image/ImgOne"}}`))
+	}))
+	defer server.Close()
+
+	target, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatalf("url.Parse returned error: %v", err)
+	}
+	client := server.Client()
+	client.Transport = rewriteTransport{
+		base:   client.Transport,
+		target: target,
+	}
+	f := &Fs{
+		client: client,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	var upload api.UploadResponse
+	err = f.upload(ctx, &testAccounter{in: bytes.NewReader([]byte("body"))}, 4, nil, "", &upload)
+	if err != nil {
+		t.Fatalf("upload returned error: %v", err)
+	}
+	if requests != 2 {
+		t.Fatalf("requests = %d, want 2", requests)
+	}
+	if upload.Image.ImageURI != "/api/v2/image/ImgOne" {
+		t.Fatalf("ImageURI = %q, want uploaded image URI", upload.Image.ImageURI)
+	}
+}
+
+func TestUpdateClearsCachedDownloadURL(t *testing.T) {
+	ctx := context.Background()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("X-Smug-ImageUri"); got != "/api/v2/image/Old" {
+			t.Errorf("X-Smug-ImageUri = %q, want old image URI", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"stat":"ok","Image":{"ImageUri":"/api/v2/image/New","AlbumImageUri":"/api/v2/album/AbCdEf/image/New"}}`))
+	}))
+	defer server.Close()
+
+	target, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatalf("url.Parse returned error: %v", err)
+	}
+	client := server.Client()
+	client.Transport = rewriteTransport{
+		base:   client.Transport,
+		target: target,
+	}
+	f := &Fs{
+		albumURI: "/api/v2/album/AbCdEf",
+		client:   client,
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	o := &Object{
+		fs:            f,
+		remote:        "photo.jpg",
+		albumURI:      "/api/v2/album/AbCdEf",
+		albumImageURI: "/api/v2/album/AbCdEf/image/Old",
+		imageURI:      "/api/v2/image/Old",
+		downloadURL:   "https://example.invalid/old.jpg",
+	}
+	body := "new image"
+	src := object.NewStaticObjectInfo("photo.jpg", time.Now(), int64(len(body)), true, nil, nil).WithMimeType("image/jpeg")
+
+	if err := o.Update(ctx, bytes.NewBufferString(body), src); err != nil {
+		t.Fatalf("Update returned error: %v", err)
+	}
+	if o.downloadURL != "" {
+		t.Fatalf("downloadURL = %q, want cleared after Update", o.downloadURL)
+	}
+	if o.imageURI != "/api/v2/image/New" {
+		t.Fatalf("imageURI = %q, want new image URI", o.imageURI)
+	}
+	if o.albumImageURI != "/api/v2/album/AbCdEf/image/New" {
+		t.Fatalf("albumImageURI = %q, want new album image URI", o.albumImageURI)
+	}
+}
+
+type rewriteTransport struct {
+	base   http.RoundTripper
+	target *url.URL
+}
+
+func (t rewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	clone := req.Clone(req.Context())
+	clone.URL.Scheme = t.target.Scheme
+	clone.URL.Host = t.target.Host
+	clone.URL.Path = t.target.Path
+	clone.URL.RawPath = t.target.RawPath
+	clone.URL.RawQuery = t.target.RawQuery
+	clone.Host = t.target.Host
+	return base.RoundTrip(clone)
+}
+
+type testAccounter struct {
+	in io.Reader
+}
+
+func (a *testAccounter) Read(p []byte) (int, error) {
+	return a.in.Read(p)
+}
+
+func (a *testAccounter) OldStream() io.Reader {
+	return a.in
+}
+
+func (a *testAccounter) SetStream(in io.Reader) {
+	a.in = in
+}
+
+func (a *testAccounter) WrapStream(in io.Reader) io.Reader {
+	return &testAccounter{in: in}
+}
+
+func TestListPreservesDuplicateFileNames(t *testing.T) {
+	ctx := context.Background()
+	server := duplicateImageServer(t)
+	defer server.Close()
+
+	f := &Fs{
+		albumURI: server.URL + "/api/v2/album/AbCdEf",
+		client:   server.Client(),
+		srv:      newSmugMugRESTClient(server.Client()),
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	entries, err := f.List(ctx, "")
+	if err != nil {
+		t.Fatalf("List returned error: %v", err)
+	}
+	assertDuplicateImageEntries(t, entries)
+}
+
+func TestListAlbumEntriesPreservesDuplicateFileNames(t *testing.T) {
+	ctx := context.Background()
+	server := duplicateImageServer(t)
+	defer server.Close()
+
+	f := &Fs{
+		client: server.Client(),
+		srv:    newSmugMugRESTClient(server.Client()),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	entries, err := f.listAlbumEntries(ctx, "", server.URL+"/api/v2/album/AbCdEf", "")
+	if err != nil {
+		t.Fatalf("listAlbumEntries returned error: %v", err)
+	}
+	assertDuplicateImageEntries(t, entries)
+}
+
+func duplicateImageServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v2/album/AbCdEf!images" {
+			t.Errorf("unexpected path %q", r.URL.Path)
+			http.Error(w, "bad path", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"Response": {
+				"AlbumImage": [
+					{"Uri": "/api/v2/album/AbCdEf/image/ImgOne", "FileName": "photo.jpg", "OriginalSize": 1},
+					{"Uri": "/api/v2/album/AbCdEf/image/ImgTwo", "FileName": "photo.jpg", "OriginalSize": 2}
+				]
+			}
+		}`))
+	}))
+}
+
+func TestListAlbumImagesCachesUntilAlbumChanges(t *testing.T) {
+	ctx := context.Background()
+	var listCount, deleteCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			deleteCount++
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"Code":200,"Message":"Ok"}`))
+			return
+		}
+		listCount++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"Response": {
+				"AlbumImage": [
+					{"Uri": "/api/v2/album/AbCdEf/image/ImgOne", "FileName": "photo.jpg", "ArchivedSize": 1}
+				]
+			}
+		}`))
+	}))
+	defer server.Close()
+
+	albumURI := server.URL + "/api/v2/album/AbCdEf"
+	f := &Fs{
+		albumURI: albumURI,
+		client:   server.Client(),
+		srv:      newSmugMugRESTClient(server.Client()),
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	for i := range 3 {
+		if _, err := f.listAlbumImages(ctx, albumURI); err != nil {
+			t.Fatalf("listAlbumImages %d returned error: %v", i, err)
+		}
+	}
+	if listCount != 1 {
+		t.Fatalf("album listed %d times, want 1 (cache miss)", listCount)
+	}
+
+	o := &Object{
+		fs:            f,
+		remote:        "photo.jpg",
+		albumURI:      albumURI,
+		albumImageURI: albumURI + "/image/ImgOne",
+	}
+	if err := o.Remove(ctx); err != nil {
+		t.Fatalf("Remove returned error: %v", err)
+	}
+	if deleteCount != 1 {
+		t.Fatalf("delete count = %d, want 1", deleteCount)
+	}
+
+	if _, err := f.listAlbumImages(ctx, albumURI); err != nil {
+		t.Fatalf("listAlbumImages after Remove returned error: %v", err)
+	}
+	if listCount != 2 {
+		t.Fatalf("album listed %d times after Remove, want 2 (cache invalidated)", listCount)
+	}
+}
+
+func TestListAlbumImagesDiscardsListingThatRacedInvalidation(t *testing.T) {
+	ctx := context.Background()
+	var f *Fs
+	albumPath := "/api/v2/album/AbCdEf"
+	var listCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		listCount++
+		// Simulate an upload landing in the album while this listing is in
+		// flight: the invalidation happens after the cache miss but before the
+		// response is stored.
+		if listCount == 1 {
+			f.invalidateAlbumImages(f.albumURI)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"Response":{"AlbumImage":[]}}`))
+	}))
+	defer server.Close()
+
+	f = &Fs{
+		albumURI: server.URL + albumPath,
+		client:   server.Client(),
+		srv:      newSmugMugRESTClient(server.Client()),
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	if _, err := f.listAlbumImages(ctx, f.albumURI); err != nil {
+		t.Fatalf("listAlbumImages returned error: %v", err)
+	}
+	if _, ok := f.getCachedAlbumImages(f.albumURI); ok {
+		t.Fatal("listing that raced an invalidation was cached")
+	}
+	if _, err := f.listAlbumImages(ctx, f.albumURI); err != nil {
+		t.Fatalf("second listAlbumImages returned error: %v", err)
+	}
+	if listCount != 2 {
+		t.Fatalf("album listed %d times, want 2 (raced listing not reused)", listCount)
+	}
+}
+
+func TestAlbumImageCacheInvalidatedByMutations(t *testing.T) {
+	ctx := context.Background()
+	albumURI := "/api/v2/album/AbCdEf"
+	images := []api.AlbumImage{{URI: albumURI + "/image/ImgOne", FileName: "photo.jpg"}}
+
+	for _, test := range []struct {
+		name   string
+		mutate func(t *testing.T, f *Fs)
+	}{
+		{
+			name: "SetMetadata",
+			mutate: func(t *testing.T, f *Fs) {
+				o := &Object{fs: f, albumURI: albumURI, albumImageURI: albumURI + "/image/ImgOne"}
+				if err := o.SetMetadata(ctx, fs.Metadata{"title": "new"}); err != nil {
+					t.Fatalf("SetMetadata returned error: %v", err)
+				}
+			},
+		},
+		{
+			name: "DirCacheFlush",
+			mutate: func(t *testing.T, f *Fs) {
+				f.DirCacheFlush()
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"Code":200,"Message":"Ok"}`))
+			}))
+			defer server.Close()
+
+			f := &Fs{
+				client: server.Client(),
+				srv:    newSmugMugRESTClient(server.Client()).SetRoot(server.URL),
+				pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+			}
+			f.cacheAlbumImages(albumURI, images, f.imagesGeneration())
+			if _, ok := f.getCachedAlbumImages(albumURI); !ok {
+				t.Fatal("album images were not cached to begin with")
+			}
+			test.mutate(t, f)
+			if _, ok := f.getCachedAlbumImages(albumURI); ok {
+				t.Fatalf("album images still cached after %s", test.name)
+			}
+		})
+	}
+}
+
+func TestListAlbumImagesCacheIsPerAlbum(t *testing.T) {
+	ctx := context.Background()
+	seen := map[string]int{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen[r.URL.Path]++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"Response":{"AlbumImage":[]}}`))
+	}))
+	defer server.Close()
+
+	f := &Fs{
+		client: server.Client(),
+		srv:    newSmugMugRESTClient(server.Client()),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	first := server.URL + "/api/v2/album/AbCdEf"
+	second := server.URL + "/api/v2/album/GhIjKl"
+	for _, albumURI := range []string{first, second, first, second} {
+		if _, err := f.listAlbumImages(ctx, albumURI); err != nil {
+			t.Fatalf("listAlbumImages(%q) returned error: %v", albumURI, err)
+		}
+	}
+	if got := seen["/api/v2/album/AbCdEf!images"]; got != 1 {
+		t.Fatalf("first album listed %d times, want 1", got)
+	}
+	if got := seen["/api/v2/album/GhIjKl!images"]; got != 1 {
+		t.Fatalf("second album listed %d times, want 1", got)
+	}
+}
+
+func assertDuplicateImageEntries(t *testing.T, entries fs.DirEntries) {
+	t.Helper()
+	if len(entries) != 2 {
+		t.Fatalf("entry count = %d, want 2", len(entries))
+	}
+	for i, entry := range entries {
+		obj, ok := entry.(*Object)
+		if !ok {
+			t.Fatalf("entry %d has type %T, want *Object", i, entry)
+		}
+		if obj.Remote() != "photo.jpg" {
+			t.Fatalf("entry %d remote = %q, want %q", i, obj.Remote(), "photo.jpg")
+		}
+		if obj.Size() != int64(i+1) {
+			t.Fatalf("entry %d size = %d, want %d", i, obj.Size(), i+1)
+		}
+	}
+}
+
+func TestParseRetryAfter(t *testing.T) {
+	now := time.Date(2026, 6, 25, 15, 0, 0, 0, time.UTC)
+	for _, test := range []struct {
+		name string
+		in   string
+		want time.Duration
+		ok   bool
+	}{
+		{
+			name: "seconds",
+			in:   "3",
+			want: 3 * time.Second,
+			ok:   true,
+		},
+		{
+			name: "http date",
+			in:   now.Add(5 * time.Second).Format(http.TimeFormat),
+			want: 5 * time.Second,
+			ok:   true,
+		},
+		{
+			name: "past date",
+			in:   now.Add(-5 * time.Second).Format(http.TimeFormat),
+			want: 0,
+			ok:   true,
+		},
+		{
+			name: "bad",
+			in:   "later",
+			ok:   false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, ok := parseRetryAfter(test.in, now)
+			if ok != test.ok {
+				t.Fatalf("parseRetryAfter(%q) ok = %v, want %v", test.in, ok, test.ok)
+			}
+			if got != test.want {
+				t.Fatalf("parseRetryAfter(%q) = %v, want %v", test.in, got, test.want)
+			}
+		})
+	}
+}
+
+func TestFirstAlbumURIFromPage(t *testing.T) {
+	page := normalizeSmugMugPageText(`"Uris":{"Album":{"Uri":"\/api\/v2\/album\/AbCdEf"}}`)
+	if got, want := firstAlbumURI(page), "/api/v2/album/AbCdEf"; got != want {
+		t.Fatalf("firstAlbumURI() = %q, want %q", got, want)
+	}
+}
+
+func TestNormalizeSmugMugPageText(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{`\/`, "/"},
+		{`/`, "/"},
+		{`/`, "/"},
+		{"&amp;", "&"},
+		{"&#x2F;", "/"},
+	} {
+		got := normalizeSmugMugPageText(test.in)
+		if got != test.want {
+			t.Fatalf("normalizeSmugMugPageText(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestFindDownloadDetailsPrefersOriginalURL(t *testing.T) {
+	details := findDownloadDetails(map[string]any{
+		"OriginalUrl":  "https://example.invalid/original.jpg",
+		"OriginalSize": float64(100),
+		"OriginalMD5":  "0123456789abcdef0123456789abcdef",
+		"ArchivedUri":  "https://example.invalid/archive.jpg",
+		"ArchivedSize": float64(80),
+	})
+	if details.URL != "https://example.invalid/original.jpg" {
+		t.Fatalf("URL = %q, want original URL", details.URL)
+	}
+	if details.Size != 100 {
+		t.Fatalf("Size = %d, want 100", details.Size)
+	}
+	if details.MD5 != "0123456789abcdef0123456789abcdef" {
+		t.Fatalf("MD5 = %q, want original MD5", details.MD5)
+	}
+}
+
+func TestFindDownloadDetailsFallsBackToLargestImageURL(t *testing.T) {
+	details := findDownloadDetails(map[string]any{
+		"LargestImageUrl":  "https://example.invalid/large.jpg",
+		"LargestImageSize": float64(50),
+	})
+	if details.URL != "https://example.invalid/large.jpg" {
+		t.Fatalf("URL = %q, want largest-image URL", details.URL)
+	}
+	if details.Size != 50 {
+		t.Fatalf("Size = %d, want 50", details.Size)
+	}
+}
+
+func TestFindDownloadDetailsFallsBackToURL(t *testing.T) {
+	details := findDownloadDetails(map[string]any{
+		"Url":  "https://example.invalid/img.jpg",
+		"Size": float64(25),
+	})
+	if details.URL != "https://example.invalid/img.jpg" {
+		t.Fatalf("URL = %q, want URL field", details.URL)
+	}
+	if details.Size != 25 {
+		t.Fatalf("Size = %d, want 25", details.Size)
+	}
+}
+
+func TestFindDownloadDetailsReturnsEmptyWhenNotFound(t *testing.T) {
+	details := findDownloadDetails(map[string]any{
+		"Title": "Photo",
+	})
+	if details.URL != "" {
+		t.Fatalf("URL = %q, want empty", details.URL)
+	}
+}
+
+func TestFindDownloadDetailsSearchesArrayItems(t *testing.T) {
+	details := findDownloadDetails([]any{
+		map[string]any{"Title": "no url here"},
+		map[string]any{
+			"ArchivedUri":  "https://example.invalid/archive.jpg",
+			"ArchivedSize": float64(10),
+		},
+	})
+	if details.URL != "https://example.invalid/archive.jpg" {
+		t.Fatalf("URL = %q, want archived URL from array", details.URL)
+	}
+	if details.Size != 10 {
+		t.Fatalf("Size = %d, want 10", details.Size)
+	}
+}
+
+func TestPercentEncode(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{" ", "%20"},
+		{"hello world", "hello%20world"},
+		{"a=b&c=d", "a%3Db%26c%3Dd"},
+		{"~unreserved", "~unreserved"},
+	} {
+		got := percentEncode(test.in)
+		if got != test.want {
+			t.Fatalf("percentEncode(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestNormalizeParams(t *testing.T) {
+	params := url.Values{
+		"z_key": {"z_val"},
+		"a_key": {"a_val"},
+		"m_key": {"b_val", "a_val"},
+	}
+	got := normalizeParams(params)
+	want := "a_key=a_val&m_key=a_val&m_key=b_val&z_key=z_val"
+	if got != want {
+		t.Fatalf("normalizeParams() = %q, want %q", got, want)
+	}
+}
+
+func TestNormalizeMD5(t *testing.T) {
+	const validLower = "0123456789abcdef0123456789abcdef"
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{validLower, validLower},
+		{strings.ToUpper(validLower), validLower},
+		{"  " + validLower + "  ", validLower},
+		{"short", ""},
+		{"0123456789abcdef0123456789abcdeg", ""},
+	} {
+		got := normalizeMD5(test.in)
+		if got != test.want {
+			t.Fatalf("normalizeMD5(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestReadMD5SmallFile(t *testing.T) {
+	data := []byte("hello world")
+	md5sum, out, cleanup, err := readMD5(bytes.NewReader(data), int64(len(data)), int64(len(data))+1)
+	defer cleanup()
+	if err != nil {
+		t.Fatalf("readMD5 returned error: %v", err)
+	}
+	got, err := io.ReadAll(out)
+	if err != nil {
+		t.Fatalf("ReadAll returned error: %v", err)
+	}
+	if !bytes.Equal(got, data) {
+		t.Fatalf("readMD5 body = %q, want %q", got, data)
+	}
+	h := cryptomd5.New()
+	_, _ = h.Write(data)
+	if want := hex.EncodeToString(h.Sum(nil)); md5sum != want {
+		t.Fatalf("readMD5 md5 = %q, want %q", md5sum, want)
+	}
+}
+
+func TestReadMD5LargeFileSpillsToDisk(t *testing.T) {
+	data := []byte("hello world")
+	md5sum, out, cleanup, err := readMD5(bytes.NewReader(data), int64(len(data)), int64(len(data))-1)
+	defer cleanup()
+	if err != nil {
+		t.Fatalf("readMD5 returned error: %v", err)
+	}
+	got, err := io.ReadAll(out)
+	if err != nil {
+		t.Fatalf("ReadAll returned error: %v", err)
+	}
+	if !bytes.Equal(got, data) {
+		t.Fatalf("readMD5 body = %q, want %q", got, data)
+	}
+	h := cryptomd5.New()
+	_, _ = h.Write(data)
+	if want := hex.EncodeToString(h.Sum(nil)); md5sum != want {
+		t.Fatalf("readMD5 md5 = %q, want %q", md5sum, want)
+	}
+}
+
+func TestCleanRemote(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{".", ""},
+		{"foo", "foo"},
+		{"/foo/", "foo"},
+		{"//foo//bar//", "foo/bar"},
+		{"foo/../bar", "bar"},
+	} {
+		got := cleanRemote(test.in)
+		if got != test.want {
+			t.Fatalf("cleanRemote(%q) = %q, want %q", test.in, got, test.want)
+		}
+	}
+}
+
+func TestParseSmugMugTime(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		zero bool
+	}{
+		{"", true},
+		{"not-a-date", true},
+		{"2026-01-02T15:04:05Z", false},
+		{"2026-01-02T15:04:05+09:00", false},
+	} {
+		got := parseSmugMugTime(test.in)
+		if got.IsZero() != test.zero {
+			t.Fatalf("parseSmugMugTime(%q) zero = %v, want %v", test.in, got.IsZero(), test.zero)
+		}
+	}
+}
+
+func TestSmugMugMetadata(t *testing.T) {
+	hidden := true
+	lat, lon, alt := 35.681236, 139.767125, 12.5
+	o := &Object{
+		format:    "JPEG",
+		title:     "Cover",
+		caption:   "Trail",
+		keywords:  "travel,landscape",
+		hidden:    &hidden,
+		latitude:  &lat,
+		longitude: &lon,
+		altitude:  &alt,
+	}
+	metadata := o.smugMugMetadata()
+	for key, want := range map[string]string{
+		"format":    "JPEG",
+		"title":     "Cover",
+		"caption":   "Trail",
+		"keywords":  "travel,landscape",
+		"hidden":    "true",
+		"latitude":  "35.681236",
+		"longitude": "139.767125",
+		"altitude":  "12.5",
+	} {
+		if metadata[key] != want {
+			t.Fatalf("smugMugMetadata()[%q] = %q, want %q", key, metadata[key], want)
+		}
+	}
+}
+
+func TestSmugMugMetadataEmptyWhenNoFields(t *testing.T) {
+	if got := (&Object{}).smugMugMetadata(); got != nil {
+		t.Fatalf("smugMugMetadata() = %v, want nil", got)
+	}
+}
+
+func TestApplyMetadataPatch(t *testing.T) {
+	o := &Object{}
+	o.applyMetadataPatch(map[string]any{
+		"Title":     "Cover",
+		"Caption":   "Trail",
+		"Keywords":  "travel,landscape",
+		"Hidden":    true,
+		"Latitude":  35.681236,
+		"Longitude": 139.767125,
+		"Altitude":  12.5,
+	})
+	if o.title != "Cover" {
+		t.Fatalf("title = %q, want %q", o.title, "Cover")
+	}
+	if o.caption != "Trail" {
+		t.Fatalf("caption = %q, want %q", o.caption, "Trail")
+	}
+	if o.keywords != "travel,landscape" {
+		t.Fatalf("keywords = %q, want %q", o.keywords, "travel,landscape")
+	}
+	if o.hidden == nil || !*o.hidden {
+		t.Fatalf("hidden = %v, want true", o.hidden)
+	}
+	if o.latitude == nil || *o.latitude != 35.681236 {
+		t.Fatalf("latitude = %v, want 35.681236", o.latitude)
+	}
+	if o.longitude == nil || *o.longitude != 139.767125 {
+		t.Fatalf("longitude = %v, want 139.767125", o.longitude)
+	}
+	if o.altitude == nil || *o.altitude != 12.5 {
+		t.Fatalf("altitude = %v, want 12.5", o.altitude)
+	}
+}
