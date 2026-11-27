@@ -43,8 +43,7 @@ func NewClient(c *http.Client) *Client {
 	return api
 }
 
-// ErrBodyTooLarge is returned by ReadBody when the response body is
-// bigger than the limit it will read into memory.
+// ErrBodyTooLarge indicates a response body exceeds the read or decode limit.
 var ErrBodyTooLarge = errors.New("response body too large")
 
 // ReadBody reads resp.Body into result, closing the body
@@ -197,31 +196,53 @@ func drainAndClose(r io.ReadCloser) (err error) {
 	return err
 }
 
-// checkDrainAndClose is a utility function used to check the return
-// from drainAndClose in a defer statement.
-func checkDrainAndClose(r io.ReadCloser, err *error) {
-	cerr := drainAndClose(r)
-	if *err == nil {
-		*err = cerr
+func decodeResponse(resp *http.Response, decode func(io.Reader) error) (err error) {
+	defer fs.CheckClose(resp.Body, &err)
+	var ctx context.Context
+	if resp.Request != nil {
+		ctx = resp.Request.Context()
 	}
+	limit := fs.GetConfig(ctx).MaxRESTResponseSize
+	if limit <= 0 {
+		limit = fs.DefaultMaxRESTResponseSize
+	}
+	body := &io.LimitedReader{R: resp.Body, N: int64(limit)}
+	err = decode(body)
+	// A decoder can stop after one value, so check the remaining body too.
+	_, readErr := io.Copy(io.Discard, body)
+	if body.N == 0 && readErr == nil {
+		n, probeErr := io.CopyN(io.Discard, resp.Body, 1)
+		if n != 0 {
+			return fmt.Errorf("%w (limit %d bytes)", ErrBodyTooLarge, int64(limit))
+		}
+		if probeErr != io.EOF {
+			readErr = probeErr
+		}
+	}
+	if err == nil {
+		err = readErr
+	}
+	return err
 }
 
-// DecodeJSON decodes resp.Body into result
-func DecodeJSON(resp *http.Response, result any) (err error) {
-	defer checkDrainAndClose(resp.Body, &err)
-	decoder := json.NewDecoder(resp.Body)
-	return decoder.Decode(result)
+// DecodeJSON decodes resp.Body into result and closes it.
+// It returns ErrBodyTooLarge if the body exceeds the configured limit.
+func DecodeJSON(resp *http.Response, result any) error {
+	return decodeResponse(resp, func(body io.Reader) error {
+		return json.NewDecoder(body).Decode(result)
+	})
 }
 
-// DecodeXML decodes resp.Body into result
-func DecodeXML(resp *http.Response, result any) (err error) {
-	defer checkDrainAndClose(resp.Body, &err)
-	decoder := xml.NewDecoder(resp.Body)
-	// MEGAcmd has included escaped HTML entities in its XML output, so we have to be able to
-	// decode them.
-	decoder.Strict = false
-	decoder.Entity = xml.HTMLEntity
-	return decoder.Decode(result)
+// DecodeXML decodes resp.Body into result and closes it.
+// It returns ErrBodyTooLarge if the body exceeds the configured limit.
+func DecodeXML(resp *http.Response, result any) error {
+	return decodeResponse(resp, func(body io.Reader) error {
+		decoder := xml.NewDecoder(body)
+		// MEGAcmd can include escaped HTML entities in its XML output.
+		decoder.Strict = false
+		decoder.Entity = xml.HTMLEntity
+		return decoder.Decode(result)
+	})
 }
 
 // ClientWithNoRedirects makes a new http client which won't follow redirects

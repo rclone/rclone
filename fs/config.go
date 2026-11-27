@@ -66,6 +66,9 @@ var (
 	ConfigEdit = "config_fs_edit"
 )
 
+// DefaultMaxRESTResponseSize is the default byte limit for decoding REST responses.
+const DefaultMaxRESTResponseSize = 32 * Mebi
+
 // ConfigOptionsInfo describes the Options in use
 var ConfigOptionsInfo = Options{{
 	Name:    "modify_window",
@@ -592,6 +595,11 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "max_rest_response_size",
+	Default: DefaultMaxRESTResponseSize,
+	Help:    "Maximum size of a REST response decoded as JSON or XML (non-positive values use the default)",
+	Groups:  "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -708,6 +716,8 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	// MaxRESTResponseSize limits the size of a REST response decoded as JSON or XML.
+	MaxRESTResponseSize SizeSuffix `config:"max_rest_response_size"`
 }
 
 func init() {
