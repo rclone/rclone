@@ -298,8 +298,15 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
-	// Make sure BaseURL starts with a / and doesn't end with one
-	w.opt.HTTP.BaseURL = "/" + strings.Trim(w.opt.HTTP.BaseURL, "/")
+	// Make sure BaseURL starts with a / and doesn't end with one.
+	//
+	// The root is "" rather than "/" as the webdav handler strips the
+	// prefix from the Destination header but ServeHTTP prepends it to
+	// the request path, so "/" would make them differ.
+	w.opt.HTTP.BaseURL = strings.Trim(w.opt.HTTP.BaseURL, "/")
+	if w.opt.HTTP.BaseURL != "" {
+		w.opt.HTTP.BaseURL = "/" + w.opt.HTTP.BaseURL
+	}
 
 	webdavHandler := &webdav.Handler{
 		Prefix:     w.opt.HTTP.BaseURL,
