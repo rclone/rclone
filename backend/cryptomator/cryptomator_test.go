@@ -101,3 +101,25 @@ func TestLongNames(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testFs.(*cryptomator.Fs).ShorteningThreshold(), 0)
 }
+
+// TestVaultFormat7 runs integration tests against a vault with format version 7.
+func TestVaultFormat7(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(t.TempDir(), "rclone-cryptomator-test-vault-format-7")
+	name := "TestCryptomator"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*cryptomator.DecryptingObject)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "cryptomator"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
+			{Name: name, Key: "auto_create", Value: "true"},
+			{Name: name, Key: "auto_create_vault_format_version", Value: "7"},
+		},
+		QuickTestOK:              true,
+		UnimplementableFsMethods: UnimplementableFsMethods,
+	})
+}

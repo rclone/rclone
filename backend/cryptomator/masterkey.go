@@ -27,6 +27,7 @@ const (
 type masterKey struct {
 	EncryptKey []byte
 	MacKey     []byte
+	Version    uint32
 }
 
 type encryptedMasterKey struct {
@@ -36,10 +37,8 @@ type encryptedMasterKey struct {
 	PrimaryMasterKey []byte `json:"primaryMasterKey"`
 	HmacMasterKey    []byte `json:"hmacMasterKey"`
 
-	// Deprecated: Vault format 8 no longer uses this field.
-	// When compatibility with older vault formats is implemented, code will need to be added to verify this field against VersionMac.
-	Version uint32 `json:"version"`
-	// Deprecated: Vault format 8 no longer uses this field.
+	// Deprecated: Vault format 8 no longer uses these fields.
+	Version    uint32 `json:"version"`
 	VersionMac []byte `json:"versionMac"`
 }
 
@@ -47,6 +46,7 @@ type encryptedMasterKey struct {
 func newMasterKey() (m masterKey, err error) {
 	m.EncryptKey = make([]byte, masterEncryptKeySize)
 	m.MacKey = make([]byte, masterMacKeySize)
+	m.Version = masterDefaultVersion
 
 	if _, err = rand.Read(m.EncryptKey); err != nil {
 		return
@@ -57,10 +57,21 @@ func newMasterKey() (m masterKey, err error) {
 	return
 }
 
+func calcVersionMac(m *masterKey, em *encryptedMasterKey) []byte {
+	hash := hmac.New(sha256.New, m.MacKey)
+	var verBytes [4]byte
+	binary.BigEndian.PutUint32(verBytes[:], em.Version)
+	_, err := hash.Write(verBytes[:])
+	if err != nil {
+		panic(err)
+	}
+	return hash.Sum(nil)
+}
+
 // marshal encrypts the MasterKey with a passphrase and writes it.
 func (m masterKey) marshal(w io.Writer, passphrase string) (err error) {
 	encKey := encryptedMasterKey{
-		Version:         masterDefaultVersion,
+		Version:         m.Version,
 		ScryptCostParam: masterDefaultScryptCostParam,
 		ScryptBlockSize: masterDefaultScryptBlockSize,
 	}
@@ -87,14 +98,11 @@ func (m masterKey) marshal(w io.Writer, passphrase string) (err error) {
 		return
 	}
 
-	hash := hmac.New(sha256.New, m.MacKey)
-	if err = binary.Write(hash, binary.BigEndian, encKey.Version); err != nil {
-		return
-	}
+	encKey.VersionMac = calcVersionMac(&m, &encKey)
 
-	encKey.VersionMac = hash.Sum(nil)
-
-	err = json.NewEncoder(w).Encode(encKey)
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	err = enc.Encode(encKey)
 
 	return
 }
@@ -126,6 +134,12 @@ func unmarshalMasterKey(r io.Reader, passphrase string) (m masterKey, err error)
 		err = fmt.Errorf("failed to unwrap hmac key: %w", err)
 		return
 	}
+
+	if !hmac.Equal(encKey.VersionMac, calcVersionMac(&m, encKey)) {
+		err = fmt.Errorf("failed to validate version hmac")
+		return
+	}
+	m.Version = encKey.Version
 
 	return
 }

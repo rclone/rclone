@@ -68,6 +68,15 @@ This vault setting is normally read out of the vault config file on the remote. 
 The out-of-band filename storage works by replacing a file whose name is too long with a directory named using the SHA1 hash of the encrypted filename, and storying the original encrypted filename in a text file. For details, read the Cryptomator documentation on [Name Shortening](https://docs.cryptomator.org/security/vault/#name-shortening).`,
 			Advanced: true,
 			Default:  newDefaultVaultConfig().ShorteningThreshold,
+		}, {
+			Name: "auto_create_vault_format_version",
+			Help: `If auto create is enabled, the version of the vault format to use.
+
+This vault setting is normally read out of the vault config file on the remote. It can only be configured when the vault is created, because changing it may make the vault unreadable. Therefore this option has no effect if auto create is disabled, or it is enabled and the the vault already exists.
+
+It is not recommended to intentionally choose an old vault format version. This option is mainly useful for testing Rclone itself. Rclone supports vault formats 8 and 7.`,
+			Advanced: true,
+			Default: newDefaultVaultConfig().Format,
 		}},
 	})
 }

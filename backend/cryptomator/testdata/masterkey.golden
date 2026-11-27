@@ -1,6 +1,7 @@
 {
     "example": {
         "EncryptKey": "xcYD4Ftr2zXebvrJ7ccCfIwOMFtJpBLBr62/9rXyCZk=",
-        "MacKey": "CY1D3+ZyelyFZlXZPidWNjcJqAleyUtGWBNKoA9vbOM="
+        "MacKey": "CY1D3+ZyelyFZlXZPidWNjcJqAleyUtGWBNKoA9vbOM=",
+        "Version": 999
     }
 }
