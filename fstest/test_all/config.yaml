@@ -138,6 +138,8 @@ backends:
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
      - TestRWFileHandleWriteNoWrite
+     - TestRWCacheUpdateFromEmpty
+     - TestRWFileHandleReadAtEOFNotOpened
      - TestRWFileTruncateShrinkUncached/writes
      - TestRWFileTruncateShrinkUncached/full
    ignoretests:
@@ -226,6 +228,8 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsPutZeroLength
      - TestRWFileHandleWriteNoWrite
+     - TestRWCacheUpdateFromEmpty
+     - TestRWFileHandleReadAtEOFNotOpened
    ignoretests:
      - cmd/bisync
  - backend:  "internetarchive"
@@ -593,6 +597,8 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
      - TestRWFileHandleWriteNoWrite
+     - TestRWCacheUpdateFromEmpty
+     - TestRWFileHandleReadAtEOFNotOpened
      - TestCaseInsensitiveMoveFile
      - TestCaseInsensitiveMoveWithoutServerSideMove # Linkbox renames "File1" uploaded next to "File1-rclone-move-xxx" to name(1)
      - TestFixCase
@@ -709,6 +715,8 @@ backends:
    fastlist: false
    ignore:
      - TestRWFileHandleWriteNoWrite
+     - TestRWCacheUpdateFromEmpty
+     - TestRWFileHandleReadAtEOFNotOpened
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
@@ -741,6 +749,8 @@ backends:
    listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite
+     - TestRWCacheUpdateFromEmpty
+     - TestRWFileHandleReadAtEOFNotOpened
      # Listings lag behind directory renames and deletes for longer
      # than the list retries allow.
      - TestDirRename
@@ -753,6 +763,8 @@ backends:
    extratime: 3.0
    ignore:
      - TestRWFileHandleWriteNoWrite
+     - TestRWCacheUpdateFromEmpty
+     - TestRWFileHandleReadAtEOFNotOpened
  - backend:  "drime"
    remote:   "TestDrime:"
    ignoretests:

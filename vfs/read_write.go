@@ -263,7 +263,20 @@ func (fh *RWFileHandle) _readAt(b []byte, off int64, release bool) (n int, err e
 		return n, EBADF
 	}
 	if off >= fh._size() {
-		return n, io.EOF
+		// The cached size may be stale until the item is opened,
+		// so open it if the remote object is bigger.
+		if fh.opened {
+			return n, io.EOF
+		}
+		if o := fh.file.getObject(); o == nil || off >= o.Size() {
+			return n, io.EOF
+		}
+		if err = fh.openPending(); err != nil {
+			return n, err
+		}
+		if off >= fh._size() {
+			return n, io.EOF
+		}
 	}
 	if err = fh.openPending(); err != nil {
 		return n, err

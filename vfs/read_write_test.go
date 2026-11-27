@@ -792,3 +792,78 @@ func TestRWCacheUpdate(t *testing.T) {
 		fstest.AssertTimeEqualWithPrecision(t, filename, modTime, fi.ModTime(), r.Fremote.Precision())
 	}
 }
+
+// Test the cache reading a file cached empty which is then updated externally
+func TestRWCacheUpdateFromEmpty(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = writeBackDelay
+	opt.DirCacheTime = fs.Duration(100 * time.Millisecond)
+	opt.HandleCaching = 0
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	if r.Fremote.Precision() == fs.ModTimeNotSupported {
+		t.Skip("skip as modtime not supported")
+	}
+
+	const filename = "TestRWCacheUpdateFromEmpty"
+
+	// Write an empty file through the VFS so it is cached clean with size 0
+	require.NoError(t, vfs.WriteFile(filename, nil, 0644))
+	vfs.WaitForWriters(waitForWritersDelay)
+	item := vfs.cache.Item(filename)
+	require.True(t, item.Exists() && item.WrittenBack() && !item.IsDirty())
+
+	modTime := time.Now().Add(-time.Hour)
+	for i, contents := range []string{"now the file has content", "", "and content again"} {
+		modTime = modTime.Add(time.Minute)
+		file1 := r.WriteObject(context.Background(), filename, contents, modTime)
+		r.CheckRemoteItems(t, file1)
+
+		// Wait for directory cache to expire
+		time.Sleep(time.Duration(2 * opt.DirCacheTime))
+
+		fi, err := vfs.Stat(filename)
+		require.NoError(t, err)
+		assert.Equal(t, int64(len(contents)), fi.Size(), "round %d", i)
+
+		data, err := vfs.ReadFile(filename)
+		require.NoError(t, err, "round %d", i)
+		require.Equal(t, contents, string(data), "round %d", i)
+	}
+}
+
+// Test that reading at EOF doesn't open the cache item
+func TestRWFileHandleReadAtEOFNotOpened(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "empty", "", t1)
+	file2 := r.WriteObject(context.Background(), "full", "0123456789abcdef", t1)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// Cache "full"
+	_, err := vfs.ReadFile("full")
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		name string
+		off  int64
+	}{
+		{"empty", 0},
+		{"full", 16},
+	} {
+		h, err := vfs.OpenFile(test.name, os.O_RDONLY, 0)
+		require.NoError(t, err)
+		fh, ok := h.(*RWFileHandle)
+		require.True(t, ok)
+
+		n, err := fh.ReadAt(make([]byte, 16), test.off)
+		assert.Equal(t, 0, n, test.name)
+		assert.Equal(t, io.EOF, err, test.name)
+		assert.False(t, fh.opened, test.name)
+		require.NoError(t, fh.Close())
+	}
+	assert.False(t, vfs.cache.Item("empty").Exists())
+}
