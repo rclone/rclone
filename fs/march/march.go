@@ -408,6 +408,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		wg                     sync.WaitGroup
 		ci                     = fs.GetConfig(m.Ctx)
 		dstCtx, dstCancel      = context.WithCancel(m.Ctx)
+		srcFailed              = make(chan struct{}) // closed if the src directory couldn't be listed
 	)
 	defer dstCancel()
 
@@ -421,6 +422,9 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				}
 				return nil
 			})
+			if srcListErr != nil {
+				close(srcFailed)
+			}
 			close(srcChan)
 		})
 	} else {
@@ -535,6 +539,13 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			})
 		}
 	}, func(dst fs.DirEntry) {
+		select {
+		case <-srcFailed:
+			// It isn't known what is in the src directory, so it
+			// isn't known that this is missing from it
+			return
+		default:
+		}
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
 			jobs = append(jobs, listDirJob{

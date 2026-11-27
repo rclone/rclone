@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -3217,4 +3218,71 @@ func blankMissingHashes(logger, lsf *bytes.Buffer) {
 	}
 	logger.Reset()
 	logger.Write(bytes.Join(loggerSplit, []byte("\n")))
+}
+
+func TestSyncDoesNotDeleteDuringAfterErrors(t *testing.T) {
+	for name, mode := range map[string]fs.DeleteMode{"During": fs.DeleteModeDuring, "Before": fs.DeleteModeBefore} {
+		t.Run(name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.DeleteMode = mode
+			r := fstest.NewRun(t)
+			file1 := r.WriteBoth(ctx, "file.txt", "in both", t1)
+			file2 := r.WriteObject(ctx, "dir/only-dst.txt", "not in the source", t1)
+
+			accounting.GlobalStats().ResetCounters()
+			_ = fs.CountError(ctx, errors.New("an earlier error"))
+			err := Sync(ctx, r.Fremote, r.Flocal, false)
+			accounting.GlobalStats().ResetCounters()
+			require.Error(t, err)
+			r.CheckRemoteItems(t, file1, file2)
+
+			// It is deleted when there hasn't been an error
+			require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+			r.CheckRemoteItems(t, file1)
+		})
+	}
+}
+
+func TestSyncDoesNotDeleteWhatIsInUnreadableDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("can't make a directory unreadable")
+	}
+	for name, mode := range map[string]fs.DeleteMode{"During": fs.DeleteModeDuring, "Before": fs.DeleteModeBefore, "After": fs.DeleteModeAfter} {
+		t.Run(name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.DeleteMode = mode
+			r := fstest.NewRun(t)
+			file1 := r.WriteBoth(ctx, "dir/file.txt", "in both", t1)
+			dir := filepath.Join(r.LocalName, "dir")
+			require.NoError(t, os.Chmod(dir, 0))
+			defer func() { _ = os.Chmod(dir, 0o777) }()
+
+			accounting.GlobalStats().ResetCounters()
+			err := Sync(ctx, r.Fremote, r.Flocal, false)
+			accounting.GlobalStats().ResetCounters()
+			require.Error(t, err)
+			r.CheckRemoteItems(t, file1)
+		})
+	}
+}
+
+func TestSyncDoesNotDeleteWhenSourceIsMissing(t *testing.T) {
+	for name, mode := range map[string]fs.DeleteMode{"During": fs.DeleteModeDuring, "Before": fs.DeleteModeBefore, "After": fs.DeleteModeAfter} {
+		t.Run(name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.DeleteMode = mode
+			r := fstest.NewRun(t)
+			file1 := r.WriteObject(ctx, "file.txt", "in the destination", t1)
+			file2 := r.WriteObject(ctx, "dir/file.txt", "in the destination", t1)
+			// The directory the source is in has gone, as when a drive is unplugged
+			fsrc, err := fs.NewFs(ctx, r.LocalName+"/missing")
+			require.NoError(t, err)
+
+			accounting.GlobalStats().ResetCounters()
+			err = Sync(ctx, r.Fremote, fsrc, false)
+			accounting.GlobalStats().ResetCounters()
+			require.Error(t, err)
+			r.CheckRemoteItems(t, file1, file2)
+		})
+	}
 }
