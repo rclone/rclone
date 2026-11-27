@@ -218,12 +218,12 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 		}
 	}
 
-	err = parseRules(&f.Opt.RulesOpt, f.Add, f.Clear)
+	err = parseRules(&f.Opt.RulesOpt, "", f.Add, f.Clear)
 	if err != nil {
 		return nil, err
 	}
 
-	err = parseRules(&f.Opt.MetaRules, f.metaRules.Add, f.metaRules.clear)
+	err = parseRules(&f.Opt.MetaRules, "metadata-", f.metaRules.Add, f.metaRules.clear)
 	if err != nil {
 		return nil, err
 	}

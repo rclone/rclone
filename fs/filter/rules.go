@@ -321,16 +321,12 @@ func (rs *rules) AddRule(rule string) error {
 }
 
 // Parse the rules passed in and add them to the function
-func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
-	addImplicitExclude := false
-	foundExcludeRule := false
-
+func parseRules(opt *RulesOpt, flagPrefix string, add addFn, clear clearFn) (err error) {
 	for _, rule := range opt.IncludeRule {
 		err = add(true, rule)
 		if err != nil {
 			return err
 		}
-		addImplicitExclude = true
 	}
 	for _, rule := range opt.IncludeFrom {
 		err := forEachLine(rule, false, false, func(line string) error {
@@ -339,14 +335,12 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 		if err != nil {
 			return err
 		}
-		addImplicitExclude = true
 	}
 	for _, rule := range opt.ExcludeRule {
 		err = add(false, rule)
 		if err != nil {
 			return err
 		}
-		foundExcludeRule = true
 	}
 	for _, rule := range opt.ExcludeFrom {
 		err := forEachLine(rule, false, false, func(line string) error {
@@ -355,11 +349,13 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 		if err != nil {
 			return err
 		}
-		foundExcludeRule = true
 	}
 
-	if addImplicitExclude && foundExcludeRule {
-		fs.Errorf(nil, "Using --filter is recommended instead of both --include and --exclude as the order they are parsed in is indeterminate")
+	hasInclude := len(opt.IncludeRule) != 0 || len(opt.IncludeFrom) != 0
+	hasExclude := len(opt.ExcludeRule) != 0 || len(opt.ExcludeFrom) != 0
+	hasFilter := len(opt.FilterRule) != 0 || len(opt.FilterFrom) != 0
+	if (hasInclude && hasExclude) || (hasFilter && (hasInclude || hasExclude)) {
+		fs.Errorf(nil, "Mixing --%[1]sinclude, --%[1]sexclude or --%[1]sfilter can change rule order. Use --%[1]sfilter rules to specify the order", flagPrefix)
 	}
 
 	for _, rule := range opt.FilterRule {
@@ -377,7 +373,7 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 		}
 	}
 
-	if addImplicitExclude {
+	if hasInclude {
 		err = add(false, "/**")
 		if err != nil {
 			return err
