@@ -201,6 +201,26 @@ func TestEncodeDot(t *testing.T) {
 			mask: EncodeDot,
 			in:   ". .",
 			out:  ". .",
+		}, {
+			mask: EncodeDot,
+			in:   ".．",
+			out:  ".．",
+		}, {
+			mask: EncodeDot | EncodeLeftPeriod,
+			in:   ".．",
+			out:  "．‛．",
+		}, {
+			mask: EncodeDot | EncodeRightPeriod,
+			in:   "．.",
+			out:  "‛．．",
+		}, {
+			mask: EncodeDot | EncodeLeftPeriod | EncodeRightPeriod,
+			in:   ".．",
+			out:  "．‛．",
+		}, {
+			mask: EncodeDot | EncodeLeftPeriod | EncodeRightPeriod,
+			in:   "．.",
+			out:  "‛．．",
 		},
 	} {
 		e := tc.mask
