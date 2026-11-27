@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/errcount"
+	"github.com/rclone/rclone/vfs"
 )
 
 // Handle describes what a server can do
@@ -35,6 +36,7 @@ type Handle interface {
 type server struct {
 	ID      string     `json:"id"`     // id of the server
 	Addr    string     `json:"addr"`   // address of the server
+	VfsID   string     `json:"vfsId"`  // id of the VFS used by the server
 	Params  rc.Params  `json:"params"` // Parameters used to start the server
 	h       Handle     `json:"-"`      // control the server
 	errChan chan error `json:"-"`      // receive errors from the server process
@@ -77,6 +79,7 @@ This takes the following parameters:
 - |type| - type of server: |http|, |webdav|, |ftp|, |sftp|, |nfs|, etc.
 - |fs| - remote storage path to serve
 - |addr| - the ip:port to run the server on, eg ":1234" or "localhost:1234"
+- |vfsId| - ID of an existing active VFS to reuse
 
 Other parameters are as described in the documentation for the
 relevant [rclone serve](/commands/rclone_serve/) command line options.
@@ -97,7 +100,8 @@ This will give the reply
 |||json
 {
     "addr": "[::]:4321", // Address the server was started on
-    "id": "nfs-ecfc6852" // Unique identifier for the server instance
+    "id": "nfs-ecfc6852", // Unique identifier for the server instance
+    "vfsId": "vfs-12345678" // Unique identifier for the VFS instance
 }
 |||
 
@@ -134,6 +138,19 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	newCtx = fs.CopyConfig(newCtx, ctx)
 	newCtx = filter.CopyConfig(newCtx, ctx)
 
+	var createdVFSes []*vfs.VFS
+	newCtx = vfs.WithTracker(newCtx, &createdVFSes)
+
+	vfsID, err := in.GetString("vfsId")
+	if err == nil && vfsID != "" {
+		if !vfs.Exists(vfsID) {
+			return nil, fmt.Errorf("no VFS found with ID %q", vfsID)
+		}
+		newCtx = vfs.WithVFSID(newCtx, vfsID)
+	} else if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+
 	// Start the server
 	h, err := serveFn(newCtx, f, in)
 	if err != nil {
@@ -142,6 +159,7 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	delete(in, "type")
 	delete(in, "fs")
+	delete(in, "vfsId")
 	err = rc.CheckParamsUsed(in)
 	if err != nil {
 		_ = h.Shutdown()
@@ -168,19 +186,26 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, fmt.Errorf("error when starting serve %q: %w", serveType, err)
 	}
 
+	var resolvedVfsID string
+	if len(createdVFSes) > 0 {
+		resolvedVfsID = createdVFSes[0].ID
+	}
+
 	// Store it for later
 	runningServer := server{
 		ID:      fmt.Sprintf("%s-%08x", serveType, rand.Uint32()),
 		Params:  paramsCopy,
 		Addr:    h.Addr().String(),
+		VfsID:   resolvedVfsID,
 		h:       h,
 		errChan: errChan,
 	}
 	servers[runningServer.ID] = &runningServer
 
 	out = rc.Params{
-		"id":   runningServer.ID,
-		"addr": runningServer.Addr,
+		"id":    runningServer.ID,
+		"addr":  runningServer.Addr,
+		"vfsId": runningServer.VfsID,
 	}
 
 	fs.Debugf(f, "Started serve %s on %s", serveType, runningServer.Addr)
@@ -287,6 +312,7 @@ Each list element will have
 
 - id: ID of the server
 - addr: address the server is running on
+- vfsId: ID of the VFS used by the server
 - params: parameters used to start the server
 
 Eg
@@ -301,6 +327,7 @@ Returns
         {
             "addr": "[::]:4321",
             "id": "nfs-ffc2a4e5",
+            "vfsId": "vfs-12345678",
             "params": {
                 "fs": "remote:",
                 "opt": {
