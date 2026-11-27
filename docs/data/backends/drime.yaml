@@ -2,7 +2,7 @@ backend: drime
 name: Drime
 tier: Tier 1
 maintainers: Core
-features_score: 4
+features_score: 6
 integration_tests: Passing
 data_integrity: High
 performance: High
@@ -23,6 +23,8 @@ features:
 - PutStream
 - PutUnchecked
 - ReadMimeType
+- SlowHash
 - WriteMimeType
-hashes: []
-precision: 3153600000000000000
+hashes:
+- sha256
+precision: 1000000

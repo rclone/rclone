@@ -212,6 +212,7 @@ type Object struct {
 	dirID    string    // ID of the object's directory
 	mimeType string    // mime type of the object
 	url      string    // where to download this object
+	sha256   string    // SHA-256 of the object if known
 }
 
 // ------------------------------------------------------------
@@ -380,6 +381,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
 		WriteMimeType:           true,
+		SlowHash:                true,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 	f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
@@ -787,7 +789,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Millisecond
 }
 
 // Purge deletes all the files and the container
@@ -1146,7 +1148,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.None)
+	return hash.Set(hash.SHA256)
 }
 
 var warnStreamUpload sync.Once
@@ -1168,6 +1170,7 @@ type drimeChunkWriter struct {
 	extension    string
 	parentID     json.Number
 	relativePath string
+	modTime      time.Time
 
 	completedPartsMu sync.Mutex
 	completedParts   []api.CompletedPart
@@ -1262,6 +1265,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		extension:    ext,
 		parentID:     json.Number(directoryID),
 		relativePath: relPath,
+		modTime:      src.ModTime(ctx),
 	}
 	info = fs.ChunkWriterInfo{
 		ChunkSize:         int64(chunkSize),
@@ -1406,6 +1410,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 		ParentID:        s.parentID,
 		RelativePath:    s.relativePath,
 		WorkspaceID:     s.f.opt.WorkspaceID,
+		LastModified:    s.modTime.UnixMilli(),
 	}
 
 	entriesOpts := rest.Opts{
@@ -1506,7 +1511,58 @@ func (o *Object) Remote() string {
 
 // Hash returns the hash of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	return "", hash.ErrUnsupported
+	if t != hash.SHA256 {
+		return "", hash.ErrUnsupported
+	}
+	if o.sha256 == "" && o.id != "" {
+		sum, err := o.serverHash(ctx, noHash)
+		if err != nil {
+			// e.g. no permission to verify the file
+			fs.Debugf(o, "Failed to read hash: %v", err)
+			return "", nil
+		}
+		o.sha256 = sum
+	}
+	return o.sha256, nil
+}
+
+// noHash is sent to verify-integrity to make Drime compute and record
+// the hash of a file when the expected value isn't known.
+const noHash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+// hashTries is how many times to ask Drime for the hash of a file.
+//
+// Drime replies only after reading the whole file and its gateway cuts
+// the request off after about two minutes, which abandons the hashing.
+// The first read after an upload is the slowest so it is worth asking
+// again, but very large files never finish.
+const hashTries = 3
+
+// serverHash makes Drime compare its stored data with sum and returns
+// the SHA-256 Drime computed, which it also records on the file.
+func (o *Object) serverHash(ctx context.Context, sum string) (string, error) {
+	var resp api.VerifyIntegrityResponse
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file-entries/" + o.id + "/verify-integrity",
+	}
+	var err error
+	for try := 1; try <= hashTries; try++ {
+		retry := false
+		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+			res, err := o.fs.srv.CallJSON(ctx, &opts, &api.VerifyIntegrityRequest{SHA256: sum}, &resp)
+			retry, err = shouldRetry(ctx, res, err)
+			return false, err
+		})
+		if err == nil {
+			return strings.ToLower(resp.ServerHash), nil
+		}
+		if !retry {
+			break
+		}
+		fs.Debugf(o, "Hashing on Drime failed (try %d/%d): %v", try, hashTries, err)
+	}
+	return "", err
 }
 
 // Size returns the size of an object in bytes
@@ -1518,6 +1574,14 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetaDataAny(info *api.Item) {
 	o.size = info.FileSize
 	o.modTime = info.UpdatedAt
+	if info.ClientLastModified != nil {
+		o.modTime = time.UnixMilli(*info.ClientLastModified)
+	}
+	if h, ok := info.FileHash.(string); ok {
+		o.sha256 = strings.ToLower(h)
+	} else {
+		o.sha256 = ""
+	}
 	o.id = info.ID.String()
 	o.dirID = info.ParentID.String()
 	o.mimeType = info.Mime
@@ -1549,15 +1613,37 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ModTime returns the modification time of the object
 //
-// It attempts to read the objects mtime and if that isn't present the
-// LastModified returned in the http headers
+// This is the client modification time, falling back to the time the
+// entry was last updated for files uploaded without one.
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
-// SetModTime sets the modification time of the local fs object
+// SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	if o.id == "" {
+		return errors.New("can't set modtime - no id")
+	}
+	request := api.SetMetadataRequest{
+		LastModified: modTime.UnixMilli(),
+	}
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/file-entries/" + o.id + "/metadata",
+		Parameters: url.Values{},
+	}
+	if o.fs.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", o.fs.opt.WorkspaceID)
+	}
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &request, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set modtime: %w", err)
+	}
+	o.modTime = time.UnixMilli(request.LastModified)
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1640,21 +1726,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		s := chunkWriter.(*drimeChunkWriter)
 
-		return o.setMetaData(&s.fileEntry)
+		return o.finishUpload(ctx, &s.fileEntry, src)
 	}
 
 	// Do the upload
 	var resp *http.Response
 	var result api.UploadResponse
 	var encodedLeaf = o.fs.opt.Enc.FromStandardName(leaf)
+	params := url.Values{
+		"parentId":     {directoryID},
+		"relativePath": {encodedLeaf},
+		"workspaceId":  {o.fs.opt.WorkspaceID},
+		"lastModified": {strconv.FormatInt(src.ModTime(ctx).UnixMilli(), 10)},
+	}
 	opts := rest.Opts{
-		Method: "POST",
-		Body:   in,
-		MultipartParams: url.Values{
-			"parentId":     {directoryID},
-			"relativePath": {encodedLeaf},
-			"workspaceId":  {o.fs.opt.WorkspaceID},
-		},
+		Method:               "POST",
+		Body:                 in,
+		MultipartParams:      params,
 		MultipartContentName: "file",
 		MultipartFileName:    encodedLeaf,
 		MultipartContentType: fs.MimeType(ctx, src),
@@ -1668,7 +1756,44 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
-	return o.setMetaData(&result.FileEntry)
+	return o.finishUpload(ctx, &result.FileEntry, src)
+}
+
+// finishUpload sets the metadata from the upload response and then asks
+// Drime to verify the stored bytes against the source SHA-256.
+//
+// A hash supplied by the client at upload time is stored without being
+// checked, so it is not sent. Verifying instead makes the server hash
+// the stored data.
+func (o *Object) finishUpload(ctx context.Context, info *api.Item, src fs.ObjectInfo) error {
+	err := o.setMetaData(info)
+	if err != nil {
+		return err
+	}
+	if info.ClientLastModified == nil {
+		o.modTime = src.ModTime(ctx).Truncate(time.Millisecond)
+	}
+	if fs.GetConfig(ctx).IgnoreChecksum {
+		return nil
+	}
+	sum, err := src.Hash(ctx, hash.SHA256)
+	if err != nil || sum == "" {
+		return nil
+	}
+	serverSum, err := o.serverHash(ctx, sum)
+	if err != nil {
+		// e.g. no permission to verify the file
+		fs.Debugf(o, "Failed to verify upload: %v", err)
+		return nil
+	}
+	if serverSum != sum {
+		if rmErr := o.Remove(ctx); rmErr != nil {
+			fs.Errorf(o, "Failed to remove corrupted upload: %v", rmErr)
+		}
+		return fmt.Errorf("corrupted on transfer: SHA-256 differ src %q vs dst %q", sum, serverSum)
+	}
+	o.sha256 = sum
+	return nil
 }
 
 // Remove an object
