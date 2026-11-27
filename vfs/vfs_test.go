@@ -385,6 +385,60 @@ func TestVFSRename(t *testing.T) {
 	assert.Equal(t, os.ErrNotExist, err)
 }
 
+func TestVFSRenameDirIntoSubdirectory(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		newPath  string
+		filePath string
+		wantErr  error
+	}{
+		{"Subdirectory", "dir/sub", "dir/file", EINVAL},
+		{"DeepSubdirectory", "dir/sub/deep", "dir/sub/file", EINVAL},
+		{"Self", "dir", "dir/file", EINVAL},
+		{"Sibling", "dir2", "dir/file", nil},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			r, vfs := newTestVFS(t)
+			if features := r.Fremote.Features(); features.DirMove == nil && features.Move == nil && features.Copy == nil {
+				t.Skip("skip as can't rename directories")
+			}
+
+			file := r.WriteObject(context.Background(), test.filePath, "file contents", t1)
+			r.CheckRemoteItems(t, file)
+
+			var timer *time.Timer
+			if test.wantErr != nil {
+				timeout := 5 * time.Second
+				if deadline, ok := t.Deadline(); ok {
+					timeout = min(timeout, time.Until(deadline))
+				}
+				// Panic from a separate goroutine because cleanup also needs directory locks.
+				timer = time.AfterFunc(timeout, func() {
+					panic("rename of directory into itself or its own subdirectory timed out")
+				})
+				defer timer.Stop()
+			}
+
+			err := vfs.Rename("dir", test.newPath)
+			if timer != nil {
+				timer.Stop()
+			}
+			if test.wantErr != nil {
+				require.Equal(t, test.wantErr, err)
+			} else {
+				require.NoError(t, err)
+				file.Path = test.newPath + "/file"
+				_, err = vfs.Stat("dir")
+				assert.Equal(t, os.ErrNotExist, err)
+			}
+			r.CheckRemoteItems(t, file)
+			node, err := vfs.Stat(file.Path)
+			require.NoError(t, err)
+			assert.Equal(t, file.Path, node.Path())
+		})
+	}
+}
+
 func TestVFSStatfs(t *testing.T) {
 	r, vfs := newTestVFS(t)
 
