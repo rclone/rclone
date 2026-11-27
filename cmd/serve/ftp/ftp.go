@@ -616,6 +616,12 @@ func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset 
 		}
 	}
 
+	// The ftp library passes the same offset for APPE as for STOR,
+	// so append to an existing file by writing from its end.
+	if offset == -1 && isExist && sctx != nil && sctx.Cmd == "APPE" {
+		offset = fi.Size()
+	}
+
 	if offset > -1 && !isExist {
 		offset = -1
 	}
@@ -641,7 +647,8 @@ func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset 
 		return n, nil
 	}
 
-	f, err = VFS.OpenFile(path, os.O_APPEND|os.O_RDWR, 0660)
+	// Don't use O_APPEND as that would ignore the Seek below
+	f, err = VFS.OpenFile(path, os.O_RDWR, 0660)
 	if err != nil {
 		return 0, err
 	}
