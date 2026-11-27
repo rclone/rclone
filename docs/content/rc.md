@@ -658,15 +658,18 @@ format. Each block describes a single option.
 | Provider   | string     | Y | set to filter on provider |
 | Default    | any        | N | default value, if set (and not to nil or "") then Required does nothing |
 | Value      | any        | N | value to be set by flags |
-| Examples   | Examples   | Y | predefined values that can be selected from list (multiple-choice option) |
+| Examples   | [Examples](#option-examples) | Y | predefined values that can be selected from list (multiple-choice option) |
 | ShortOpt   | string     | Y | the short command line option for this |
-| Hide       | Visibility | N | if non zero, this option is hidden from the configurator or the command line |
+| Hide       | [Visibility](#option-visibility) | N | if non zero, this option is hidden from the configurator or the command line |
 | Required   | bool       | N | this option is required, meaning value cannot be empty unless there is a default |
 | IsPassword | bool       | N | set if the option is a password |
 | NoPrefix   | bool       | N | set if the option for this should not use the backend prefix |
 | Advanced   | bool       | N | set if this is an advanced config option |
 | Exclusive  | bool       | N | set if the answer can only be one of the examples (empty string allowed unless Required or Default is set) |
 | Sensitive  | bool       | N | set if this option should be redacted when using `rclone config redacted` |
+| DefaultStr | string     | N | Default rendered as a string for display, eg "NOTICE" when Default is 5 for `log_level` - sizes may be rounded so don't use this to set the option |
+| ValueStr   | string     | N | Value, or Default if Value isn't set, rendered as a string which can be used to set the option |
+| Type       | string     | N | name of the type of the option, eg "string", "bool", "Duration", "SizeSuffix" or "stringArray" |
 
 An example of this might be the `--log-level` flag. Note that the
 `Name` of the option becomes the command line flag with `_` replaced
@@ -707,6 +710,31 @@ with `-`.
 Note that the `Help` may be multiple lines separated by `\n`. The
 first line will always be a short sentence and this is the sentence
 shown when running `rclone help flags`.
+
+#### Examples {#option-examples}
+
+`Examples` is an array of objects with these fields:
+
+| Field    | Type   | Optional | Description |
+|----------|--------|----------|-------------|
+| Value    | string | N | the value to set the option to |
+| Help     | string | N | help for this value, may be blank |
+| Provider | string | Y | set to filter on provider in the same way as the `Provider` field of the option |
+
+A `Provider` filter is a comma separated list of providers the item
+applies to, or if it starts with `!` a list of providers it doesn't
+apply to. If it is blank it applies to all providers.
+
+#### Visibility {#option-visibility}
+
+`Hide` is a `Visibility` which is an integer bit mask:
+
+| Value | Meaning |
+|-------|---------|
+| 0     | shown everywhere |
+| 1     | hidden from the command line |
+| 2     | hidden from the configurator |
+| 3     | hidden from both |
 
 ## Specifying remotes to work on
 

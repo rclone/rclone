@@ -143,7 +143,16 @@ func init() {
 		Title: "Shows how providers are configured in the config file.",
 		Help: `
 Returns a JSON object:
-- providers - array of objects
+- providers - array of objects, one for each backend, with these keys
+    - Name - name of the backend, used as the type in the config file
+    - Description - description of the backend
+    - Prefix - prefix for the backend's command line flags
+    - Options - array of Option blocks for the backend's config
+    - CommandHelp - array of backend commands, each with Name, Short, Long and Opts
+    - Aliases - other names this backend is known by
+    - Hide - set if this backend shouldn't be shown in the configurator
+    - MetadataInfo - help about the metadata this backend supports, with System and Help keys, or null
+    - Overview - object describing the backend, e.g. its Tier, Features and Hashes
 
 See the [config providers](/commands/rclone_config_providers/) command
 for more information on the above.
