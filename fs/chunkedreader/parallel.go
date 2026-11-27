@@ -19,14 +19,15 @@ import (
 // parallel reads Object in chunks of a given size in parallel.
 type parallel struct {
 	ctx       context.Context
-	o         fs.Object  // source to read from
-	mu        sync.Mutex // protects following fields
-	endStream int64      // offset we have started streams for
-	offset    int64      // offset the read file pointer is at
-	chunkSize int64      // length of the chunks to read
-	nstreams  int        // number of streams to use
-	streams   []*stream  // the opened streams in offset order - the current one is first
-	closed    bool       // has Close been called?
+	cancel    context.CancelFunc // cancels reads before Close takes mu
+	o         fs.Object          // source to read from
+	mu        sync.Mutex         // protects following fields
+	endStream int64              // offset we have started streams for
+	offset    int64              // offset the read file pointer is at
+	chunkSize int64              // length of the chunks to read
+	nstreams  int                // number of streams to use
+	streams   []*stream          // the opened streams in offset order - the current one is first
+	closed    bool               // has Close been called?
 }
 
 // stream holds the info about a single download
@@ -39,7 +40,8 @@ type stream struct {
 	size      int64           // and the size it is reading
 	readBytes int64           // bytes read from the stream
 	rw        *pool.RW        // buffer for read
-	err       chan error      // error returned from the read
+	done      chan struct{}   // closed when the producer exits
+	err       error           // producer result, protected by done
 	name      string          // name of this stream for debugging
 }
 
@@ -56,7 +58,7 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 		offset: offset,
 		size:   size,
 		rw:     rw,
-		err:    make(chan error, 1),
+		done:   make(chan struct{}),
 	}
 	s.name = fmt.Sprintf("stream(%d,%d,%p)", s.offset, s.size, s)
 
@@ -69,13 +71,17 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 
 // read the file into the buffer
 func (s *stream) readFrom(ctx context.Context) {
+	defer func() {
+		close(s.done)
+		s.cancel() // wake consumers waiting for writes
+	}()
 	// Open the object at the correct range
 	fs.Debugf(s.cr.o, "%s: open", s.name)
 	rc, err := operations.Open(ctx, s.cr.o,
 		&fs.HashesOption{Hashes: hash.Set(hash.None)},
 		&fs.RangeOption{Start: s.offset, End: s.offset + s.size - 1})
 	if err != nil {
-		s.err <- fmt.Errorf("parallel chunked reader: failed to open stream at %d size %d: %w", s.offset, s.size, err)
+		s.err = fmt.Errorf("parallel chunked reader: failed to open stream at %d size %d: %w", s.offset, s.size, err)
 		return
 	}
 	s.rc = rc
@@ -83,7 +89,7 @@ func (s *stream) readFrom(ctx context.Context) {
 	fs.Debugf(s.cr.o, "%s: readfrom started", s.name)
 	_, err = s.rw.ReadFrom(s.rc)
 	fs.Debugf(s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
-	s.err <- err
+	s.err = err
 }
 
 // eof is true when we've read all the data we are expecting
@@ -117,9 +123,28 @@ func (s *stream) read(p []byte) (n int, err error) {
 			break
 		}
 		// Wait for a write to happen to read more
-		s.rw.WaitWrite(s.ctx)
+		if err := s.waitWrite(s.readBytes + 1); err != nil {
+			return n, err
+		}
 	}
 	return n, nil
+}
+
+// waitWrite waits for more data, producer completion, or cancellation.
+func (s *stream) waitWrite(want int64) error {
+	s.rw.WaitWrite(s.ctx)
+	if s.rw.Size() >= want {
+		return nil
+	}
+	select {
+	case <-s.done:
+		if s.err != nil {
+			return s.err
+		}
+		return io.ErrUnexpectedEOF
+	default:
+		return s.ctx.Err()
+	}
 }
 
 // Sets *perr to newErr if err is nil
@@ -133,7 +158,8 @@ func orErr(perr *error, newErr error) {
 func (s *stream) close() (err error) {
 	defer log.Trace(s.cr.o, "%s: close", s.name)("err=%v", &err)
 	s.cancel()
-	err = <-s.err // wait for readFrom to stop and return error
+	<-s.done // wait for readFrom to stop before releasing the buffer
+	err = s.err
 	orErr(&err, s.rw.Close())
 	if s.rc != nil {
 		orErr(&err, s.rc.Close())
@@ -167,8 +193,10 @@ func newParallel(ctx context.Context, o fs.Object, chunkSize int64, streams int)
 
 	fs.Debugf(o, "newParallel chunkSize=%d, streams=%d", chunkSize, streams)
 
+	ctx, cancel := context.WithCancel(ctx)
 	return &parallel{
 		ctx:       ctx,
+		cancel:    cancel,
 		o:         o,
 		offset:    0,
 		chunkSize: newChunkSize,
@@ -265,7 +293,8 @@ func (cr *parallel) Read(p []byte) (n int, err error) {
 
 		// Read from the stream
 		stream := cr.streams[0]
-		nn, err := stream.read(p[n:])
+		var nn int
+		nn, err = stream.read(p[n:])
 		n += nn
 		cr.offset += int64(nn)
 		if err == io.EOF {
@@ -284,6 +313,7 @@ func (cr *parallel) Read(p []byte) (n int, err error) {
 //
 // All methods on ChunkedReader will return ErrorFileClosed afterwards
 func (cr *parallel) Close() error {
+	cr.cancel()
 	cr.mu.Lock()
 	defer cr.mu.Unlock()
 
@@ -363,7 +393,9 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	fs.Debugf(cr.o, "parallel chunked reader: seek the current stream to %d", streamOffset)
 	// Wait for the read to the correct part of the data
 	for stream.rw.Size() < streamOffset {
-		stream.rw.WaitWrite(cr.ctx)
+		if err := stream.waitWrite(streamOffset); err != nil {
+			return cr.offset, fmt.Errorf("parallel chunked reader: failed to seek stream: %w", err)
+		}
 	}
 	_, err := stream.rw.Seek(streamOffset, io.SeekStart)
 	if err != nil {
