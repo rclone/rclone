@@ -2,6 +2,7 @@ package webdav
 
 /*
    Chunked upload based on the tus protocol for ownCloud Infinite Scale
+   and OpenCloud
    See https://tus.io/protocols/resumable-upload
 */
 
@@ -19,7 +20,7 @@ import (
 
 func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType string, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 
-	fn := filepath.Base(src.Remote())
+	fn := filepath.Base(o.Remote())
 	metadata := map[string]string{
 		"filename": fn,
 		"mtime":    strconv.FormatInt(src.ModTime(ctx).Unix(), 10),
@@ -30,7 +31,10 @@ func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType str
 	fingerprint := ""
 
 	// create an upload from a file.
-	upload := NewUpload(in, src.Size(), metadata, fingerprint)
+	upload, err := NewUpload(in, src.Size(), metadata, fingerprint)
+	if err != nil {
+		return err
+	}
 
 	// create the uploader.
 	uploader, err := o.CreateUploader(ctx, upload, options...)
