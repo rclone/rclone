@@ -500,6 +500,11 @@ backends:
    ignoretests:
      - cmd/bisync
  - backend:  "webdav"
+   remote:   "TestWebdavDcache:"
+   fastlist: false
+   env:
+     - RCLONE_EXPECT_CONTINUE_TIMEOUT=60s
+ - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
