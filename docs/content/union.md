@@ -138,6 +138,11 @@ of the file.
 | search   | Reading and listing file | ls, lsd, lsl, cat, md5sum, sha1sum and copy, sync (as source)                       |
 | N/A      |                          | size, about                                                                         |
 
+Unless the union has a single writable upstream which isn't tagged `:nc`,
+files are uploaded directly to their final names, as with
+[--inplace](/docs/#inplace), so that overwriting an existing file updates
+it on every upstream picked by the **action** policy.
+
 ### Path Preservation
 
 Policies, as described below, are of two basic types. `path preserving` and

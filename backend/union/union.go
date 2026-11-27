@@ -1007,6 +1007,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// If any of upstreams are SlowHash, propagate it
 	features.SlowHash = slowHash
 
+	// Partial uploads are created with the create policy then renamed
+	// on that upstream only, so only use them when the create and
+	// action policies can only pick the same single upstream.
+	writable, creatable := 0, 0
+	for _, u := range f.upstreams {
+		if u.IsWritable() {
+			writable++
+		}
+		if u.IsCreatable() {
+			creatable++
+		}
+	}
+	if writable > 1 || creatable != writable {
+		features.PartialUploads = false
+	}
+
 	// Enable ListR when upstreams either support ListR or is local
 	// But not when all upstreams are local
 	if features.ListR == nil {

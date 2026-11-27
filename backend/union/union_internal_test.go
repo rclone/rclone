@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
@@ -162,4 +164,59 @@ func TestMoveCopy(t *testing.T) {
 			assert.Equal(t, fileMemory.Size, obj.Size())
 		})
 	})
+}
+
+// Test that overwriting a file which exists on both upstreams updates
+// it on every writable upstream with the default policies.
+func TestOverwriteExisting(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	ctx := context.Background()
+	const oldContents, newContents = "v1", "version-2"
+	for _, test := range []struct {
+		tags    [2]string
+		partial bool
+	}{
+		{tags: [2]string{"", ""}},
+		{tags: [2]string{":nc", ""}},
+		{tags: [2]string{":nc", ":ro"}},
+		{tags: [2]string{"", ":ro"}, partial: true},
+	} {
+		t.Run("u1"+test.tags[0]+",u2"+test.tags[1], func(t *testing.T) {
+			dirs := MakeTestDirs(t, 3)
+			srcDir := dirs[2]
+			for _, dir := range dirs[:2] {
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "file.txt"), []byte(oldContents), 0666))
+			}
+			require.NoError(t, os.WriteFile(filepath.Join(srcDir, "file.txt"), []byte(newContents), 0666))
+
+			f, err := fs.NewFs(ctx, fmt.Sprintf(":union,upstreams='%s%s %s%s':", dirs[0], test.tags[0], dirs[1], test.tags[1]))
+			require.NoError(t, err)
+			assert.Equal(t, test.partial, f.Features().PartialUploads)
+
+			fsrc, err := fs.NewFs(ctx, srcDir)
+			require.NoError(t, err)
+			src, err := fsrc.NewObject(ctx, "file.txt")
+			require.NoError(t, err)
+			dst, err := f.NewObject(ctx, "file.txt")
+			require.NoError(t, err)
+			_, err = operations.Copy(ctx, f, dst, "file.txt", src)
+			require.NoError(t, err)
+
+			for i, dir := range dirs[:2] {
+				want := newContents
+				if test.tags[i] == ":ro" {
+					want = oldContents
+				}
+				got, err := os.ReadFile(filepath.Join(dir, "file.txt"))
+				require.NoError(t, err)
+				assert.Equal(t, want, string(got), "upstream %d", i)
+			}
+
+			obj, err := f.NewObject(ctx, "file.txt")
+			require.NoError(t, err)
+			assert.Equal(t, newContents, fstests.ReadObject(ctx, t, obj, -1))
+		})
+	}
 }
