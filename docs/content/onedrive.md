@@ -1291,6 +1291,12 @@ may disable these checks with the following command line arguments:
 --ignore-checksum --ignore-size
 ```
 
+When using `rclone mount` or `rclone serve` with `--vfs-cache-mode writes`
+or `full`, rclone notices when the uploaded file comes back from Sharepoint
+with a different size. It keeps showing what was written to any program that
+still has the file open, and fetches Sharepoint's version of the file the next
+time it is opened.
+
 Alternatively, if you have write access to the OneDrive files, it may be possible
 to fix this problem for certain files, by attempting the steps below.
 Open the web interface for [OneDrive](https://onedrive.live.com) and find the
