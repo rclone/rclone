@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/internxt/rclone-adapter/config"
 	"github.com/internxt/rclone-adapter/endpoints"
+	"github.com/internxt/rclone-adapter/folders"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -188,4 +191,85 @@ func TestFindFileIgnoresStale(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, file, "moved here")
 	assert.Equal(t, "uuid-renamed", file.UUID)
+}
+
+// lagServer wraps existenceServer so the first lag existence checks find
+// nothing, as when the replicas haven't caught up with an upload.
+func lagServer(t *testing.T, stored []storedFile, lag int32) (server *httptest.Server, calls *atomic.Int32) {
+	t.Helper()
+	inner := existenceServer(t, stored)
+	t.Cleanup(inner.Close)
+	calls = new(atomic.Int32)
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/meta") && calls.Add(1) <= lag {
+			w.Header().Set("Content-Type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"existentFiles": []any{}}))
+			return
+		}
+		inner.Config.Handler.ServeHTTP(w, r)
+	}))
+	t.Cleanup(server.Close)
+	return server, calls
+}
+
+func TestWaitForFile(t *testing.T) {
+	ctx := context.Background()
+	stored := []storedFile{{"uuid-new", "foo", "txt"}}
+
+	t.Run("Visible", func(t *testing.T) {
+		server, calls := lagServer(t, stored, 0)
+		file := testFs(t, server).waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new")
+		require.NotNil(t, file)
+		assert.Equal(t, "uuid-new", file.UUID)
+		assert.Equal(t, int32(1), calls.Load())
+	})
+
+	t.Run("VisibleAfterLag", func(t *testing.T) {
+		server, calls := lagServer(t, stored, 3)
+		file := testFs(t, server).waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new")
+		require.NotNil(t, file)
+		assert.Equal(t, "uuid-new", file.UUID)
+		assert.Equal(t, int32(4), calls.Load())
+	})
+
+	t.Run("NeverVisible", func(t *testing.T) {
+		server, calls := lagServer(t, stored, 1000)
+		f := testFs(t, server)
+		f.pacer.SetRetries(3)
+		assert.Nil(t, f.waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new"))
+		assert.Equal(t, int32(3), calls.Load(), "gives up after the low level retries")
+	})
+
+	t.Run("OtherFileOfSameName", func(t *testing.T) {
+		// The replicas still show the file we just replaced
+		server, _ := lagServer(t, []storedFile{{"uuid-old", "foo", "txt"}}, 0)
+		f := testFs(t, server)
+		f.pacer.SetRetries(2)
+		assert.Nil(t, f.waitForFile(ctx, "foo.txt", "dir-uuid", "uuid-new"))
+	})
+}
+
+func TestGetFile(t *testing.T) {
+	ctx := context.Background()
+	server := existenceServer(t, []storedFile{{"uuid-1", "foo", "txt"}})
+	defer server.Close()
+	f := testFs(t, server)
+
+	file, err := f.getFile(ctx, "uuid-1")
+	require.NoError(t, err)
+	require.NotNil(t, file)
+	assert.Equal(t, "uuid-1", file.UUID)
+
+	_, err = f.getFile(ctx, "uuid-missing")
+	assert.Error(t, err, "a file the replicas don't have yet")
+}
+
+func TestObjectSetMetaData(t *testing.T) {
+	modTime := time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)
+	o := &Object{size: -1, modTime: time.Unix(1, 0), uuid: "old-uuid", id: "old-id"}
+	o.setMetaData(&folders.File{UUID: "uuid", FileID: "id", Size: "42", ModificationTime: modTime})
+	assert.Equal(t, "uuid", o.uuid)
+	assert.Equal(t, "id", o.id)
+	assert.Equal(t, int64(42), o.size)
+	assert.True(t, modTime.Equal(o.modTime), "modification time is replaced, not left as the old file's")
 }
