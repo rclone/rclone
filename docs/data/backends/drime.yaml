@@ -17,6 +17,7 @@ features:
 - Copy
 - DirCacheFlush
 - DirMove
+- ListR
 - Move
 - OpenChunkWriter
 - Purge

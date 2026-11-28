@@ -19,9 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/multipart"
@@ -628,6 +631,159 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, iErr
 	}
 	return entries, nil
+}
+
+// listRGrouping is the number of folders whose children ListR asks
+// for in one listing
+const listRGrouping = 50
+
+// errListTogetherRefused is returned by listChildren when drime
+// won't list the folders together
+var errListTogetherRefused = errors.New("drime won't list these folders together")
+
+// listChildren lists the children of all the folders in parentIDs,
+// calling fn on each item found.
+//
+// Drime answers 500 when asked to list folders shared from another
+// account this way. That isn't retried and errListTogetherRefused is
+// returned before fn is called, so the folders can be listed on
+// their own.
+//
+// If the user fn ever returns true then it exits early.
+func (f *Fs) listChildren(ctx context.Context, parentIDs []string, fn listAllFn) (err error) {
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/drive/file-entries",
+		Parameters: url.Values{},
+	}
+	for _, id := range parentIDs {
+		opts.Parameters.Add("parentIds[]", id)
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
+	}
+	opts.Parameters.Set("perPage", strconv.Itoa(f.opt.ListChunk))
+	page := 1
+	for {
+		opts.Parameters.Set("page", strconv.Itoa(page))
+		var result api.Listing
+		var resp *http.Response
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+			if page == 1 && resp != nil && resp.StatusCode == http.StatusInternalServerError {
+				return false, err
+			}
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			if page == 1 && resp != nil && resp.StatusCode == http.StatusInternalServerError {
+				return fmt.Errorf("%w: %w", errListTogetherRefused, err)
+			}
+			return fmt.Errorf("couldn't list files: %w", err)
+		}
+		// Drime lists at most a fixed number of entries (20,000 for
+		// rclone) and answers any later page with the last one it allows
+		if result.CurrentPage != page {
+			return errors.New("couldn't list files: folders have more entries than drime will list")
+		}
+		for i := range result.Data {
+			item := &result.Data[i]
+			item.Name = f.opt.Enc.ToStandardName(item.Name)
+			if fn(item) {
+				return nil
+			}
+		}
+		// Drime doesn't report the real total and last page for
+		// these listings, so stop on a short page too
+		if result.CurrentPage >= result.LastPage || len(result.Data) < result.PerPage {
+			return nil
+		}
+		page++
+	}
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Drime can list the children of many folders at once, so this
+// walks the tree a level at a time instead of a folder at a time.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	helper := list.NewHelper(callback)
+	var iErr error
+	next := map[string]string{} // folder ID to remote, for the next level
+	add := func(parent string, info *api.Item) bool {
+		remote := path.Join(parent, info.Name)
+		entry, err := f.itemToDirEntry(ctx, remote, info)
+		if err == nil {
+			err = helper.Add(entry)
+		}
+		if err != nil {
+			iErr = err
+			return true
+		}
+		if info.Type == api.ItemTypeFolder {
+			next[info.ID.String()] = remote
+		}
+		return false
+	}
+	// The first level is listed with folderId which also works for
+	// the drive root and for folders shared from another account
+	_, err = f.listAll(ctx, directoryID, false, false, "", func(info *api.Item) bool {
+		return add(dir, info)
+	})
+	if err != nil {
+		return err
+	}
+	if iErr != nil {
+		return iErr
+	}
+	for len(next) > 0 {
+		parents := next
+		next = map[string]string{}
+		for group := range slices.Chunk(slices.Sorted(maps.Keys(parents)), listRGrouping) {
+			err := f.listChildren(ctx, group, func(info *api.Item) bool {
+				parent, ok := parents[info.ParentID.String()]
+				if !ok {
+					iErr = fmt.Errorf("couldn't list files: unexpected parent %q for %q", info.ParentID, info.Name)
+					return true
+				}
+				return add(parent, info)
+			})
+			if errors.Is(err, errListTogetherRefused) {
+				fs.Debugf(f, "Listing %d folders on their own: %v", len(group), err)
+				for _, id := range group {
+					_, err = f.listAll(ctx, id, false, false, "", func(info *api.Item) bool {
+						return add(parents[id], info)
+					})
+					if err != nil || iErr != nil {
+						break
+					}
+				}
+			}
+			if err != nil {
+				return err
+			}
+			if iErr != nil {
+				return iErr
+			}
+		}
+	}
+	return helper.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which
