@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -462,7 +463,15 @@ func parseHTML(t *testing.T, name string, base string, want []string) {
 	require.NoError(t, err)
 	entries, err := parse(u, in)
 	require.NoError(t, err)
-	assert.Equal(t, want, entries)
+	assert.Equal(t, want, entryNames(entries))
+}
+
+// entryNames returns the names of the listing entries
+func entryNames(entries []listingEntry) (names []string) {
+	for _, entry := range entries {
+		names = append(names, entry.name)
+	}
+	return names
 }
 
 func TestParseEmpty(t *testing.T) {
@@ -512,6 +521,62 @@ func TestParseNginx(t *testing.T) {
 		"config",
 		"summary",
 	})
+}
+
+func TestParseJSON(t *testing.T) {
+	in := `[
+{ "name":"A B.json", "type":"file", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT", "size":7709274 },
+{ "name":"sub", "type":"directory", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT" },
+{ "name":"nosize", "type":"file" },
+{ "name":"bad/name", "type":"file", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT", "size":1 }
+]`
+	u, err := url.Parse("http://example.com/")
+	require.NoError(t, err)
+	entries, err := parseJSON(u, strings.NewReader(in))
+	require.NoError(t, err)
+	assert.Equal(t, []listingEntry{
+		{name: "A B.json", size: 7709274, modTime: time.Date(2026, 10, 19, 9, 36, 12, 0, time.UTC)},
+		{name: "sub/", size: -1},
+		{name: "nosize", size: -1},
+	}, entries)
+
+	_, err = parseJSON(u, strings.NewReader("not json"))
+	assert.Error(t, err)
+}
+
+func TestParseJSONCaddy(t *testing.T) {
+	in := `[
+{"name":"A B.json","size":7709274,"url":"./A%20B.json","mod_time":"2026-10-19T09:36:12.5Z","mode":420,"is_dir":false,"is_symlink":false},
+{"name":"sub","size":4096,"url":"./sub/","mod_time":"2026-10-19T09:36:12Z","mode":2147484141,"is_dir":true,"is_symlink":false},
+{"name":"badtime","size":3,"url":"./badtime","mod_time":"yesterday","is_dir":false}
+]`
+	u, err := url.Parse("http://example.com/")
+	require.NoError(t, err)
+	entries, err := parseJSON(u, strings.NewReader(in))
+	require.NoError(t, err)
+	assert.Equal(t, []listingEntry{
+		{name: "A B.json", size: 7709274, modTime: time.Date(2026, 10, 19, 9, 36, 12, 5e8, time.UTC)},
+		{name: "sub/", size: -1},
+		{name: "badtime", size: -1},
+	}, entries)
+}
+
+func TestParseJSONUnknown(t *testing.T) {
+	u, err := url.Parse("http://example.com/")
+	require.NoError(t, err)
+	for _, in := range []string{
+		`[{"name":"a","size":1,"modified":"2026-10-19T09:36:12Z"}]`,
+		`[{"filename":"a","type":"file"}]`,
+		`[{"type":"file","size":1}]`,
+		`{"name":"a","type":"file"}`,
+	} {
+		_, err = parseJSON(u, strings.NewReader(in))
+		assert.Error(t, err, in)
+	}
+
+	entries, err := parseJSON(u, strings.NewReader(`[]`))
+	require.NoError(t, err)
+	assert.Empty(t, entries)
 }
 
 func TestParseCaddy(t *testing.T) {
@@ -851,4 +916,51 @@ func TestRootCannotChangeHost(t *testing.T) {
 	f, err := NewFs(context.Background(), remoteName, "/", m)
 	require.NoError(t, err)
 	assert.Equal(t, m["url"]+"/", f.String())
+}
+
+// listingServer serves a listing of two files and counts the HEAD requests
+func listingServer(t *testing.T, contentType, body string) (m configmap.Simple, heads *atomic.Int32) {
+	heads = new(atomic.Int32)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/":
+			w.Header().Set("Content-Type", contentType)
+			_, _ = io.WriteString(w, body)
+		case r.Method == "HEAD":
+			heads.Add(1)
+			w.Header().Set("Last-Modified", "Mon, 02 Jan 2006 15:04:05 GMT")
+			w.Header().Set("Content-Length", "99")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(ts.Close)
+	configfile.Install()
+	return configmap.Simple{"type": "http", "url": ts.URL}, heads
+}
+
+const nginxJSONListing = `[
+{ "name":"dir", "type":"directory", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT" },
+{ "name":"listed.txt", "type":"file", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT", "size":7709274 },
+{ "name":"unlisted.txt", "type":"file" }
+]`
+
+func TestListJSONListing(t *testing.T) {
+	ctx := context.Background()
+	m, headCount := listingServer(t, "application/json", nginxJSONListing)
+	f, err := NewFs(ctx, remoteName, "", m)
+	require.NoError(t, err)
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	sort.Sort(entries)
+	require.Len(t, entries, 3)
+
+	// the listed file is not stat'd, the unlisted one still is
+	assert.Equal(t, int32(1), headCount.Load())
+	assert.Equal(t, "dir", entries[0].Remote())
+	assert.Equal(t, "listed.txt", entries[1].Remote())
+	assert.Equal(t, int64(7709274), entries[1].Size())
+	assert.True(t, time.Date(2026, 10, 19, 9, 36, 12, 0, time.UTC).Equal(entries[1].ModTime(ctx)), entries[1].ModTime(ctx))
+	assert.Equal(t, "unlisted.txt", entries[2].Remote())
+	assert.Equal(t, int64(99), entries[2].Size())
 }
