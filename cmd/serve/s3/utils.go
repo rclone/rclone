@@ -63,8 +63,16 @@ func emptyHash(hashType hash.Type) []byte {
 }
 
 func getFileHash(node any, hashType hash.Type) string {
-	if hashType == hash.None {
+	sum, err := readFileHash(context.Background(), node, hashType)
+	if err != nil {
 		return ""
+	}
+	return sum
+}
+
+func readFileHash(ctx context.Context, node any, hashType hash.Type) (string, error) {
+	if hashType == hash.None {
+		return "", hash.ErrUnsupported
 	}
 
 	var o fs.Object
@@ -72,35 +80,32 @@ func getFileHash(node any, hashType hash.Type) string {
 	switch b := node.(type) {
 	case vfs.Node:
 		fsObj, ok := b.DirEntry().(fs.Object)
-		if !ok {
+		file, isFile := b.(*vfs.File)
+		if !ok || (isFile && file.CacheDirty()) {
 			fs.Debugf("serve s3", "File uploading - reading hash from VFS cache")
 			in, err := b.Open(os.O_RDONLY)
 			if err != nil {
-				return ""
+				return "", err
 			}
 			defer func() {
 				_ = in.Close()
 			}()
 			h, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
 			if err != nil {
-				return ""
+				return "", err
 			}
 			_, err = io.Copy(h, in)
 			if err != nil {
-				return ""
+				return "", err
 			}
-			return h.Sums()[hashType]
+			return h.Sums()[hashType], nil
 		}
 		o = fsObj
 	case fs.Object:
 		o = b
 	}
 
-	hash, err := o.Hash(context.Background(), hashType)
-	if err != nil {
-		return ""
-	}
-	return hash
+	return o.Hash(ctx, hashType)
 }
 
 // canonicalKey reports whether key is a non-empty path in canonical form: it

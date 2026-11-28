@@ -184,6 +184,13 @@ func (f *File) CachePath() string {
 	return f._cachePath()
 }
 
+// CacheDirty reports whether the VFS cache holds unpublished changes to this file.
+func (f *File) CacheDirty() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && f.d.vfs.cache.DirtyItem(f._cachePath()) != nil
+}
+
 // Inode returns the inode number - satisfies Node interface
 func (f *File) Inode() uint64 {
 	return f.inode

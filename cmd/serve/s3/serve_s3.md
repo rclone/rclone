@@ -165,19 +165,11 @@ Concurrent multipart uploads of the same key (which S3 permits) are
 safe. Each writes its own temporary object and the last to complete
 wins.
 
-On the few remotes that support neither server side move nor copy, the
-parts are written straight to the destination object instead and never
-buffered in memory. This is at some cost in atomicity - the incomplete
-object is visible under its final name while the upload is in flight,
-as it also is for a plain object PUT on such remotes, and concurrent
-multipart uploads of the same key write to the same object and can
-interleave. A failed or aborted upload still leaves any pre-existing
-object untouched provided the remote uploads atomically and the VFS
-cache is off; on a remote where partial uploads are visible it may
-leave partial data at the key (like a plain PUT there), and with
-`--vfs-cache-mode writes` (or `full`) a write to the cache cannot be
-abandoned, so an aborted upload's partial data is written back to the
-remote as if it had completed.
+On remotes that support neither server-side move nor copy, completion
+streams the staged object to its destination. This takes an extra read
+and write. A remote that exposes partial writes can show the new data
+during that final transfer. Aborting before completion discards the
+staged object.
 
 **Features**
 
@@ -263,11 +255,7 @@ remote. The rename normally happens in the cache before the upload has
 started, but the VFS requires the remote to support a server-side move
 or copy to rename files at all (and uses one if the temporary file has
 already been written back, e.g. with `--vfs-write-back 0`). On remotes
-without either, the parts are written to the cache directly under the
-final key instead: the upload still never touches memory, but it loses
-its atomicity - the in-flight upload is visible at the key, and an
-aborted upload cannot be abandoned once in the cache, so its partial
-data is written back to the remote as if it were a completed object.
+without either operation, completion copies the staged data through the VFS.
 
 Remotes that benefit from `--vfs-cache-mode writes`:
 
@@ -488,16 +476,22 @@ the prefix walking, unless the delimiter is in the directory names.
 
 Versioning is not supported (see [Design goals](#design-goals)).
 
-Conditional writes, `PutObject` and `CompleteMultipartUpload` with
-`If-None-Match` or `If-Match`, are supported. The conditions are
-checked before the object is written, and again as it is moved into
-place when it is written to a temporary object first. This happens for
-multipart uploads and, for `PutObject`, with remotes which can upload
-partial files (such as local disk) or with `--vfs-cache-mode minimal`
-or above. The second check is atomic against other writes through
-`serve s3`, but neither is atomic against changes made to the remote
-some other way. If the remote doesn't support the `--etag-hash`,
-objects have no `ETag` so `If-Match` with an `ETag` always fails.
+PUT, COPY and multipart completion accept `If-Match` and `If-None-Match`.
+Use `If-Match` with the current ETag to replace an unchanged object, or
+`If-None-Match: *` to create an object only when the key is absent.
+A failed condition returns `412 PreconditionFailed`. A missing object with
+`If-Match` returns `404 NoSuchKey`.
+
+Writes to the same key are coordinated within one server. This is not a
+lock shared with other rclone servers or clients writing directly to the
+remote. On a case-insensitive local mount on Linux, use
+`--local-case-insensitive --vfs-case-insensitive` so rclone coordinates
+alternate spellings of the same name. Multipart data is staged separately
+before publication. Auth-proxy requests check the destination using the
+authenticated user's VFS. Separate VFS caches can observe different versions.
+On case-insensitive backends, publication is coordinated per bucket to cover
+alternate spellings of a key. PUTs that use temporary objects take the lock
+after the request body has been staged.
 
 Metadata will only be saved in memory (see [Design
 goals](#design-goals)) other than the rclone `mtime` metadata which
@@ -566,7 +560,7 @@ ignored.
 | `CopyObject` | Yes | Including the metadata and tagging directives and the `x-amz-copy-source-if-*` conditions. |
 | `DeleteObject`, `DeleteObjects` | Yes | |
 | Multipart uploads | Yes | `CreateMultipartUpload`, `UploadPart`, `UploadPartCopy`, `CompleteMultipartUpload`, `AbortMultipartUpload`, `ListMultipartUploads` and `ListParts`. The `ETag` of the object is its hash, not the `-N` suffixed one AWS gives. The 5 MiB minimum part size isn't enforced. |
-| Conditional writes | Partial | `If-Match` and `If-None-Match` on `PutObject` and `CompleteMultipartUpload` are checked, but not atomically against changes made to the remote some other way (see [Limitations](#limitations)). |
+| Conditional writes | Partial | `If-Match` and `If-None-Match` on `PutObject`, `CopyObject` and `CompleteMultipartUpload` are checked, but not atomically against changes made to the remote some other way (see [Limitations](#limitations)). |
 | Authentication | Partial | AWS Signature Version 4, in headers, presigned URLs and browser form (`POST`) uploads. Signature Version 2 isn't supported. |
 | Anonymous access | Partial | All requests are allowed without `--auth-key` or `--auth-proxy`, and none are with them, as buckets and objects can't be made public. |
 | Metadata | Partial | `x-amz-meta-*`, the storage class and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. The storage class is only recorded, so doesn't change how the object is stored. |

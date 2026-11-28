@@ -92,10 +92,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 
 	w.backend = newBackend(w)
+	conditionalBackend := newConditionalBackend(w.backend)
 
 	var newLogger logger
 	w.faker = gofakes3.New(
-		w.backend,
+		conditionalBackend,
 		gofakes3.WithHostBucket(!opt.ForcePathStyle),
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),
@@ -111,7 +112,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		fs.Logf("serve s3", "--multipart-expiry 0 means abandoned multipart uploads are never cleaned up and go on counting towards --multipart-max-uploads %d", w.opt.MultipartMaxUploads)
 	}
 
-	w.handler = w.faker.Server()
+	w.handler = withConditions(w.faker.Server())
 
 	if w.provider.IsProxy() {
 		w.handler = proxyAuthMiddleware(w.handler, w)
