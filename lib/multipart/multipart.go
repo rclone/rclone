@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -61,11 +62,17 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 
 	var (
 		g, gCtx   = errgroup.WithContext(uploadCtx)
+		partCtx   = gCtx
 		finished  = false
+		failed    atomic.Bool
 		off       int64
 		size      = src.Size()
 		chunkSize = info.ChunkSize
 	)
+	if info.LeavePartsOnError {
+		// Allow already-started parts to finish unless uploadCtx is cancelled.
+		partCtx = uploadCtx
+	}
 
 	// Do the accounting manually
 	in, acc := accounting.UnWrapAccounting(in)
@@ -86,7 +93,7 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 
 		// Fail fast, in case an errgroup managed function returns an error
 		// gCtx is cancelled. There is no point in uploading all the other parts.
-		if gCtx.Err() != nil {
+		if gCtx.Err() != nil || failed.Load() {
 			free()
 			break
 		}
@@ -111,7 +118,10 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 		g.Go(func() (err error) {
 			defer free()
 			fs.Debugf(src, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
-			_, err = chunkWriter.WriteChunk(gCtx, int(partNum), rw)
+			_, err = chunkWriter.WriteChunk(partCtx, int(partNum), rw)
+			if err != nil {
+				failed.Store(true)
+			}
 			return err
 		})
 	}

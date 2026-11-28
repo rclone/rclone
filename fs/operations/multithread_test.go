@@ -403,3 +403,198 @@ func TestMultithreadCopyWriterAtErrors(t *testing.T) {
 		}
 	}
 }
+
+type mockLeavePartsChunkWriter struct {
+	writeFn   func(ctx context.Context, chunk int) (int64, error)
+	mu        sync.Mutex
+	started   []int
+	completed []int
+	closed    bool
+	aborted   bool
+}
+
+func (w *mockLeavePartsChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
+	w.mu.Lock()
+	w.started = append(w.started, chunkNumber)
+	w.mu.Unlock()
+
+	if _, err := io.Copy(io.Discard, reader); err != nil {
+		return -1, err
+	}
+	n, err := w.writeFn(ctx, chunkNumber)
+	if err == nil {
+		w.mu.Lock()
+		w.completed = append(w.completed, chunkNumber)
+		w.mu.Unlock()
+	}
+	return n, err
+}
+
+func (w *mockLeavePartsChunkWriter) Close(context.Context) error {
+	w.mu.Lock()
+	w.closed = true
+	w.mu.Unlock()
+	return nil
+}
+
+func (w *mockLeavePartsChunkWriter) Abort(context.Context) error {
+	w.mu.Lock()
+	w.aborted = true
+	w.mu.Unlock()
+	return nil
+}
+
+func TestMultithreadCopyLeavePartsOnError(t *testing.T) {
+	setup := func(t *testing.T, leaveParts bool, writeFn func(ctx context.Context, chunk int) (int64, error)) (context.Context, *fs.ConfigInfo, fs.Fs, *mockobject.ContentMockObject, *mockLeavePartsChunkWriter) {
+		ctx, ci := fs.AddConfig(context.Background())
+		ci.MultiThreadChunkSize = 4
+		ci.MultiThreadWriteBufferSize = 0
+		ci.MultiThreadStreams = 2
+		ci.MultiThreadSet = true
+
+		f, err := mockfs.NewFs(ctx, "destination", "", nil)
+		require.NoError(t, err)
+		writer := &mockLeavePartsChunkWriter{writeFn: writeFn}
+		f.Features().OpenChunkWriter = func(context.Context, string, fs.ObjectInfo, ...fs.OpenOption) (fs.ChunkWriterInfo, fs.ChunkWriter, error) {
+			return fs.ChunkWriterInfo{
+				ChunkSize:         4,
+				Concurrency:       2,
+				LeavePartsOnError: leaveParts,
+			}, writer, nil
+		}
+		srcFs, err := mockfs.NewFs(ctx, "source", "", nil)
+		require.NoError(t, err)
+		src := mockobject.New("file.bin").WithContent([]byte("0123456789abcdef"), mockobject.SeekModeNone)
+		src.SetFs(srcFs)
+		return ctx, ci, f, src, writer
+	}
+
+	t.Run("cancels in-flight and aborts by default", func(t *testing.T) {
+		terminalErr := errors.New("terminal chunk error")
+		chunk1Started := make(chan struct{})
+		chunk1Done := make(chan error, 1)
+
+		ctx, _, f, src, writer := setup(t, false, func(ctx context.Context, chunk int) (int64, error) {
+			switch chunk {
+			case 0:
+				select {
+				case <-chunk1Started:
+				case <-time.After(3 * time.Second):
+					return 0, errors.New("timed out waiting for chunk 1")
+				}
+				return 0, terminalErr
+			case 1:
+				close(chunk1Started)
+				select {
+				case <-ctx.Done():
+					chunk1Done <- ctx.Err()
+					return 0, ctx.Err()
+				case <-time.After(3 * time.Second):
+					chunk1Done <- nil
+					return 4, nil
+				}
+			default:
+				return 4, nil
+			}
+		})
+
+		tr := accounting.GlobalStats().NewTransfer(src, nil)
+		_, err := multiThreadCopy(ctx, f, src.Remote(), src, 2, tr)
+		tr.Done(ctx, err)
+		require.ErrorIs(t, err, terminalErr)
+		assert.ErrorIs(t, <-chunk1Done, context.Canceled)
+		assert.True(t, writer.aborted)
+		assert.False(t, writer.closed)
+		for _, c := range writer.started {
+			assert.Less(t, c, 2)
+		}
+	})
+
+	t.Run("drains in-flight chunks and skips new chunks when enabled", func(t *testing.T) {
+		terminalErr := errors.New("terminal chunk error")
+		chunk1Started := make(chan struct{})
+		chunk0Failed := make(chan struct{})
+		releaseChunk1 := make(chan struct{})
+		chunk1CtxErr := make(chan error, 1)
+
+		ctx, _, f, src, writer := setup(t, true, func(ctx context.Context, chunk int) (int64, error) {
+			switch chunk {
+			case 0:
+				select {
+				case <-chunk1Started:
+				case <-time.After(3 * time.Second):
+					return 0, errors.New("timed out waiting for chunk 1")
+				}
+				close(chunk0Failed)
+				return 0, terminalErr
+			case 1:
+				close(chunk1Started)
+				select {
+				case <-releaseChunk1:
+					chunk1CtxErr <- ctx.Err()
+					return 4, nil
+				case <-ctx.Done():
+					chunk1CtxErr <- ctx.Err()
+					return 0, ctx.Err()
+				case <-time.After(3 * time.Second):
+					chunk1CtxErr <- errors.New("timed out waiting for release")
+					return 0, errors.New("timed out waiting for release")
+				}
+			default:
+				return 4, nil
+			}
+		})
+
+		go func() {
+			<-chunk0Failed
+			time.Sleep(50 * time.Millisecond)
+			close(releaseChunk1)
+		}()
+
+		tr := accounting.GlobalStats().NewTransfer(src, nil)
+		_, err := multiThreadCopy(ctx, f, src.Remote(), src, 2, tr)
+		tr.Done(ctx, err)
+		require.ErrorIs(t, err, terminalErr)
+		require.NoError(t, <-chunk1CtxErr)
+		assert.False(t, writer.aborted)
+		assert.False(t, writer.closed)
+		assert.ElementsMatch(t, []int{0, 1}, writer.started)
+		assert.Equal(t, []int{1}, writer.completed)
+	})
+
+	t.Run("stops in-flight chunks on caller cancel when enabled", func(t *testing.T) {
+		var bothStarted sync.WaitGroup
+		bothStarted.Add(2)
+		chunkErrs := make(chan error, 2)
+
+		baseCtx, _, f, src, writer := setup(t, true, func(ctx context.Context, chunk int) (int64, error) {
+			if chunk < 2 {
+				bothStarted.Done()
+			}
+			select {
+			case <-ctx.Done():
+				chunkErrs <- ctx.Err()
+				return 0, ctx.Err()
+			case <-time.After(3 * time.Second):
+				chunkErrs <- nil
+				return 4, nil
+			}
+		})
+
+		ctx, cancel := context.WithCancel(baseCtx)
+		defer cancel()
+		go func() {
+			bothStarted.Wait()
+			cancel()
+		}()
+
+		tr := accounting.GlobalStats().NewTransfer(src, nil)
+		_, err := multiThreadCopy(ctx, f, src.Remote(), src, 2, tr)
+		tr.Done(ctx, err)
+		require.ErrorIs(t, err, context.Canceled)
+		assert.ErrorIs(t, <-chunkErrs, context.Canceled)
+		assert.ErrorIs(t, <-chunkErrs, context.Canceled)
+		assert.False(t, writer.aborted)
+		assert.False(t, writer.closed)
+	})
+}

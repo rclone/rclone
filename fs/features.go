@@ -738,7 +738,7 @@ type OpenWriterAtFn func(ctx context.Context, remote string, size int64) (Writer
 type ChunkWriterInfo struct {
 	ChunkSize         int64 // preferred chunk size
 	Concurrency       int   // how many chunks to write at once
-	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error
+	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error and let in-flight parts finish
 }
 
 // OpenChunkWriter is an option interface for Fs to implement chunked writing

@@ -263,6 +263,8 @@ to start uploading.`,
 		Name: "leave_parts_on_error",
 		Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery.
 
+Already-running part uploads are allowed to finish before returning the upload error, while new parts are not scheduled.
+
 It should be set to true for resuming uploads across different sessions.
 
 WARNING: Storing parts of an incomplete multipart upload counts towards space usage on object storage and will add
