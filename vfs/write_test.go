@@ -192,6 +192,26 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	checkListing(t, root, []string{"file1,7,false"})
 }
 
+func TestWriteFileHandleCloseBeforeWriteBack(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeWrites
+	opt.WriteBack = 10 * writeBackDelay
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	h, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	require.NoError(t, err)
+	_, err = h.Write([]byte("hello"))
+	require.NoError(t, err)
+	require.NoError(t, h.Close())
+
+	_, err = r.Fremote.NewObject(context.Background(), "file1")
+	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+
+	vfs.WaitForWriters(waitForWritersDelay)
+	_, err = r.Fremote.NewObject(context.Background(), "file1")
+	require.NoError(t, err)
+}
+
 func TestWriteFileHandleWriteAt(t *testing.T) {
 	r, vfs, fh := writeHandleCreate(t)
 

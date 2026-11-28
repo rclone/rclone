@@ -1,10 +1,10 @@
 package webdav
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 )
 
@@ -16,6 +16,7 @@ type Upload struct {
 	stream io.ReadSeeker
 	size   int64
 	offset int64
+	file   *os.File
 
 	Fingerprint string
 	Metadata    Metadata
@@ -62,16 +63,27 @@ func b64encode(s string) string {
 }
 
 // NewUpload creates a new upload from an io.Reader.
-func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint string) *Upload {
+func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint string) (*Upload, error) {
 	stream, ok := reader.(io.ReadSeeker)
+	var file *os.File
 
 	if !ok {
-		buf := new(bytes.Buffer)
-		_, err := buf.ReadFrom(reader)
+		var err error
+		file, err = os.CreateTemp("", "rclone-tus")
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("failed to create tus upload spool: %w", err)
 		}
-		stream = bytes.NewReader(buf.Bytes())
+		if _, err = io.Copy(file, reader); err != nil {
+			_ = file.Close()
+			_ = os.Remove(file.Name())
+			return nil, fmt.Errorf("failed to spool tus upload: %w", err)
+		}
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
+			_ = file.Close()
+			_ = os.Remove(file.Name())
+			return nil, fmt.Errorf("failed to rewind tus upload spool: %w", err)
+		}
+		stream = file
 	}
 
 	if metadata == nil {
@@ -81,8 +93,24 @@ func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint stri
 	return &Upload{
 		stream: stream,
 		size:   size,
+		file:   file,
 
 		Fingerprint: fingerprint,
 		Metadata:    metadata,
+	}, nil
+}
+
+// Close removes the temporary spool file for u, if one was created.
+func (u *Upload) Close() error {
+	if u.file == nil {
+		return nil
 	}
+	name := u.file.Name()
+	err := u.file.Close()
+	removeErr := os.Remove(name)
+	u.file = nil
+	if err != nil {
+		return err
+	}
+	return removeErr
 }
