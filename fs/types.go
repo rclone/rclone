@@ -182,6 +182,16 @@ type ObjectUnWrapper interface {
 	UnWrap() Object
 }
 
+// ObjectSerializer is an optional interface for Object
+type ObjectSerializer interface {
+	// Serialize returns data, containing no NUL bytes, from which
+	// Features.NewObjectFromSerialized recreates the Object without
+	// a remote call.
+	//
+	// It returns an error if the Object can't be serialized.
+	Serialize() ([]byte, error)
+}
+
 // SetTierer is an optional interface for Object
 type SetTierer interface {
 	// SetTier performs changing storage tier of the Object if

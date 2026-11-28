@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -856,6 +857,56 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fs.ErrorObjectNotFound
 	}
 	return o, err
+}
+
+// serializedObject is the data from a listing needed to recreate an Object
+type serializedObject struct {
+	ModTime         time.Time         `json:"t"`
+	MD5             string            `json:"m,omitempty"`
+	Size            int64             `json:"s"`
+	MimeType        string            `json:"y,omitempty"`
+	AccessTier      blob.AccessTier   `json:"a,omitempty"`
+	Meta            map[string]string `json:"x,omitempty"`
+	ContentEncoding *string           `json:"e,omitempty"`
+}
+
+// Serialize returns data from which NewObjectFromSerialized recreates o
+//
+// Only objects whose tags haven't been read can be serialized.
+func (o *Object) Serialize() ([]byte, error) {
+	if o.tags != nil {
+		return nil, errors.New("can't serialize object with tags")
+	}
+	metadataMu.Lock()
+	defer metadataMu.Unlock()
+	return json.Marshal(serializedObject{
+		ModTime:         o.modTime,
+		MD5:             o.md5,
+		Size:            o.size,
+		MimeType:        o.mimeType,
+		AccessTier:      o.accessTier,
+		Meta:            o.meta,
+		ContentEncoding: o.contentEncoding,
+	})
+}
+
+// NewObjectFromSerialized recreates an Object from Serialize data without a HEAD request
+func (f *Fs) NewObjectFromSerialized(ctx context.Context, remote string, data []byte) (fs.Object, error) {
+	var s serializedObject
+	if err := json.Unmarshal(data, &s); err != nil {
+		return nil, err
+	}
+	return &Object{
+		fs:              f,
+		remote:          remote,
+		modTime:         s.ModTime,
+		md5:             s.MD5,
+		size:            s.Size,
+		mimeType:        s.MimeType,
+		accessTier:      s.AccessTier,
+		meta:            s.Meta,
+		contentEncoding: s.ContentEncoding,
+	}, nil
 }
 
 // getBlobSVC creates a blob client
@@ -3411,15 +3462,17 @@ func parseTier(tier string) *blob.AccessTier {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = &Fs{}
-	_ fs.Copier          = &Fs{}
-	_ fs.PutStreamer     = &Fs{}
-	_ fs.Purger          = &Fs{}
-	_ fs.ListRer         = &Fs{}
-	_ fs.ListPer         = &Fs{}
-	_ fs.OpenChunkWriter = &Fs{}
-	_ fs.Object          = &Object{}
-	_ fs.MimeTyper       = &Object{}
-	_ fs.GetTierer       = &Object{}
-	_ fs.SetTierer       = &Object{}
+	_ fs.Fs                 = &Fs{}
+	_ fs.Copier             = &Fs{}
+	_ fs.PutStreamer        = &Fs{}
+	_ fs.Purger             = &Fs{}
+	_ fs.ListRer            = &Fs{}
+	_ fs.ListPer            = &Fs{}
+	_ fs.OpenChunkWriter    = &Fs{}
+	_ fs.ObjectDeserializer = &Fs{}
+	_ fs.Object             = &Object{}
+	_ fs.MimeTyper          = &Object{}
+	_ fs.GetTierer          = &Object{}
+	_ fs.SetTierer          = &Object{}
+	_ fs.ObjectSerializer   = &Object{}
 )
