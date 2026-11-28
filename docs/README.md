@@ -22,6 +22,12 @@ If you want to change the layout then the main files to edit are
 Running `make serve` in a terminal give a live preview of the website
 so it is easy to tweak stuff.
 
+## Changes on commands
+
+If you have worked on the commands in `cmd/*` and you want to see the
+changed docs locally, you can run `make commanddocs serve` to
+regenerate the command docs and serve the website locally.
+
 ## What are all these files
 
 ```
