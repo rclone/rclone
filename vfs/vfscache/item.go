@@ -71,6 +71,7 @@ type Item struct {
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 	graceTimer      *time.Timer              // timer for delayed close after grace period
 	closing         chan struct{}            // non-nil while a grace-period close is tearing the handle down, closed when done
+	stolen          bool                     // another item has taken over the cache paths for name
 }
 
 // Info is persisted to backing store
@@ -773,7 +774,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	// FIXME It would be nice to do this asynchronously however it
 	// would require keeping the downloaders alive after the item
 	// has been closed
-	if item.info.Dirty && item.o != nil {
+	if !item.stolen && item.info.Dirty && item.o != nil {
 		err = item._ensure(0, item.info.Size)
 		if err != nil {
 			return fmt.Errorf("vfs cache: failed to download missing parts of cache file: %w", err)
@@ -811,6 +812,14 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	} else {
 		checkErr(item.fd.Close())
 		item.fd = nil
+	}
+
+	// If the item's name has been stolen by another item in a
+	// rename then the cache paths belong to it, so don't write
+	// the metadata or the modtime or store the item
+	if item.stolen {
+		item.modified = false
+		return err
 	}
 
 	// save the metadata once more since it may be dirty
@@ -1556,6 +1565,63 @@ func (item *Item) Sync() (err error) {
 		return fmt.Errorf("vfs cache item sync: failed to sync metadata: %w", err)
 	}
 	return nil
+}
+
+// steal marks the item as having had the cache paths for its name
+// taken over by another item in a rename so it must no longer
+// read or write them
+func (item *Item) steal() {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	item.stolen = true
+}
+
+// releaseForRename closes the backing file handle of an item which is
+// about to have its cache paths taken over by a rename, so the rename
+// can replace the file on platforms which cannot rename over an open
+// file (Windows). Only items with no open handles are released - an
+// actively used item keeps its handle and the rename fails as it
+// would have anyway. If the rename then fails the item simply reopens
+// its cache file on next access.
+//
+// Call with no locks held.
+func (item *Item) releaseForRename() {
+	item.mu.Lock()
+
+	// Wait for any in-progress grace-period close to finish so we
+	// start from a fully closed item rather than racing the fd
+	// teardown, as in open.
+	for item.closing != nil {
+		closing := item.closing
+		item.mu.Unlock()
+		<-closing
+		item.mu.Lock()
+	}
+
+	if item.opens != 0 {
+		item.mu.Unlock()
+		return
+	}
+
+	// Cancel the pending grace-period close - the item is being
+	// torn down here instead.
+	if item.graceTimer != nil {
+		item.graceTimer.Stop()
+		item.graceTimer = nil
+	}
+
+	dls := item.downloaders
+	item.downloaders = nil
+	fd := item.fd
+	item.fd = nil
+	item.mu.Unlock()
+
+	if dls != nil {
+		_ = dls.Close(nil)
+	}
+	if fd != nil {
+		_ = fd.Close()
+	}
 }
 
 // rename the item
