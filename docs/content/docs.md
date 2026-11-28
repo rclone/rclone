@@ -2475,6 +2475,8 @@ enable modifications to source and destination file names by applying
 prefixes, suffixes, and other alterations during transfer operations.
 For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).
 
+`rclone bisync` does not support `--name-transform`.
+
 ### --no-check-dest
 
 The `--no-check-dest` can be used with `move` or `copy` and it causes
