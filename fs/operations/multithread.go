@@ -197,9 +197,14 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 
 	g, gCtx := errgroup.WithContext(uploadCtx)
 	g.SetLimit(concurrency)
+	partCtx := gCtx
+	if info.LeavePartsOnError {
+		// Allow already-started chunks to finish unless uploadCtx is cancelled.
+		partCtx = uploadCtx
+	}
 
 	mc := &multiThreadCopyState{
-		ctx:         gCtx,
+		ctx:         partCtx,
 		size:        src.Size(),
 		src:         src,
 		partSize:    info.ChunkSize,
@@ -208,7 +213,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	}
 
 	// Make accounting
-	mc.acc = tr.Account(gCtx, nil)
+	mc.acc = tr.Account(partCtx, nil)
 
 	fs.DebugfCtx(ctx, src, "Starting multi-thread copy with %d chunks of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), concurrency)
 	for chunk := range mc.numChunks {
@@ -233,7 +238,13 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		}
 
 		g.Go(func() error {
-			return mc.copyChunk(gCtx, chunk, chunkWriter, start, end, size, rw)
+			if gCtx.Err() != nil {
+				if !mc.noBuffering {
+					_ = rw.Close()
+				}
+				return nil
+			}
+			return mc.copyChunk(partCtx, chunk, chunkWriter, start, end, size, rw)
 		})
 	}
 
