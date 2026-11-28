@@ -222,7 +222,7 @@ them into regular expressions.
 |             |         | `/dir/file.345` | `/dir/file.def` |
 | Regexp      | `*.{{jpe?g}}` | `/file.jpeg`     | `/file.png`    |
 |             |         | `/dir/file.jpg` | `/dir/file.jpeeg` |
-| Rooted Regexp | `/{{.*\.jpe?g}}` | `/file.jpeg`  | `/file.png`    |
+| Rooted Regexp | `/{{[^/]*\.jpe?g}}` | `/file.jpeg`  | `/file.png`    |
 |             |                  | `/file.jpg`   | `/dir/file.jpg` |
 
 ## How filter rules are applied to files {#how-filter-rules-work}
