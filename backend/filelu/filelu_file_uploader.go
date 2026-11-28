@@ -3,7 +3,6 @@ package filelu
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -130,33 +129,8 @@ func (f *Fs) uploadFile(ctx context.Context, fileContent io.Reader, fileFullPath
 	destinationFolderPath := path.Join(f.root, directory)
 	if destinationFolderPath != "" {
 		destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
-	}
-
-	existingEntries, err := f.List(ctx, path.Dir(fileFullPath))
-	if err != nil {
-		if errors.Is(err, fs.ErrorDirNotFound) {
-			err = f.Mkdir(ctx, path.Dir(fileFullPath))
-			if err != nil {
-				return fmt.Errorf("failed to create directory: %w", err)
-			}
-		} else {
-			return fmt.Errorf("failed to list existing files: %w", err)
-		}
-	}
-
-	for _, entry := range existingEntries {
-		if entry.Remote() == fileFullPath {
-			_, ok := entry.(fs.Object)
-			if !ok {
-				continue
-			}
-
-			// If the file exists but is different, remove it
-			filePath := "/" + strings.Trim(destinationFolderPath+"/"+fileName, "/")
-			err = f.deleteFile(ctx, filePath)
-			if err != nil {
-				return fmt.Errorf("failed to delete existing file: %w", err)
-			}
+		if _, err := f.createFolder(ctx, destinationFolderPath); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
 		}
 	}
 

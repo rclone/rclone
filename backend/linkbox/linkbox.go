@@ -46,10 +46,13 @@ const (
 	minSleep           = 200 * time.Millisecond
 	maxSleep           = 2 * time.Second
 	pacerBurst         = 1
-	linkboxAPIURL      = "https://www.linkbox.to/api/open/"
-	linkboxWebAPIURL   = "https://www.linkbox.to/api/"
 	rootID             = "0"              // ID of root directory
 	prefixSize         = 10 * 1024 * 1024 // the API wants the MD5 of the first 10 MiB of a file
+)
+
+var (
+	linkboxAPIURL    = "https://www.linkbox.to/api/open/"
+	linkboxWebAPIURL = "https://www.linkbox.to/api/"
 )
 
 func init() {
@@ -701,22 +704,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	remote := o.Remote()
 
-	// remove the file if it exists
+	var oldObj fs.Object
 	if o.itemID != "" {
-		fs.Debugf(o, "Update: removing old file")
-		err = o.Remove(ctx)
-		if err != nil {
-			fs.Errorf(o, "Update: failed to remove existing file: %v", err)
-		}
-		o.itemID = ""
+		oldObj = o
 	} else {
 		tmpObject, err := o.fs.NewObject(ctx, remote)
 		if err == nil {
-			fs.Debugf(o, "Update: removing old file")
-			err = tmpObject.Remove(ctx)
-			if err != nil {
-				fs.Errorf(o, "Update: failed to remove existing file: %v", err)
-			}
+			oldObj = tmpObject
 		}
 	}
 
@@ -808,6 +802,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	leaf, dirID, err := o.fs.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
 		return err
+	}
+
+	// remove the old file if it exists
+	if oldObj != nil {
+		fs.Debugf(oldObj, "Update: removing old file")
+		err = oldObj.Remove(ctx)
+		if err != nil {
+			return fmt.Errorf("update: failed to remove existing file: %w", err)
+		}
+		if oldObj == o {
+			o.itemID = ""
+		}
 	}
 
 	// create file item at Linkbox (second step)
