@@ -21,6 +21,7 @@ const (
 	EROFS
 	ENOSYS
 	ELOOP
+	ENOTDIR
 )
 
 // Errors which have exact counterparts in os
@@ -40,6 +41,7 @@ var errorNames = []string{
 	EROFS:     "Read only file system",
 	ENOSYS:    "Function not implemented",
 	ELOOP:     "Too many symbolic links",
+	ENOTDIR:   "Not a directory",
 }
 
 // Error renders the error as a string

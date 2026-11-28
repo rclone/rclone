@@ -1271,6 +1271,10 @@ func Transform(ctx context.Context, fdst fs.Fs, deleteEmptySrcDirs bool, copyEmp
 }
 
 // MoveDir moves fsrc into fdst
+//
+// If fdst already exists the contents are merged into it. This is
+// different from operations.DirMove which won't merge when it can use
+// Fs.DirMove and returns an error instead.
 func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	fi := filter.GetConfig(ctx)
 	if operations.Same(fdst, fsrc) {
