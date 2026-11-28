@@ -2321,6 +2321,9 @@ func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string
 				State struct {
 					Value string `json:"value"`
 				} `json:"state"`
+				Error struct {
+					Value string `json:"value"`
+				} `json:"error"`
 			} `json:"fields"`
 		} `json:"records"`
 	}
@@ -2330,9 +2333,19 @@ func (ps *PhotosService) checkIndexingState(ctx context.Context, zoneName string
 		return
 	}
 
-	if len(response.Records) == 0 || response.Records[0].Fields.State.Value != indexingStateReady {
-		fs.Logf(nil, "iclouddrive photos: library is still indexing, listings may be incomplete")
+	if len(response.Records) == 0 {
+		fs.Logf(nil, "iclouddrive photos: no indexing state reported, listings may be incomplete")
+		return
 	}
+	state := response.Records[0].Fields.State.Value
+	if state == indexingStateReady {
+		return
+	}
+	detail := ""
+	if errValue := response.Records[0].Fields.Error.Value; errValue != "" {
+		detail = fmt.Sprintf(" (%s)", errValue)
+	}
+	fs.Logf(nil, "iclouddrive photos: library indexing state is %s%s, listings may be incomplete", state, detail)
 }
 
 // requestWithReauth makes a CloudKit request with pacer retry and reauth on 401/421
