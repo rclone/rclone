@@ -17,6 +17,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -164,12 +165,44 @@ func TestRemoteShellPathRelativePathOverrideLeadingDash(t *testing.T) {
 	assert.Equal(t, "./-file", f.remoteShellPath("-file"))
 }
 
-func TestDefaultEncodingStandardizesControlCharacters(t *testing.T) {
+func TestDefaultEncodingPreservesNames(t *testing.T) {
 	ri, err := fs.Find("sftp")
 	require.NoError(t, err)
 	enc := ri.Options.Get(config.ConfigEncoding).Default.(encoder.MultiEncoder)
-	assert.Equal(t, "a␊b", enc.ToStandardName("a\nb"))
-	assert.Equal(t, "a\nb", enc.FromStandardName("a␊b"))
+	for _, name := range []string{"normal", "a\nb", "a␊b", "a\x7fb", "a␡b", "a‛b", "a␀b"} {
+		assert.Equal(t, name, enc.ToStandardName(name))
+		assert.Equal(t, name, enc.FromStandardName(name))
+	}
+}
+
+func TestDefaultEncodingPreservesCryptNames(t *testing.T) {
+	ri, err := fs.Find("sftp")
+	require.NoError(t, err)
+	enc := ri.Options.Get(config.ConfigEncoding).Default.(encoder.MultiEncoder)
+	cipher, err := crypt.NewCipher(configmap.Simple{
+		"filename_encryption":       "standard",
+		"filename_encoding":         "base32768",
+		"directory_name_encryption": "true",
+		"password":                  obscure.MustObscure("potato"),
+		"suffix":                    ".bin",
+	})
+	require.NoError(t, err)
+
+	const name = "file210"
+	encrypted := cipher.EncryptFileName(name)
+	require.Contains(t, encrypted, "␁")
+	stored := encoder.Display.FromStandardName(encrypted)
+	assert.Equal(t, encrypted, stored)
+	listed := enc.ToStandardName(stored)
+	assert.Equal(t, encrypted, listed)
+	decrypted, err := cipher.DecryptFileName(listed)
+	assert.NoError(t, err)
+	assert.Equal(t, name, decrypted)
+	assert.Equal(t, stored, enc.FromStandardName(encrypted))
+	assert.Equal(t, "/srv/root/"+stored, (&Fs{
+		absRoot: "/srv/root",
+		opt:     Options{Enc: enc},
+	}).remotePath(encrypted))
 }
 
 func TestParseHash(t *testing.T) {
