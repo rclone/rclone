@@ -81,8 +81,8 @@ type syncCopyMove struct {
 	renamerWg              sync.WaitGroup         // wait for renamers
 	toBeRenamed            *pipe                  // renamers channel
 	trackRenamesWg         sync.WaitGroup         // wg for background track renames
-	trackRenamesCh         chan fs.Object         // objects are pumped in here
-	renameCheck            []fs.Object            // accumulate files to check for rename here
+	trackRenamesCh         chan fs.ObjectPair     // objects are pumped in here
+	renameCheck            []fs.ObjectPair        // accumulate files to check for rename here
 	compareCopyDest        []fs.Fs                // place to check for files to server side copy
 	backupDir              fs.Fs                  // place to store overwrites/deletes
 	checkFirst             bool                   // if set run all the checkers before starting transfers
@@ -137,7 +137,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		trackRenames:           ci.TrackRenames,
 		commonHash:             fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
 		modifyWindow:           fs.GetModifyWindow(ctx, fsrc, fdst),
-		trackRenamesCh:         make(chan fs.Object, ci.Checkers),
+		trackRenamesCh:         make(chan fs.ObjectPair, ci.Checkers),
 		checkFirst:             ci.CheckFirst,
 		setDirMetadata:         ci.Metadata && fsrc.Features().ReadDirMetadata && fdst.Features().WriteDirMetadata,
 		setDirModTime:          (!ci.NoUpdateDirModTime && fsrc.Features().CanHaveEmptyDirectories) && (fdst.Features().WriteDirSetModTime || fdst.Features().MkdirMetadata != nil || fdst.Features().DirSetModTime != nil),
@@ -399,22 +399,24 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					} else {
 						s.markDirModifiedObject(src)
 					}
+					backedUp := true
 					// If destination already exists, then we must move it into --backup-dir if required
 					if pair.Dst != nil && s.backupDir != nil {
-						err := operations.MoveBackupDir(s.ctx, s.backupDir, pair.Dst)
-						if err != nil {
-							s.processError(err)
-							s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, err)
+						if backupErr := operations.MoveBackupDir(s.ctx, s.backupDir, pair.Dst); backupErr != nil {
+							s.processError(backupErr)
+							s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, backupErr)
+							backedUp = false
 						} else {
 							// If successful zero out the dst as it is no longer there and copy the file
 							pair.Dst = nil
-							ok = out.Put(s.inCtx, pair)
-							if !ok {
-								return
-							}
 						}
-					} else {
-						ok = out.Put(s.inCtx, pair)
+					}
+					if backedUp {
+						if s.trackRenames {
+							ok = s.trackRenamesChPut(pair)
+						} else {
+							ok = out.Put(s.inCtx, pair)
+						}
 						if !ok {
 							return
 						}
@@ -549,6 +551,17 @@ func (s *syncCopyMove) stopRenamers() {
 	s.toBeRenamed.Close()
 	fs.DebugfCtx(s.ctx, s.fdst, "Waiting for renames to finish")
 	s.renamerWg.Wait()
+}
+
+// trackRenamesChPut pushes an object pair onto the track renames
+// collection channel, returning false if the context was cancelled.
+func (s *syncCopyMove) trackRenamesChPut(pair fs.ObjectPair) bool {
+	select {
+	case <-s.ctx.Done():
+		return false
+	case s.trackRenamesCh <- pair:
+	}
+	return true
 }
 
 // This starts the collection of possible renames
@@ -726,8 +739,8 @@ func (s *syncCopyMove) makeRenameMap() {
 
 	// first make a map of possible sizes we need to check
 	possibleSizes := map[int64]struct{}{}
-	for _, obj := range s.renameCheck {
-		possibleSizes[obj.Size()] = struct{}{}
+	for _, pair := range s.renameCheck {
+		possibleSizes[pair.Src.Size()] = struct{}{}
 	}
 
 	// pump all the dstFiles into in
@@ -822,21 +835,23 @@ func (s *syncCopyMove) run() error {
 	}
 	s.processError(m.Run(s.ctx))
 
+	// Stop checkers before closing trackRenamesCh because checkers push
+	// overwritten pairs onto trackRenamesCh when --track-renames is active.
+	s.stopCheckers()
 	s.stopTrackRenames()
 	if s.trackRenames {
 		// Build the map of the remaining dstFiles by hash
 		s.makeRenameMap()
-		// Attempt renames for all the files which don't have a matching dst
-		for _, src := range s.renameCheck {
-			ok := s.toBeRenamed.Put(s.inCtx, fs.ObjectPair{Src: src, Dst: nil})
+		// Attempt renames for all files without a matching dst or whose
+		// matching dst needs to be overwritten
+		for _, pair := range s.renameCheck {
+			ok := s.toBeRenamed.Put(s.inCtx, pair)
 			if !ok {
 				break
 			}
 		}
 	}
 
-	// Stop background checking and transferring pipeline
-	s.stopCheckers()
 	if s.checkFirst {
 		fs.InfofCtx(s.ctx, s.fdst, "Checks finished, now starting transfers")
 		s.startTransfers()
@@ -1115,10 +1130,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 
 		if s.trackRenames {
 			// Save object to check for a rename later
-			select {
-			case <-s.ctx.Done():
+			if !s.trackRenamesChPut(fs.ObjectPair{Src: x, Dst: nil}) {
 				return
-			case s.trackRenamesCh <- x:
 			}
 		} else {
 			// Check CompareDest && CopyDest
