@@ -277,6 +277,15 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 			if err := d.vfs.cache.Rename(oldPath, newPath, newObject); err != nil {
 				fs.Infof(f.Path(), "File.Rename failed in Cache: %v", err)
 			}
+			// The upload under the old name was cancelled and is queued again
+			// under the new name, but it may have reached the remote anyway
+			if o == nil && oldPath != newPath {
+				if stale, findErr := d.Fs().NewObject(ctx, oldPath); findErr == nil {
+					if err := stale.Remove(ctx); err != nil {
+						fs.Errorf(f.Path(), "File.Rename failed to remove %q left by cancelled upload: %v", oldPath, err)
+					}
+				}
+			}
 		}
 		// Update the node with the new details
 		fs.Debugf(f.Path(), "Updating file with %v %p", newObject, f)
@@ -680,6 +689,11 @@ func (f *File) Remove() (err error) {
 	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
 	if f.o != nil {
 		err = f.o.Remove(f.ctx)
+	} else if wasWriting {
+		// A cancelled upload of a new file may have reached the remote anyway
+		if o, findErr := d.Fs().NewObject(f.ctx, f._cachePath()); findErr == nil {
+			err = o.Remove(f.ctx)
+		}
 	}
 	f.mu.Unlock()
 	f.muRW.Unlock()
