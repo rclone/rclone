@@ -129,7 +129,7 @@ or by using an extra parameter with the same value
 - ` + "`" + `--dedupe-mode oldest` + "`" + ` - removes identical files then keeps the oldest one.
 - ` + "`" + `--dedupe-mode largest` + "`" + ` - removes identical files then keeps the largest one.
 - ` + "`" + `--dedupe-mode smallest` + "`" + ` - removes identical files then keeps the smallest one.
-- ` + "`" + `--dedupe-mode rename` + "`" + ` - removes identical files then renames the rest to be different.
+- ` + "`" + `--dedupe-mode rename` + "`" + ` - removes identical files then renames the rest to be different. Can't be used with ` + "`" + `--by-hash` + "`" + `.
 - ` + "`" + `--dedupe-mode list` + "`" + ` - lists duplicate dirs and files only and changes nothing.
 
 For example, to rename all the identically named photos in your Google Photos

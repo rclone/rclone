@@ -4,6 +4,7 @@ package operations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"sort"
@@ -430,6 +431,11 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 	if byHash {
 		if ht == hash.None {
 			return fmt.Errorf("%v has no hashes", f)
+		}
+		// Renaming to the hash would move the files to the root
+		// and lose their names, directories and extensions
+		if mode == DeduplicateRename {
+			return errors.New("can't rename duplicates found by hash")
 		}
 		what = ht.String() + " hashes"
 	}
