@@ -136,6 +136,83 @@ func TestInternalGetPermissionCacheHit(t *testing.T) {
 	assert.Equal(t, int32(1), requests.Load())
 }
 
+func TestChangeNotifyRunnerFlushesRemovedDirectories(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		change      string
+		flushFolder bool
+		notifyPath  string
+		notifyType  fs.EntryType
+	}{
+		{
+			name:        "trashed folder",
+			change:      `{"fileId":"folder-id","file":{"name":"folder","parents":["root-id"],"mimeType":"application/vnd.google-apps.folder","trashed":true}}`,
+			flushFolder: true,
+			notifyPath:  "folder",
+			notifyType:  fs.EntryDirectory,
+		},
+		{
+			name:        "permanently removed folder",
+			change:      `{"fileId":"folder-id","removed":true}`,
+			flushFolder: true,
+			notifyPath:  "folder",
+			notifyType:  fs.EntryDirectory,
+		},
+		{
+			name:       "trashed file in live folder",
+			change:     `{"fileId":"file-id","file":{"name":"file.txt","parents":["folder-id"],"mimeType":"text/plain","trashed":true}}`,
+			notifyPath: "folder/file.txt",
+			notifyType: fs.EntryObject,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fieldsC := make(chan string, 1)
+			response := `{"changes":[` + test.change + `],"newStartPageToken":"next-token"}`
+			f := newPermissionTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fieldsC <- r.URL.Query().Get("fields")
+				w.Header().Set("Content-Type", "application/json")
+				_, err := io.WriteString(w, response)
+				assert.NoError(t, err)
+			}))
+			f.dirCache = dircache.New("", "root-id", f)
+			f.dirCache.Put("", "root-id")
+			f.dirCache.Put("folder", "folder-id")
+			f.dirCache.Put("folder/child", "child-id")
+
+			var notifications []struct {
+				path      string
+				entryType fs.EntryType
+			}
+			nextPageToken, err := f.changeNotifyRunner(context.Background(), func(path string, entryType fs.EntryType) {
+				notifications = append(notifications, struct {
+					path      string
+					entryType fs.EntryType
+				}{path, entryType})
+			}, "page-token")
+			require.NoError(t, err)
+			assert.Equal(t, "next-token", nextPageToken)
+
+			fields := <-fieldsC
+			assert.Contains(t, fields, "removed")
+			assert.Contains(t, fields, "trashed")
+			assert.Contains(t, notifications, struct {
+				path      string
+				entryType fs.EntryType
+			}{test.notifyPath, test.notifyType})
+
+			_, folderCached := f.dirCache.Get("folder")
+			_, childCached := f.dirCache.Get("folder/child")
+			if test.flushFolder {
+				assert.False(t, folderCached)
+				assert.False(t, childCached)
+			} else {
+				assert.True(t, folderCached)
+				assert.True(t, childCached)
+			}
+		})
+	}
+}
+
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
 		in       string

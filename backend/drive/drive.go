@@ -3311,7 +3311,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 		err = f.pacer.Call(func() (bool, error) {
 			changesCall := f.svc.Changes.List(pageToken).
-				Fields("nextPageToken,newStartPageToken,changes(fileId,file(name,parents,mimeType))")
+				Fields("nextPageToken,newStartPageToken,changes(fileId,removed,file(name,parents,mimeType,trashed))")
 			if f.opt.ListChunk > 0 {
 				changesCall.PageSize(f.opt.ListChunk)
 			}
@@ -3337,6 +3337,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			entryType fs.EntryType
 		}
 		var pathsToClear []entryType
+		var dirsToFlush []string
 		for _, change := range changeList.Changes {
 			// find the previous path
 			if path, ok := f.dirCache.GetInv(change.FileId); ok {
@@ -3344,6 +3345,9 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
 				} else {
 					pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryDirectory})
+				}
+				if change.Removed || change.File != nil && change.File.MimeType == driveFolderType && change.File.Trashed {
+					dirsToFlush = append(dirsToFlush, path)
 				}
 			}
 
@@ -3369,6 +3373,10 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					pathsToClear = append(pathsToClear, entryType{path: change.File.Name, entryType: changeType})
 				}
 			}
+		}
+
+		for _, dir := range dirsToFlush {
+			f.dirCache.FlushDir(dir)
 		}
 
 		visitedPaths := make(map[string]struct{})
