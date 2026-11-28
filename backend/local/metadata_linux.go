@@ -82,7 +82,9 @@ func readMetadataFromFileStatx(o *Object, m *fs.Metadata) (err error) {
 	}
 	setTime("atime", stat.Atime)
 	setTime("mtime", stat.Mtime)
-	setTime("btime", stat.Btime)
+	if stat.Mask&unix.STATX_BTIME != 0 {
+		setTime("btime", stat.Btime)
+	}
 	return nil
 }
 
