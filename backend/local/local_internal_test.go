@@ -1222,6 +1222,31 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 	})
 }
 
+// TestMetadataMissingLinuxBirthTime checks that a file whose filesystem does
+// not record a birth time does not report one, rather than reporting the zero
+// time as if it were real metadata.
+//
+// /proc filesystems never set STATX_BTIME, so they are used as the example.
+//
+// See: https://github.com/rclone/rclone/issues/10418
+func TestMetadataMissingLinuxBirthTime(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("linux only")
+	}
+	if _, err := os.Stat("/proc/uptime"); err != nil {
+		t.Skipf("/proc/uptime is unavailable: %v", err)
+	}
+
+	ctx := context.Background()
+	f, err := NewFs(ctx, "local", "/proc", configmap.Simple{})
+	require.NoError(t, err)
+	o, err := f.NewObject(ctx, "uptime")
+	require.NoError(t, err)
+	metadata, err := o.(fs.Metadataer).Metadata(ctx)
+	require.NoError(t, err)
+	assert.NotContains(t, metadata, "btime")
+}
+
 // Check that the setuid, setgid and sticky bits from "mode" metadata are
 // stripped by default and only restored with --local-metadata-restore-special-bits.
 //
