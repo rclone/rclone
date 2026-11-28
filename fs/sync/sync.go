@@ -459,11 +459,17 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 		}
 		src := pair.Src
 		if !s.tryRename(src) {
-			// pass on if not renamed
-			fs.DebugfCtx(s.ctx, src, "Need to transfer - No matching file found at Destination")
-			ok = out.Put(s.inCtx, pair)
-			if !ok {
-				return
+			noNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, src, s.compareCopyDest, s.backupDir)
+			if err != nil {
+				s.processError(err)
+				s.logger(s.ctx, operations.TransferError, src, pair.Dst, err)
+			}
+			if !noNeedTransfer {
+				fs.DebugfCtx(s.ctx, src, "Need to transfer - No matching file found at Destination")
+				ok = out.Put(s.inCtx, pair)
+				if !ok {
+					return
+				}
 			}
 		}
 	}
