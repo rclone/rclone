@@ -7,7 +7,6 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -56,14 +55,10 @@ If you just want the directory names use ` + "`rclone lsf --dirs-only`" + `.
 		"groups": "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
-		ci := fs.GetConfig(context.Background())
 		cmd.CheckArgs(1, 1, command, args)
-		if recurse {
-			ci.MaxDepth = 0
-		}
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.ListDir(context.Background(), fsrc, os.Stdout)
+			return operations.ListDir(context.Background(), fsrc, os.Stdout, recurse)
 		})
 	},
 }
