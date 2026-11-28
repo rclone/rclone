@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -51,6 +52,7 @@ import (
 	drive_v2 "google.golang.org/api/drive/v2"
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/impersonate"
 	"google.golang.org/api/option"
 )
 
@@ -348,7 +350,7 @@ a non root folder as its starting point.
 			Sensitive: true,
 		}, {
 			Name: "service_account_file",
-			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
+			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.\n\nIf the file has no private_key, the token is signed by the IAM\nCredentials API using Application Default Credentials. This needs\n--drive-impersonate (keyless domain-wide delegation)." + env.ShellExpandHelp,
 		}, {
 			Name:      "service_account_credentials",
 			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
@@ -1290,6 +1292,31 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 
 func getServiceAccountClient(ctx context.Context, opt *Options, credentialsData []byte) (*http.Client, error) {
 	scopes := driveScopes(opt.Scope)
+	// Keyless domain-wide delegation: a service account file with no
+	// private_key has its JWT signed by the IAM Credentials API, with
+	// Application Default Credentials as the caller. The caller needs
+	// roles/iam.serviceAccountTokenCreator on the service account.
+	var descriptor struct {
+		Type        string `json:"type"`
+		ClientEmail string `json:"client_email"`
+		PrivateKey  string `json:"private_key"`
+	}
+	if err := json.Unmarshal(credentialsData, &descriptor); err == nil &&
+		descriptor.Type == "service_account" && descriptor.ClientEmail != "" && descriptor.PrivateKey == "" {
+		if opt.Impersonate == "" {
+			return nil, errors.New("service account file has no private_key: keyless credentials need --drive-impersonate")
+		}
+		ctxWithSpecialClient := oauthutil.Context(ctx, getClient(ctx, opt))
+		ts, err := impersonate.CredentialsTokenSource(ctxWithSpecialClient, impersonate.CredentialsConfig{
+			TargetPrincipal: descriptor.ClientEmail,
+			Scopes:          scopes,
+			Subject:         opt.Impersonate,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating keyless token source: %w", err)
+		}
+		return oauth2.NewClient(ctxWithSpecialClient, ts), nil
+	}
 	conf, err := google.JWTConfigFromJSON(credentialsData, scopes...)
 	if err != nil {
 		return nil, fmt.Errorf("error processing credentials: %w", err)
