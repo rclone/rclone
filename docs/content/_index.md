@@ -259,6 +259,7 @@ These backends adapt or modify other storage providers:
 {{< provider name="Combine: Combine multiple remotes into a directory tree" home="/combine/" config="/combine/" >}}
 {{< provider name="Compress: Compress files" home="/compress/" config="/compress/" >}}
 {{< provider name="Crypt: Encrypt files" home="/crypt/" config="/crypt/" >}}
+{{< provider name="Cryptomator: Access Cryptomator-format encrypted vaults" home="/cryptomator/" config="/cryptomator/" >}}
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 

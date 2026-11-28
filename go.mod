@@ -17,6 +17,7 @@ require (
 	github.com/FilenCloudDienste/filen-sdk-go v0.0.42
 	github.com/Files-com/files-sdk-go/v3 v3.3.194
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
+	github.com/NickBall/go-aes-key-wrap v0.0.0-20170929221519-1c3aa3e4dfc5
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v1.1.2
@@ -62,6 +63,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.31
 	github.com/mholt/archives v0.1.5
 	github.com/minio/minio-go/v7 v7.4.1
+	github.com/miscreant/miscreant.go v0.0.0-20200214223636-26d376326b75
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/muesli/reflow v0.3.0
@@ -110,6 +112,7 @@ require (
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/yaml.v3 v3.0.1
 	moul.io/http2curl/v2 v2.3.0
+	pgregory.net/rapid v1.1.0
 	storj.io/uplink v1.14.5
 )
 
