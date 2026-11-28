@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -1059,6 +1060,58 @@ func TestMoveFile(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t)
 	r.CheckRemoteItems(t, file2)
+}
+
+func TestMoveFileThroughSymlink(t *testing.T) {
+	for _, reverse := range []bool{false, true} {
+		for _, viaSubdir := range []bool{false, true} {
+			for _, noCheckDest := range []bool{false, true} {
+				t.Run(fmt.Sprintf("reverse=%v,viaSubdir=%v,noCheckDest=%v", reverse, viaSubdir, noCheckDest), func(t *testing.T) {
+					ctx, ci := fs.AddConfig(context.Background())
+					ci.NoCheckDest = noCheckDest
+					tempDir := t.TempDir()
+					realDir := filepath.Join(tempDir, "real")
+					linkDir := filepath.Join(tempDir, "link")
+					require.NoError(t, os.MkdirAll(filepath.Join(realDir, "sub"), 0700))
+					require.NoError(t, os.WriteFile(filepath.Join(realDir, "sub", "file"), []byte("contents"), 0600))
+					if err := os.Symlink(realDir, linkDir); err != nil {
+						t.Skipf("Symlinks are unavailable: %v", err)
+					}
+
+					srcName, dstName := "sub/file", "sub/file"
+					if viaSubdir {
+						linkDir = filepath.Join(linkDir, "sub")
+						dstName = "file"
+					}
+					srcDir := realDir
+					if noCheckDest {
+						t.Chdir(realDir)
+						srcDir = "../real"
+					}
+					srcFs, err := fs.NewFs(ctx, srcDir)
+					require.NoError(t, err)
+					dstFs, err := fs.NewFs(ctx, linkDir)
+					require.NoError(t, err)
+					if reverse {
+						srcFs, dstFs = dstFs, srcFs
+						srcName, dstName = dstName, srcName
+					}
+					srcObj := fstest.NewObject(ctx, t, srcFs, srcName)
+					dstObj := fstest.NewObject(ctx, t, dstFs, dstName)
+					assert.True(t, operations.SameObject(srcObj, dstObj))
+
+					err = operations.MoveFile(ctx, dstFs, srcFs, dstName, srcName)
+					require.NoError(t, err)
+					dstFs.Features().Disable("Move")
+					_, err = operations.Move(ctx, dstFs, nil, dstName, srcObj)
+					require.NoError(t, err)
+					contents, err := os.ReadFile(filepath.Join(realDir, "sub", "file"))
+					require.NoError(t, err)
+					assert.Equal(t, "contents", string(contents))
+				})
+			}
+		}
+	}
 }
 
 func TestMoveFileWithIgnoreExisting(t *testing.T) {

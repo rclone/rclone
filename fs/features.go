@@ -41,6 +41,10 @@ type Features struct {
 	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
 	DoubleSlash              bool // set if backend supports double slashes in paths
 
+	// CanonicalPath returns the absolute local path with symlinks resolved.
+	// An empty remote refers to the root. It returns an error if resolution fails.
+	CanonicalPath func(remote string) (string, error)
+
 	// Purge all files in the directory specified
 	//
 	// Implement this if you have a way of deleting all the files
